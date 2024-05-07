@@ -1,0 +1,78 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Dự án tốt nghiệp",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://127.0.0.1:8000/api",
+            "description": "API Server"
+        }
+    ],
+    "paths": {
+        "/signup": {
+            "post": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Đăng ký",
+                "operationId": "c75c11220a101b686d3d348fb9dea796",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password",
+                                    "confirm_password"
+                                ],
+                                "properties": {
+                                    "username": {
+                                        "type": "string",
+                                        "default": "your name"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "default": "your_email@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "default": "Abc1234"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "default": "Abc1234"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "422": {
+                        "description": "validate"
+                    },
+                    "500": {
+                        "description": "server"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "BearerAuth": {
+                "type": "http",
+                "description": "Enter JWT Bearer token **_only_**",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    }
+}
