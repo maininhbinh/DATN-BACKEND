@@ -7,8 +7,9 @@
     </style>
 </head>
 <body>
-    <div style="display: flex; flex-direction: column">
+    <div>
         <h1>Xin chào quý khách {{ $name }}</h1>
+        <br>
         <p>OPT của bạn là {{ $OTP }}</p>
     </div>
 </body>

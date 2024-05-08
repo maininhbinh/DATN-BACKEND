@@ -14,7 +14,7 @@
         "/signup": {
             "post": {
                 "tags": [
-                    "User"
+                    "User Authentication"
                 ],
                 "summary": "Đăng ký",
                 "operationId": "c75c11220a101b686d3d348fb9dea796",
@@ -60,6 +60,94 @@
                     },
                     "500": {
                         "description": "server"
+                    }
+                }
+            }
+        },
+        "/verifyOTP": {
+            "post": {
+                "tags": [
+                    "User Authentication"
+                ],
+                "summary": "Verify OTP",
+                "description": "This endpoint verifies an OTP sent to the user's email.",
+                "operationId": "1ed17c148a5b19bfb989c09af4f9483f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "OTP",
+                                    "email"
+                                ],
+                                "properties": {
+                                    "OTP": {
+                                        "description": "The OTP to verify.",
+                                        "type": "string",
+                                        "format": "digits",
+                                        "example": "1234"
+                                    },
+                                    "email": {
+                                        "description": "The email address associated with the OTP.",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "your_email@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP verified successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "OTP verified successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invalid OTP or email."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "An error occurred."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
