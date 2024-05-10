@@ -11,13 +11,13 @@
         }
     ],
     "paths": {
-        "/signup": {
+        "/auth/signup": {
             "post": {
                 "tags": [
-                    "User Authentication"
+                    "Authentication"
                 ],
                 "summary": "Đăng ký",
-                "operationId": "c75c11220a101b686d3d348fb9dea796",
+                "operationId": "af6956352ace90b33a7bc69f77eb585e",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -64,14 +64,14 @@
                 }
             }
         },
-        "/verifyOTP": {
+        "/auth/verifyOTP": {
             "post": {
                 "tags": [
-                    "User Authentication"
+                    "Authentication"
                 ],
                 "summary": "Verify OTP",
                 "description": "This endpoint verifies an OTP sent to the user's email.",
-                "operationId": "1ed17c148a5b19bfb989c09af4f9483f",
+                "operationId": "9ca8272abe2e190aea595bedab029ebf",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -117,7 +117,7 @@
                             }
                         }
                     },
-                    "400": {
+                    "422": {
                         "description": "Validation error",
                         "content": {
                             "application/json": {
@@ -150,6 +150,202 @@
                         }
                     }
                 }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "login",
+                "description": "This endpoint login",
+                "operationId": "9da2cf5088492a12575eabde8425e309",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "description": "The user's email.",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "your_email@example.com"
+                                    },
+                                    "password": {
+                                        "description": "The user's password.",
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "Abc1234"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "login successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "login successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invalid email."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "An error occurred."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/refreshToken": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "auth Resource",
+                "description": "refreshToken",
+                "operationId": "abd35f1b78003136dde1a06a96b39a07",
+                "responses": {
+                    "200": {
+                        "description": "Successful retrieval of protected resource",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "string",
+                                            "example": "A protected resource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "auth Resource",
+                "description": "Logout",
+                "operationId": "641d632667d8cd0019e6d3c7d802657a",
+                "responses": {
+                    "200": {
+                        "description": "Successful retrieval of protected resource",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "string",
+                                            "example": "A protected resource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/user/profile": {
+            "get": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Protected Resource",
+                "description": "User",
+                "operationId": "8fa93d3cc0f8379a388c26a467c13cbc",
+                "responses": {
+                    "200": {
+                        "description": "Successful retrieval of protected resource",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "string",
+                                            "example": "A protected resource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
             }
         }
     },
