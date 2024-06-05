@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\api\ApiAttribitesController;
 use App\Http\Controllers\api\ApiCategoriesController;
 use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\UserController;
@@ -50,3 +51,13 @@ Route::delete('/categories/{id}/deleteCategory', [ApiCategoriesController::class
 Route::get('/categories/{id}', [ApiCategoriesController::class, 'show']);
 Route::post('/categories/child', [ApiCategoriesController::class, 'storeChild']);
 Route::post('/categories/{id}/children/{child_id}', [ApiCategoriesController::class, 'updateChild']);
+
+
+//
+Route::prefix('attributes')->group(function () {
+    Route::get('/', [ApiAttribitesController::class, 'index'])->name('attributes.index');
+    Route::post('/', [ApiAttribitesController::class, 'store'])->name('attributes.store');
+    Route::get('/{id}', [ApiAttribitesController::class, 'show'])->name('attributes.show');
+    Route::put('/{id}', [ApiAttribitesController::class, 'update'])->name('attributes.update');
+    Route::delete('/{id}', [ApiAttribitesController::class, 'destroy'])->name('attributes.destroy');
+});

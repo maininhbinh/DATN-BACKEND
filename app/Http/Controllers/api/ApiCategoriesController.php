@@ -27,7 +27,7 @@ class ApiCategoriesController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'description' => 'required|nullable|string',
         ]);
 
         $category = Categories::create($request->all());
