@@ -3,17 +3,17 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Attributes;
+use App\Models\Parameters;
 use Illuminate\Http\Request;
 
-class ApiAttribitesController extends Controller
+class ApiParamtersController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $items = Attributes::all();
+        $items = Parameters::all();
         return response()->json($items, 200, [], JSON_UNESCAPED_UNICODE);
     }
 
@@ -40,9 +40,9 @@ class ApiAttribitesController extends Controller
             'description.required' => 'Mô tả là bắt buộc.',
             'description.string' => 'Mô tả phải là chuỗi ký tự.',
         ]);
-        $item = Attributes::create($request->all());
+        $item = Parameters::create($request->all());
         return response()->json([
-            'message' => 'Thêm biến thể thành công!',
+            'message' => 'Thêm parameter thể thành công!',
             'category' => $item
         ], 201, [], JSON_UNESCAPED_UNICODE);
     }
@@ -52,7 +52,7 @@ class ApiAttribitesController extends Controller
      */
     public function show(string $id)
     {
-        $item = Attributes::find($id);
+        $item = Parameters::find($id);
         if ($item) {
             return response()->json($item, 200, [], JSON_UNESCAPED_UNICODE);
         } else {
@@ -73,7 +73,7 @@ class ApiAttribitesController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $item = Attributes::find($id);
+        $item = Parameters::find($id);
         if ($item) {
             $request->validate([
                 'name' => 'required|string|max:255',
@@ -94,7 +94,7 @@ class ApiAttribitesController extends Controller
      */
     public function destroy(string $id)
     {
-        $item = Attributes::find($id);
+        $item = Parameters::find($id);
         if ($item) {
             $item->delete();
             return response()->json(['message' => 'Xoá biến thể thành công!'], 200, [], JSON_UNESCAPED_UNICODE);

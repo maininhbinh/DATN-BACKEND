@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\api\ApiAttribitesController;
 use App\Http\Controllers\api\ApiCategoriesController;
+use App\Http\Controllers\api\ApiParamtersController;
 use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\UserController;
 use Illuminate\Http\Request;
@@ -39,25 +40,27 @@ Route::middleware(['api', 'jwt.verify'])
 
         Route::get('profile', [UserController::class, 'profile']);
     });
-// lớp cha
-Route::get('categories', [ApiCategoriesController::class, 'index']);
-Route::post('categories', [ApiCategoriesController::class, 'store']);
-//update lớp cha (category)
-Route::post('/categories/{id}', [ApiCategoriesController::class, 'update']);
-//xoá lớp cha(đã kiểm tra sự tồn tại nếu có lớp con)
-Route::delete('/categories/{id}/deleteCategory', [ApiCategoriesController::class, 'deleteCategory']);
-
-// lớp con
-Route::get('/categories/{id}', [ApiCategoriesController::class, 'show']);
-Route::post('/categories/child', [ApiCategoriesController::class, 'storeChild']);
-Route::post('/categories/{id}/children/{child_id}', [ApiCategoriesController::class, 'updateChild']);
 
 
-//
-Route::prefix('attributes')->group(function () {
-    Route::get('/', [ApiAttribitesController::class, 'index'])->name('attributes.index');
-    Route::post('/', [ApiAttribitesController::class, 'store'])->name('attributes.store');
-    Route::get('/{id}', [ApiAttribitesController::class, 'show'])->name('attributes.show');
-    Route::put('/{id}', [ApiAttribitesController::class, 'update'])->name('attributes.update');
-    Route::delete('/{id}', [ApiAttribitesController::class, 'destroy'])->name('attributes.destroy');
+Route::prefix('category')->group(function () {
+    // lớp cha
+    Route::get('/', [ApiCategoriesController::class, 'index']);
+    Route::post('/', [ApiCategoriesController::class, 'store']);
+    //update lớp cha (category)
+    Route::post('/{id}', [ApiCategoriesController::class, 'update']);
+    // lớp con
+    Route::get('/{id}', [ApiCategoriesController::class, 'show']); // show lớp con
+    Route::post('/child', [ApiCategoriesController::class, 'storeChild']); //thêm lớp con
+    Route::post('/{id}/children/{child_id}', [ApiCategoriesController::class, 'updateChild']);
+    //xoá lớp cha(đã kiểm tra sự tồn tại nếu có lớp con)
+    Route::delete('/{id}/deleteCategory', [ApiCategoriesController::class, 'deleteCategory']);
+});
+
+// parameter
+Route::prefix('parameter')->group(function () {
+    Route::get('/', [ApiParamtersController::class, 'index'])->name('parameter.index');
+    Route::post('/', [ApiParamtersController::class, 'store'])->name('parameter.store');
+    Route::get('/{id}', [ApiParamtersController::class, 'show'])->name('parameter.show');
+    Route::put('/{id}', [ApiParamtersController::class, 'update'])->name('parameter.update');
+    Route::delete('/{id}', [ApiParamtersController::class, 'destroy'])->name('parameter.destroy');
 });
