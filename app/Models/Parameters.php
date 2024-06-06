@@ -10,5 +10,6 @@ class Parameters extends Model
 {
     use HasFactory;
     use SoftDeletes;
+    protected $table = 'parameters';
     protected $fillable = ['name', 'description'];
 }

@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Parameters;
 use Illuminate\Http\Request;
 
-class ApiParamtersController extends Controller
+class ApiParametersController extends Controller
 {
     /**
      * Display a listing of the resource.
