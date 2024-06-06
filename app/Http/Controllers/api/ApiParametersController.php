@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Parameters;
+use App\Models\Parameter;
 use Illuminate\Http\Request;
 
 class ApiParametersController extends Controller
@@ -13,7 +13,7 @@ class ApiParametersController extends Controller
      */
     public function index()
     {
-        $items = Parameters::all();
+        $items = Parameter::all();
         return response()->json($items, 200, [], JSON_UNESCAPED_UNICODE);
     }
 
@@ -31,7 +31,7 @@ class ApiParametersController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:parameters,name',
             'description' => 'required|nullable|string',
         ], [
             'name.required' => 'Tên là bắt buộc.',
@@ -40,7 +40,7 @@ class ApiParametersController extends Controller
             'description.required' => 'Mô tả là bắt buộc.',
             'description.string' => 'Mô tả phải là chuỗi ký tự.',
         ]);
-        $item = Parameters::create($request->all());
+        $item = Parameter::create($request->all());
         return response()->json([
             'message' => 'Thêm parameter thể thành công!',
             'category' => $item
@@ -52,7 +52,7 @@ class ApiParametersController extends Controller
      */
     public function show(string $id)
     {
-        $item = Parameters::find($id);
+        $item = Parameter::find($id);
         if ($item) {
             return response()->json($item, 200, [], JSON_UNESCAPED_UNICODE);
         } else {
@@ -73,10 +73,10 @@ class ApiParametersController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $item = Parameters::find($id);
+        $item = Parameter::find($id);
         if ($item) {
             $request->validate([
-                'name' => 'required|string|max:255',
+                'name' => 'required|string|max:255|unique:parameters,name,' . $item->id,
                 'description' => 'required|nullable|string',
             ]);
             $item->update($request->all());
@@ -94,7 +94,7 @@ class ApiParametersController extends Controller
      */
     public function destroy(string $id)
     {
-        $item = Parameters::find($id);
+        $item = Parameter::find($id);
         if ($item) {
             $item->delete();
             return response()->json(['message' => 'Xoá biến thể thành công!'], 200, [], JSON_UNESCAPED_UNICODE);

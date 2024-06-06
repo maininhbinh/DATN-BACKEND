@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\api\ApiCategoriesController;
 use App\Http\Controllers\api\ApiParametersController;
+use App\Http\Controllers\api\ApiValueAttributeController;
 use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\UserController;
 use Illuminate\Http\Request;
@@ -57,9 +58,16 @@ Route::prefix('category')->group(function () {
 
 // parameter
 Route::prefix('parameter')->group(function () {
-    Route::get('/', [ApiParametersController::class, 'index'])->name('parameter.index');
-    Route::post('/', [ApiParametersController::class, 'store'])->name('parameter.store');
-    Route::get('/{id}', [ApiParametersController::class, 'show'])->name('parameter.show');
-    Route::post('/{id}', [ApiParametersController::class, 'update'])->name('parameter.update');
-    Route::delete('/{id}', [ApiParametersController::class, 'destroy'])->name('parameter.destroy');
+    Route::get('/', [ApiParametersController::class, 'index']);
+    Route::post('/', [ApiParametersController::class, 'store']);
+    Route::get('/{id}', [ApiParametersController::class, 'show']);
+    Route::post('/{id}', [ApiParametersController::class, 'update']);
+    Route::delete('/{id}', [ApiParametersController::class, 'destroy']);
+});
+Route::prefix('valueAttribute')->group(function () {
+    Route::get('/', [ApiValueAttributeController::class, 'index']);
+    Route::post('/', [ApiValueAttributeController::class, 'store']);
+    Route::get('/{id}', [ApiValueAttributeController::class, 'show']);
+    Route::post('/{id}', [ApiValueAttributeController::class, 'update']);
+    Route::delete('/{id}', [ApiValueAttributeController::class, 'destroy']);
 });
