@@ -71,6 +71,7 @@ Route::prefix('value-attribute')->group(function () {
     Route::get('/{id}', [ApiValueAttributeController::class, 'show']);
     Route::post('/{id}', [ApiValueAttributeController::class, 'update']);
     Route::delete('/{id}', [ApiValueAttributeController::class, 'destroy']);
+    Route::post('/{id}/restore', [ApiValueAttributeController::class, 'restore']);
 });
 Route::prefix('category-attribute')->group(function () {
     Route::get('/', [ApiCategoryAttributeController::class, 'index']);
