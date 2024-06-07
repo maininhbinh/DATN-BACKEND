@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\api\ApiCategoriesController;
+use App\Http\Controllers\api\ApiParametersController;
+use App\Http\Controllers\api\ApiValueAttributeController;
 use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\UserController;
 use Illuminate\Http\Request;
@@ -38,15 +40,34 @@ Route::middleware(['api', 'jwt.verify'])
 
         Route::get('profile', [UserController::class, 'profile']);
     });
-// lớp cha
-Route::get('categories', [ApiCategoriesController::class, 'index']);
-Route::post('categories', [ApiCategoriesController::class, 'store']);
-//update lớp cha (category)
-Route::post('/categories/{id}', [ApiCategoriesController::class, 'update']);
-//xoá lớp cha(đã kiểm tra sự tồn tại nếu có lớp con)
-Route::delete('/categories/{id}/deleteCategory', [ApiCategoriesController::class, 'deleteCategory']);
 
-// lớp con
-Route::get('/categories/{id}', [ApiCategoriesController::class, 'show']);
-Route::post('/categories/child', [ApiCategoriesController::class, 'storeChild']);
-Route::post('/categories/{id}/children/{child_id}', [ApiCategoriesController::class, 'updateChild']);
+
+Route::prefix('category')->group(function () {
+    // lớp cha
+    Route::get('/', [ApiCategoriesController::class, 'index']);
+    Route::post('/', [ApiCategoriesController::class, 'store']);
+    //update lớp cha (category)
+    Route::post('/{id}', [ApiCategoriesController::class, 'update']);
+    // lớp con
+    Route::get('/{id}', [ApiCategoriesController::class, 'show']); // show lớp con
+    Route::post('/child', [ApiCategoriesController::class, 'storeChild']); //thêm lớp con
+    Route::post('/{id}/children/{child_id}', [ApiCategoriesController::class, 'updateChild']);
+    //xoá lớp cha(đã kiểm tra sự tồn tại nếu có lớp con)
+    Route::delete('/{id}/deleteCategory', [ApiCategoriesController::class, 'deleteCategory']);
+});
+
+// parameter
+Route::prefix('parameter')->group(function () {
+    Route::get('/', [ApiParametersController::class, 'index']);
+    Route::post('/', [ApiParametersController::class, 'store']);
+    Route::get('/{id}', [ApiParametersController::class, 'show']);
+    Route::post('/{id}', [ApiParametersController::class, 'update']);
+    Route::delete('/{id}', [ApiParametersController::class, 'destroy']);
+});
+Route::prefix('valueAttribute')->group(function () {
+    Route::get('/', [ApiValueAttributeController::class, 'index']);
+    Route::post('/', [ApiValueAttributeController::class, 'store']);
+    Route::get('/{id}', [ApiValueAttributeController::class, 'show']);
+    Route::post('/{id}', [ApiValueAttributeController::class, 'update']);
+    Route::delete('/{id}', [ApiValueAttributeController::class, 'destroy']);
+});
