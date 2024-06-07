@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 /**
  * @OA\Get(
@@ -29,28 +29,28 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserController extends Controller
 {
-    //
 
-    public function profile(){
-        try {
 
-            $user = JWTAuth::parseToken()->authenticate();
+     public function profile(Request $request){
+         try {
 
-            return response()->json([
-                'success' => true,
-                'result' => [
-                    'data' => $user,
-                ]
-            ], 200);
+             $user = $request->user();
 
-        } catch (\Tymon\JWTAuth\Exceptions\UserNotDefinedException $e) {
-            return response()->json([
-                'success' => true,
-                'result' => [
-                    'message' => 'No Auththentication',
-                    'error' => $e
-                ]
-            ], 401);
-        }
-    }
+             return response()->json([
+                 'success' => true,
+                 'result' => [
+                     'data' => $user,
+                 ]
+             ], 200);
+
+         } catch (\Exception $e) {
+             return response()->json([
+                 'success' => true,
+                 'result' => [
+                     'error' => $e
+                 ]
+             ], 500);
+         }
+
+     }
 }

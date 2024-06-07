@@ -20,22 +20,19 @@ use Illuminate\Support\Facades\Route;
 //     return $request->user();
 // });
 
-Route::middleware('api')
-->prefix('auth')
+Route::prefix('auth')
 ->group(function (){
 
     Route::post('signup', [AuthController::class, 'signup']);
     Route::post('verifyOTP', [AuthController::class, 'verifyOTP']);
     Route::post('login', [AuthController::class, 'login']);
-    Route::post('refreshToken', [AuthController::class, 'refreshToken'])->middleware(['jwt.verify']);
-    Route::post('logout', [AuthController::class, 'logout'])->middleware(['jwt.verify']);
+    Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
 });
 
-Route::middleware(['api', 'jwt.verify'])
-->prefix('user')
+Route::prefix('user')
 ->group(function (){
 
-    Route::get('profile', [UserController::class, 'profile']);
+    Route::get('profile', [UserController::class, 'profile'])->middleware('auth:sanctum');
 
 });

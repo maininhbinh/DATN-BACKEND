@@ -8,9 +8,9 @@
 </head>
 <body>
     <div>
-        <h1>Xin chào quý khách {{ $name }}</h1>
-        <br>
-        <p>OPT của bạn là {{ $OTP }}</p>
+{{--        <h1>{{$title}}</h1>--}}
+{{--        <br>--}}
+{{--        <p>{{$content}}</p>--}}
     </div>
 </body>
 </html>
