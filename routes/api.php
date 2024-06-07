@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\api\ApiCategoriesController;
+use App\Http\Controllers\api\ApiCategoryAttributeController;
 use App\Http\Controllers\api\ApiParametersController;
 use App\Http\Controllers\api\ApiValueAttributeController;
 use App\Http\Controllers\api\AuthController;
@@ -64,10 +65,19 @@ Route::prefix('parameter')->group(function () {
     Route::post('/{id}', [ApiParametersController::class, 'update']);
     Route::delete('/{id}', [ApiParametersController::class, 'destroy']);
 });
-Route::prefix('valueAttribute')->group(function () {
+Route::prefix('value-attribute')->group(function () {
     Route::get('/', [ApiValueAttributeController::class, 'index']);
     Route::post('/', [ApiValueAttributeController::class, 'store']);
     Route::get('/{id}', [ApiValueAttributeController::class, 'show']);
     Route::post('/{id}', [ApiValueAttributeController::class, 'update']);
     Route::delete('/{id}', [ApiValueAttributeController::class, 'destroy']);
+});
+Route::prefix('category-attribute')->group(function () {
+    Route::get('/', [ApiCategoryAttributeController::class, 'index']);
+    Route::post('/', [ApiCategoryAttributeController::class, 'store']);
+    Route::get('/{id}', [ApiCategoryAttributeController::class, 'show']);
+    Route::post('/{id}', [ApiCategoryAttributeController::class, 'update']);
+    Route::delete('/{id}', [ApiCategoryAttributeController::class, 'destroy']);
+    Route::post('/{id}', [ApiCategoryAttributeController::class, 'destroy']);
+    Route::post('/{id}/restore', [ApiCategoryAttributeController::class, 'restore']);
 });

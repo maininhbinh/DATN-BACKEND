@@ -37,6 +37,7 @@ class ApiParametersController extends Controller
             'name.required' => 'Tên là bắt buộc.',
             'name.string' => 'Tên phải là chuỗi ký tự.',
             'name.max' => 'Tên không được vượt quá 255 ký tự.',
+            'name.unique' => 'Tham số đã tồn tại.',
             'description.required' => 'Mô tả là bắt buộc.',
             'description.string' => 'Mô tả phải là chuỗi ký tự.',
         ]);

@@ -25,10 +25,17 @@ class ApiCategoriesController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'required|nullable|string',
-        ]);
+        $request->validate(
+            [
+                'name' => 'required|string|max:255|unique:categories,name',
+                'description' => 'required|nullable|string',
+            ],
+            [
+                'name.required' => "Chưa nhập tên danh mục",
+                'name.unique' => "Tên danh mục đã tồn tại",
+                'description.required' => "Chưa nhập mô tả",
+            ]
+        );
 
         $category = Categories::create($request->all());
 
