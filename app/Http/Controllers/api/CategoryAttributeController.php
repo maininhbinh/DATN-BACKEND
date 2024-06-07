@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CategoryAttribute;
 use Illuminate\Http\Request;
 
-class ApiCategoryAttributeController extends Controller
+class CategoryAttributeController extends Controller
 {
     /**
      * Display a listing of the resource.

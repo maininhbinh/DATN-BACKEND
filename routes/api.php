@@ -1,9 +1,9 @@
 <?php
 
-use App\Http\Controllers\api\ApiCategoriesController;
-use App\Http\Controllers\api\ApiCategoryAttributeController;
-use App\Http\Controllers\api\ApiParametersController;
-use App\Http\Controllers\api\ApiValueAttributeController;
+use App\Http\Controllers\api\CategoriesController;
+use App\Http\Controllers\api\CategoryAttributeController;
+use App\Http\Controllers\api\ParametersController;
+use App\Http\Controllers\api\ValueAttributeController;
 use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\UserController;
 use Illuminate\Http\Request;
@@ -24,61 +24,63 @@ use Illuminate\Support\Facades\Route;
 //     return $request->user();
 // });
 
-Route::middleware('api')
-    ->prefix('auth')
+Route::prefix('auth')
+->group(function (){
+
+    Route::post('signup', [AuthController::class, 'signup']);
+    Route::post('verifyOTP', [AuthController::class, 'verifyOTP']);
+    Route::post('login', [AuthController::class, 'login']);
+    Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+
+});
+
+Route::prefix('user')
+->group(function (){
+
+    Route::get('profile', [UserController::class, 'profile'])->middleware('auth:sanctum');
+});
+
+
+Route::prefix('category')
     ->group(function () {
-
-        Route::post('signup', [AuthController::class, 'signup']);
-        Route::post('verifyOTP', [AuthController::class, 'verifyOTP']);
-        Route::post('login', [AuthController::class, 'login']);
-        Route::post('refreshToken', [AuthController::class, 'refreshToken'])->middleware(['jwt.verify']);
-        Route::post('logout', [AuthController::class, 'logout'])->middleware(['jwt.verify']);
-    });
-
-Route::middleware(['api', 'jwt.verify'])
-    ->prefix('user')
-    ->group(function () {
-
-        Route::get('profile', [UserController::class, 'profile']);
-    });
-
-
-Route::prefix('category')->group(function () {
     // lớp cha
-    Route::get('/', [ApiCategoriesController::class, 'index']);
-    Route::post('/', [ApiCategoriesController::class, 'store']);
+    Route::get('/', [CategoriesController::class, 'index']);
+    Route::post('/', [CategoriesController::class, 'store']);
     //update lớp cha (category)
-    Route::post('/{id}', [ApiCategoriesController::class, 'update']);
+    Route::post('/{id}', [CategoriesController::class, 'update']);
     // lớp con
-    Route::get('/{id}', [ApiCategoriesController::class, 'show']); // show lớp con
-    Route::post('/child', [ApiCategoriesController::class, 'storeChild']); //thêm lớp con
-    Route::post('/{id}/children/{child_id}', [ApiCategoriesController::class, 'updateChild']);
+    Route::get('/{id}', [CategoriesController::class, 'show']); // show lớp con
+    Route::post('/child', [CategoriesController::class, 'storeChild']); //thêm lớp con
+    Route::post('/{id}/children/{child_id}', [CategoriesController::class, 'updateChild']);
     //xoá lớp cha(đã kiểm tra sự tồn tại nếu có lớp con)
-    Route::delete('/{id}/deleteCategory', [ApiCategoriesController::class, 'deleteCategory']);
+    Route::delete('/{id}/deleteCategory', [CategoriesController::class, 'deleteCategory']);
 });
 
 // parameter
-Route::prefix('parameter')->group(function () {
-    Route::get('/', [ApiParametersController::class, 'index']);
-    Route::post('/', [ApiParametersController::class, 'store']);
-    Route::get('/{id}', [ApiParametersController::class, 'show']);
-    Route::post('/{id}', [ApiParametersController::class, 'update']);
-    Route::delete('/{id}', [ApiParametersController::class, 'destroy']);
+Route::prefix('parameter')
+    ->group(function () {
+    Route::get('/', [ParametersController::class, 'index']);
+    Route::post('/', [ParametersController::class, 'store']);
+    Route::get('/{id}', [ParametersController::class, 'show']);
+    Route::post('/{id}', [ParametersController::class, 'update']);
+    Route::delete('/{id}', [ParametersController::class, 'destroy']);
 });
-Route::prefix('value-attribute')->group(function () {
-    Route::get('/', [ApiValueAttributeController::class, 'index']);
-    Route::post('/', [ApiValueAttributeController::class, 'store']);
-    Route::get('/{id}', [ApiValueAttributeController::class, 'show']);
-    Route::post('/{id}', [ApiValueAttributeController::class, 'update']);
-    Route::delete('/{id}', [ApiValueAttributeController::class, 'destroy']);
-    Route::post('/{id}/restore', [ApiValueAttributeController::class, 'restore']);
+Route::prefix('value-attribute')
+    ->group(function () {
+    Route::get('/', [ValueAttributeController::class, 'index']);
+    Route::post('/', [ValueAttributeController::class, 'store']);
+    Route::get('/{id}', [ValueAttributeController::class, 'show']);
+    Route::post('/{id}', [ValueAttributeController::class, 'update']);
+    Route::delete('/{id}', [ValueAttributeController::class, 'destroy']);
+//    Route::post('/{id}/restore', [ValueAttributeController::class, 'restore']);
 });
-Route::prefix('category-attribute')->group(function () {
-    Route::get('/', [ApiCategoryAttributeController::class, 'index']);
-    Route::post('/', [ApiCategoryAttributeController::class, 'store']);
-    Route::get('/{id}', [ApiCategoryAttributeController::class, 'show']);
-    Route::post('/{id}', [ApiCategoryAttributeController::class, 'update']);
-    Route::delete('/{id}', [ApiCategoryAttributeController::class, 'destroy']);
-    Route::post('/{id}', [ApiCategoryAttributeController::class, 'destroy']);
-    Route::post('/{id}/restore', [ApiCategoryAttributeController::class, 'restore']);
+Route::prefix('category-attribute')
+    ->group(function () {
+    Route::get('/', [CategoryAttributeController::class, 'index']);
+    Route::post('/', [CategoryAttributeController::class, 'store']);
+    Route::get('/{id}', [CategoryAttributeController::class, 'show']);
+    Route::post('/{id}', [CategoryAttributeController::class, 'update']);
+    Route::delete('/{id}', [CategoryAttributeController::class, 'destroy']);
+    Route::post('/{id}', [CategoryAttributeController::class, 'destroy']);
+    Route::post('/{id}/restore', [CategoryAttributeController::class, 'restore']);
 });

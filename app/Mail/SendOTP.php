@@ -3,38 +3,46 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
-class WelcomeEmail extends Mailable
+class SendOTP extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $message;
-    public $username;
+    private $otp;
+    private $content;
+    private $title;
+
 
     /**
      * Create a new message instance.
      */
-    public function __construct($message, $username)
-    {   
+    public function __construct($otp, $content, $title)
+    {
         //
-        $this->message = $message;
-        $this->username = $username;
+        $this->otp = $otp;
+        $this->content = $content;
+        $this->title = $title;
     }
 
     public function build()
     {
-        $data = $this->message;
-        $username = $this->username;
-        return $this->from(env('MAIL_FROM_ADDRESS'))
-        ->view('emails.welcome')
+        $otp = $this->otp;
+        $content = $this->content;
+        $title = $this->title;
+        Log::channel('debug')->debug([$otp, $content, $title]);
+
+        return $this
+        ->from(env('MAIL_FROM_ADDRESS'))
+        ->view('emails.email')
         ->with([
-            'OTP' => $data,
-            'name' => $username
+            'title' => $title,
+            'OTP' => $otp,
+            'content' => $content
         ]);
     }
 

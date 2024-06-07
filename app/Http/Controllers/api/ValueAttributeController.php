@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ValueAttribute;
 use Illuminate\Http\Request;
 
-class ApiValueAttributeController extends Controller
+class ValueAttributeController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -69,7 +69,7 @@ class ApiValueAttributeController extends Controller
      */
     public function edit(string $id)
     {
-      
+
     }
 
     /**

@@ -240,42 +240,6 @@
                 }
             }
         },
-        "/auth/refreshToken": {
-            "post": {
-                "tags": [
-                    "Authentication"
-                ],
-                "summary": "auth Resource",
-                "description": "refreshToken",
-                "operationId": "abd35f1b78003136dde1a06a96b39a07",
-                "responses": {
-                    "200": {
-                        "description": "Successful retrieval of protected resource",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "type": "string",
-                                            "example": "A protected resource"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized"
-                    }
-                },
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ]
-            }
-        },
         "/auth/logout": {
             "post": {
                 "tags": [

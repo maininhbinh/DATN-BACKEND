@@ -7,9 +7,9 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserRegistration;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 /**
  * @OA\Post(
@@ -42,7 +42,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
  *       description="server"
  *   )
  * ),
- * 
+ *
  * @OA\Post(
  *      path="/auth/verifyOTP",
  *      summary="Verify OTP",
@@ -143,26 +143,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
  *          )
  *      )
  * )
- * 
- * @OA\Post(
- *      path="/auth/refreshToken",
- *      summary="auth Resource",
- *      description="refreshToken",
- *      security={{ "BearerAuth": {} }},
- *      tags={"Authentication"},
- *      @OA\Response(
- *          response=200,
- *          description="Successful retrieval of protected resource",
- *          @OA\JsonContent(
- *              @OA\Property(property="data", type="string", example="A protected resource")
- *          )
- *      ),
- *      @OA\Response(
- *          response=401,
- *          description="Unauthorized"
- *      )
- * )
- * 
+ *
  * @OA\Post(
  *      path="/auth/logout",
  *      summary="auth Resource",
@@ -201,20 +182,31 @@ class AuthController extends Controller
                     'confirmed',
                     'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/'
                 ]
-            ]);
+            ],
+            [
+                'username.required' => 'Username is required',
+                'email.required' => 'Email is required',
+                'password.required' => 'Password is required',
+            ]
+            );
+
+            UserRegistration::where('email', $request->email)->where('otp_expires_at','<', now())->delete();
 
             $OTP = sprintf('%04d', rand(0000,9999));
             $expiresAt = now()->addMinutes(1);
 
-            event(new OtpRequested($request->email, $request->username, $OTP));
+            $title = '[OTP] đăng ký tài khoản';
+            $content = "Xin chào quý khách $request->username OTP xác thực của quý khách là:";
+
+            event(new OtpRequested($request->email, $content, $OTP, $title));
 
             UserRegistration::create([
-                'OTP'=> Hash::make($OTP),
-                'username' => $request->username,
-                'email' => $request->email,
-                'password' => $request->password,
-                'otp_expires_at' => $expiresAt
-            ]);
+               'OTP'=> Hash::make($OTP),
+               'username' => $request->username,
+               'email' => $request->email,
+               'password' => $request->password,
+               'otp_expires_at' => $expiresAt
+           ]);
 
             return response()->json([
                 'success' => true,
@@ -222,21 +214,21 @@ class AuthController extends Controller
                     'message' => 'send email success'
                 ]
             ], 200);
-            
+
         }
         catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e,
+                'result' => $e,
             ], 422);
         }
         catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e,
+                'result' => $e,
             ], 500);
         }
-        
+
     }
 
     public function verifyOTP(Request $request){
@@ -244,12 +236,37 @@ class AuthController extends Controller
 
             $request->validate([
                 'OTP' => 'required|min:4|max:4|string',
-                'email' => 'required|email'
+                'email' => 'required|email|unique:users,email'
+            ],
+            [
+                'OTP.required' => 'OTP is required',
+                'OTP.min' => 'OTP must be at least 4 characters',
+                'OTP.max' => 'OTP must be at most 4 characters',
+                'OTP.string' => 'OTP must be a string',
+                'email.required' => 'Email is required',
             ]);
 
-            $user = UserRegistration::where('email', $request->email)->first();
+            $userRegistration = UserRegistration::where('email', $request->email)->latest()->first();
 
-            if (!$user || !Hash::check($request->OTP, $user->OTP)) {
+            if (!$userRegistration) {
+                return response()->json([
+                    'success' => false,
+                    'result' => [
+                        'message' => 'User not found'
+                    ]
+                ], 404);
+            }
+
+            if ($userRegistration->otp_expires_at < now()) {
+                return response()->json([
+                    'success' => false,
+                    'result' => [
+                        'message' => 'OTP expired'
+                    ]
+                ], 401);
+            }
+
+            if (!Hash::check($request->OTP, $userRegistration->OTP)) {
                 return response()->json([
                     'success' => false,
                     'result' => [
@@ -257,39 +274,28 @@ class AuthController extends Controller
                     ]
                 ], 401);
             }
-        
-            if ($user->otp_expires_at < now()) {
-                return response()->json([
-                    'success' => false,
-                    'result' => [
-                        'message' => 'IOTP expired'
-                    ]
-                ], 401);
-            }
 
-            UserRegistration::where('id', $user->id)->delete();
+            UserRegistration::where('email', $userRegistration->email)->delete();
 
             $addUser = [
-                'username' => $user->username, 
-                'email' => $user->email, 
-                'password' => bcrypt($user->password), 
+                'username' => $userRegistration->username,
+                'email' => $userRegistration->email,
+                'password' => bcrypt($userRegistration->password),
                 'role_id' => User::Role_id['USER']
             ];
-            
+
             $user = User::create($addUser)->first();
 
-            if (!$token = auth('api')->login($user)) {
+            if (!$token = $user->createToken('authToken')->plainTextToken) {
                 return response()->json(['error' => 'Unauthorized'], 401);
             }
-            
+
             return response()->json([
                 'success' => true,
                 'result' => [
                     'data' => $user,
                     'access_token' => $token,
-                    // 'refresh_token' => $refreshToken,
                     'token_type' => 'bearer',
-                    'expires_in' => JWTAuth::factory()->getTTL() * 60
                 ]
             ], 200);
 
@@ -298,7 +304,7 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'result' => [
-                    'message' => $e
+                    'message' => $e->getMessage()
                 ],
             ], 422);
 
@@ -308,47 +314,31 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'result' => [
-                    'message' => $e
+                    'message' => $e->getMessage()
                 ],
             ], 500);
 
         }
     }
 
-    public function refreshToken(){
+    public function forgotPassword(Request $request) {
+        $request->validate([
+            'email' => 'email|required',
+        ],[
+            'email.required' => 'Email is required',
+        ]);
 
-        try{
+        $user = User::where('email', $request->email)->first();
 
-            $currentToken = JWTAuth::getToken();
-
-            if(!$currentToken){
-                return response()->json([
-                    'success' => false,
-                    'result' => [
-                        'message' => 'Error token'
-                    ]
-                ]);
-            }
-            
-            $newToken = JWTAuth::refresh();
-
+        if (!$user) {
             return response()->json([
                 'success' => false,
                 'result' => [
-                    'token' => $newToken,
-                    'token_type' => 'bearer',
-                    'expires_in' => JWTAuth::factory()->getTTL() * 60
-                ],
+                    'message' => 'User not found'
+                ]
             ]);
-
-        }catch(\Exception $e){
-            return response()->json([
-                'success' => false,
-                'result' => [
-                    'message' => $e
-                ],
-            ], 500);
         }
+
 
     }
 
@@ -378,7 +368,7 @@ class AuthController extends Controller
                 ], 401);
             };
 
-            if(!$token = auth('api')->login($user)){
+            if(!$token = $user->createToken('authToken')->plainTextToken){
                 return response()->json([
                     'success' => false,
                     'result' => [
@@ -392,9 +382,7 @@ class AuthController extends Controller
                 'result' => [
                     'data' => $user,
                     'access_token' => $token,
-                    // 'refresh_token' => $refreshToken,
                     'token_type' => 'bearer',
-                    'expires_in' => JWTAuth::factory()->getTTL() * 60
                 ]
             ]);
 
@@ -402,7 +390,7 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'result' => [
-                    'message' => $e
+                    'message' => $e->getMessage()
                 ]
             ], 422);
         }
@@ -410,7 +398,7 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'result' => [
-                    'message' => $e
+                    'message' => $e->getMessage()
                 ]
             ], 500);
         }
@@ -419,10 +407,11 @@ class AuthController extends Controller
 
     public function logout() {
 
-        auth()->logout();
+        Auth::logout();
+        Auth::user()->tokens()->delete();
 
         return response()->json([
-            'success' => false,
+                'success' => true,
                 'result' => [
                     'message' => 'logout success'
                 ]
