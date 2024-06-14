@@ -4,176 +4,352 @@ namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Categories;
+use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class CategoriesController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index()
     {
-        // Lấy tất cả các danh mục cha từ cơ sở dữ liệu
-        $categories = Categories::whereNull('parent_id')->get();
-
-        // Trả về danh sách các danh mục cha dưới dạng JSON
-        return response()->json($categories, 200, [], JSON_UNESCAPED_UNICODE);
+        try {
+            $items = Categories::all();
+            if ($items->isEmpty()) {
+                return response()->json(
+                    [
+                        'success' => false,
+                        'result' => [
+                            'message' => "Không tìm thấy dữ liệu"
+                        ]
+                    ],
+                    404
+                );
+            }
+            return response()->json(
+                [
+                    'success' => true,
+                    'result' => [
+                        'data' => $items,
+                    ]
+                ],
+                200
+            );
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'result' => [
+                    'message' => 'Lỗi serve'
+                ]
+            ], 500);
+        }
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+
+
     public function store(Request $request)
     {
-        $request->validate(
-            [
-                'name' => 'required|string|max:255|unique:categories,name',
-                'description' => 'required|nullable|string',
-            ],
-            [
-                'name.required' => "Chưa nhập tên danh mục",
-                'name.unique' => "Tên danh mục đã tồn tại",
-                'description.required' => "Chưa nhập mô tả",
-            ]
-        );
-
-        $category = Categories::create($request->all());
-
-        return response()->json([
-            'message' => 'Thêm danh mục thành công !',
-            'category' => $category
-        ], 201, [], JSON_UNESCAPED_UNICODE);
+        try {
+            $request->validate(
+                [
+                    'name' => 'required|string|max:255|unique:categories,name',
+                    'description' => 'required|nullable|string',
+                ],
+                [
+                    'name.required' => "Chưa nhập tên danh mục",
+                    'name.unique' => "Tên danh mục đã tồn tại",
+                    'description.required' => "Chưa nhập mô tả",
+                ]
+            );
+            $item = Categories::create($request->all());
+            if (!$item) {
+                return response()->json(
+                    [
+                        'success' => false,
+                        'result' => [
+                            'message' => "Không thể thêm dữ liệu"
+                        ]
+                    ],
+                    500
+                );
+            }
+            return response()->json(
+                [
+                    'success' => true,
+                    'result' => [
+                        'data' => $item
+                    ]
+                ],
+                200
+            );
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'result' => [
+                    'message' => 'Lỗi xác validate'
+                ]
+            ], 422);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'result' => [
+                    'message' => "Lỗi máy chủ."
+                ]
+            ], 500);
+        }
     }
+
+
+
     public function storeChild(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'parent_id' => 'required|exists:categories,id',
-        ]);
+        try {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'parent_id' => 'required|exists:categories,id',
+            ]);
 
-        $childCategory = Categories::create($request->all());
-
-        return response()->json([
-            'message' => 'Thêm danh mục con thành công!',
-            'category' => $childCategory
-        ], 201, [], JSON_UNESCAPED_UNICODE);
+            $childCategory = Categories::create($request->all());
+            if (!$childCategory) {
+                return response()->json([
+                    'success' => false,
+                    'result' => [
+                        'message' => 'Không thể thêm dữ liệu',
+                    ]
+                ], 404);
+            }
+            return response()->json([
+                'success' => true,
+                'result' => [
+                    'data' => $childCategory,
+                ]
+            ], 200);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'result' => [
+                    'message' => 'Lỗi xác thực.',
+                ]
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'result' => [
+                    'message' => 'Lỗi máy chủ.'
+                ]
+            ], 500);
+        }
     }
-    /**
-     * Display the specified resource.
-     */
+
     public function show(string $id)
     {
-        $category = Categories::with('parent', 'children')->find($id);
+        try {
+            $item = Categories::with('parent', 'children')->findOrFail($id);
 
-        if (!$category) {
             return response()->json([
-                'message' => 'Danh mục không tồn tại!'
-            ], 404, [], JSON_UNESCAPED_UNICODE);
+                'success' => true,
+                'result' => [
+                    'data' => $item,
+                ]
+            ], 200);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'result' => [
+                    'message' => 'Dữ liệu không tồn tại'
+                ]
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'result' => [
+                    'message' => 'Lỗi máy chủ'
+                ]
+            ], 500);
         }
-
-        return response()->json([
-            'category' => $category,
-        ], 200, [], JSON_UNESCAPED_UNICODE);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+
     public function update(Request $request, string $id)
     {
-        $request->validate([
-            'name' => 'string|max:255',
-            'description' => 'nullable|string',
-            'parent_id' => 'exists:categories,id',
-        ]);
+        try {
+            $validatedData = $request->validate([
+                'name' => 'string|max:255',
+                'description' => 'nullable|string',
+                'parent_id' => 'exists:categories,id',
+            ]);
 
-        $category = Categories::find($id);
+            $item = Categories::findOrFail($id);
 
-        if (!$category) {
+            $item->fill($validatedData);
+            $item->save();
+
             return response()->json([
-                'message' => 'Danh mục không tồn tại!'
-            ], 404, [], JSON_UNESCAPED_UNICODE);
+                'success' => true,
+                'result' => [
+                    'message' => 'Cập nhật danh mục thành công!',
+                    'data' => $item
+                ]
+            ], 200);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'result' => [
+                    'message' => 'Danh mục không tồn tại!'
+                ]
+            ], 404);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'result' => [
+                    'message' => 'Lỗi validate dữ liệu'
+                ]
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'result' => [
+                    'message' => 'Lỗi máy chủ'
+                ]
+            ], 500);
         }
-
-        $category->fill($request->all());
-        $category->save();
-
-        return response()->json([
-            'message' => 'Cập nhật danh mục thành công!',
-            'category' => $category
-        ], 200, [], JSON_UNESCAPED_UNICODE);
     }
+
+
     public function updateChild(Request $request, string $id, string $child_id)
     {
-        $request->validate([
-            'name' => 'string|max:255',
-            'description' => 'nullable|string',
-        ]);
+        try {
+            $validatedData = $request->validate([
+                'name' => 'string|max:255',
+                'description' => 'nullable|string',
+            ]);
 
-        $category = Categories::find($child_id);
+            $item = Categories::findOrFail($child_id);
 
-        if (!$category) {
+            // Kiểm tra xem danh mục con có thuộc về danh mục cha không
+            if ($item->parent_id != $id) {
+                return response()->json([
+                    'success' => false,
+                    'result' => [
+                        'message' => 'Danh mục con không thuộc về danh mục cha đã cho!'
+                    ]
+                ], 422);
+            }
+
+            // Lưu lại parent_id cũ để không thể sửa đổi
+            $parent_id = $item->parent_id;
+
+            // Cập nhật thông tin danh mục con
+            $item->fill($validatedData);
+
+            // Khôi phục lại parent_id cũ
+            $item->parent_id = $parent_id;
+
+            $item->save();
+
             return response()->json([
-                'message' => 'Danh mục con không tồn tại!'
-            ], 404, [], JSON_UNESCAPED_UNICODE);
-        }
-
-        // Kiểm tra xem danh mục con có thuộc về danh mục cha không
-        if ($category->parent_id != $id) {
+                'success' => true,
+                'result' => [
+                    'message' => 'Cập nhật danh mục con thành công!',
+                    'data' => $item
+                ]
+            ], 200);
+        } catch (ModelNotFoundException $e) {
             return response()->json([
-                'message' => 'Danh mục con không thuộc về danh mục cha đã cho!'
-            ], 422, [], JSON_UNESCAPED_UNICODE);
+                'success' => false,
+                'result' => [
+                    'message' => 'Danh mục con không tồn tại!'
+                ]
+            ], 404);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'result' => [
+                    'message' => 'Lỗi xác thực dữ liệu.',
+                ]
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'result' => [
+                    'message' => 'Lỗi máy chủ'
+                ]
+            ], 500);
         }
-
-        // Lưu lại parent_id cũ để không thể sửa đổi
-        $parent_id = $category->parent_id;
-
-        // Cập nhật thông tin danh mục con
-        $category->fill($request->all());
-
-        // Khôi phục lại parent_id cũ
-        $category->parent_id = $parent_id;
-
-        $category->save();
-
-        return response()->json([
-            'message' => 'Cập nhật danh mục con thành công!',
-            'category' => $category
-        ], 200, [], JSON_UNESCAPED_UNICODE);
     }
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+
+
+
+    public function destroy(Request $request, string $id)
     {
-        //
+        try {
+            // Tìm kiếm danh mục cha cần xoá mềm
+            $category = Categories::findOrFail($id);
+
+            // Kiểm tra xem danh mục có danh mục con không
+            if ($category->children()->exists()) {
+                return response()->json([
+                    'message' => 'Không thể xoá danh mục vì có danh mục con tồn tại!'
+                ], 422);
+            }
+
+            $categoryName = $category->name;
+
+            // Thực hiện xoá mềm danh mục cha nếu không có danh mục con
+            $category->delete();
+
+            return response()->json([
+                'success' => true,
+                'result' => [
+                    'message' => 'Đã xoá danh mục '
+                ]
+            ], 200);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'result' => [
+                    'message' => 'Danh mục không tồn tại!'
+                ]
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'result' => [
+                    'message' => 'Lỗi máy chủ!'
+                ]
+            ], 500);
+        }
     }
-    public function deleteCategory(Request $request, string $id)
+    public function restore(string $id)
     {
-        // Tìm kiếm danh mục cha cần xoá mềm
-        $category = Categories::find($id);
+        try {
+            $item = Categories::withTrashed()->find($id);
 
-        if (!$category) {
+            if ($item && $item->trashed()) {
+                $item->restore();
+                return response()->json([
+                    'success' => true,
+                    'result' => [
+                        'message' => 'Đã khôi phục thành công'
+                    ]
+                ], 200, [], JSON_UNESCAPED_UNICODE);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'result' => [
+                        'message' => 'Không tồn tại hoặc chưa bị xoá'
+                    ]
+                ], 404, [], JSON_UNESCAPED_UNICODE);
+            }
+        } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Danh mục không tồn tại!'
-            ], 404, [], JSON_UNESCAPED_UNICODE);
+                'success' => false,
+                'result' => [
+                    'message' => 'Lỗi máy chủ'
+                ]
+            ], 500, [], JSON_UNESCAPED_UNICODE);
         }
-
-        // Kiểm tra xem danh mục có danh mục con không
-        if ($category->children()->exists()) {
-            return response()->json([
-                'message' => 'Không thể xoá danh mục vì có danh mục con tồn tại!'
-            ], 422, [], JSON_UNESCAPED_UNICODE);
-        }
-
-        $categoryName = $category->name;
-
-        // Thực hiện xoá mềm danh mục cha nếu không có danh mục con
-        $category->delete();
-
-        return response()->json([
-            'message' => 'Đã xoá danh mục ' . $categoryName . "!"
-        ], 200, [], JSON_UNESCAPED_UNICODE);
     }
 }
