@@ -34,7 +34,6 @@ class SendOTP extends Mailable
         $otp = $this->otp;
         $content = $this->content;
         $title = $this->title;
-        Log::channel('debug')->debug([$otp, $content, $title]);
 
         return $this
         ->from(env('MAIL_FROM_ADDRESS'))

@@ -29,8 +29,6 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-
-
      public function profile(Request $request){
          try {
 
@@ -38,18 +36,16 @@ class UserController extends Controller
 
              return response()->json([
                  'success' => true,
-                 'result' => [
-                     'data' => $user,
-                 ]
+                 'data' => $user,
              ], 200);
 
          } catch (\Exception $e) {
+
              return response()->json([
                  'success' => true,
-                 'result' => [
-                     'error' => $e
-                 ]
+                 'message' => 'server error',
              ], 500);
+
          }
 
      }

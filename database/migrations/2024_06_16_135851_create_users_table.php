@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('username');
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('image')->nullable();
             $table->string('phone')->nullable();
@@ -24,7 +23,8 @@ return new class extends Migration
             $table->string('county')->nullable();
             $table->string('district')->nullable();
             $table->string('city')->nullable();
-            $table->string('role_id');
+            $table->foreignId('role_id')->constrained('roles');
+            $table->boolean('in_active')->default(true);
             $table->rememberToken();
             $table->timestamps();
         });

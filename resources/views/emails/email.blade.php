@@ -8,9 +8,9 @@
 </head>
 <body>
     <div>
-{{--        <h1>{{$title}}</h1>--}}
-{{--        <br>--}}
-{{--        <p>{{$content}}</p>--}}
+        <h1>{{$title}}</h1>
+        <br>
+        <p>{{$content}} {{$OTP}}</p>
     </div>
 </body>
 </html>

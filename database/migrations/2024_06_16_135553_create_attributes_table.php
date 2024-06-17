@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('value_attributes', function (Blueprint $table) {
+        Schema::create('attributes', function (Blueprint $table) {
             $table->id();
-            $table->integer('parameter_id');
-            $table->text('value');
-            $table->softDeletes();
+            $table->foreignId('detail_id')->constrained('details');
+            $table->string('name');
+            $table->softDeletes('deleted_at')->nullable();
             $table->timestamps();
         });
     }
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('value_attributes');
+        Schema::dropIfExists('attributes');
     }
 };

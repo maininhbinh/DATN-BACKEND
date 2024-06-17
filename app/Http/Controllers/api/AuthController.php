@@ -184,9 +184,9 @@ class AuthController extends Controller
                 ]
             ],
             [
-                'username.required' => 'Username is required',
-                'email.required' => 'Email is required',
-                'password.required' => 'Password is required',
+                'username.required' => 'Chưa nhập tên đăng kí',
+                'email.required' => 'Chưa nhập email',
+                'password.required' => 'Chưa nhập password',
             ]
             );
 
@@ -198,8 +198,6 @@ class AuthController extends Controller
             $title = '[OTP] đăng ký tài khoản';
             $content = "Xin chào quý khách $request->username OTP xác thực của quý khách là:";
 
-            event(new OtpRequested($request->email, $content, $OTP, $title));
-
             UserRegistration::create([
                'OTP'=> Hash::make($OTP),
                'username' => $request->username,
@@ -208,24 +206,24 @@ class AuthController extends Controller
                'otp_expires_at' => $expiresAt
            ]);
 
+            event(new OtpRequested($request->email, $content, $OTP, $title));
+
             return response()->json([
                 'success' => true,
-                'result' => [
-                    'message' => 'send email success'
-                ]
+                'message' => 'Gửi email thành công'
             ], 200);
 
         }
         catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'result' => $e,
+                'message' => $e->getMessage(),
             ], 422);
         }
         catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'result' => $e,
+                'message' => 'serve error',
             ], 500);
         }
 
@@ -239,11 +237,11 @@ class AuthController extends Controller
                 'email' => 'required|email|unique:users,email'
             ],
             [
-                'OTP.required' => 'OTP is required',
-                'OTP.min' => 'OTP must be at least 4 characters',
-                'OTP.max' => 'OTP must be at most 4 characters',
-                'OTP.string' => 'OTP must be a string',
-                'email.required' => 'Email is required',
+                'OTP.required' => 'Chưa gửi OTP',
+                'OTP.min' => 'OTP phải bằng 4',
+                'OTP.max' => 'OTP phải bằng 4',
+                'OTP.string' => 'OTP phải là string',
+                'email.required' => 'Chưa gửi email',
             ]);
 
             $userRegistration = UserRegistration::where('email', $request->email)->latest()->first();
@@ -252,7 +250,7 @@ class AuthController extends Controller
                 return response()->json([
                     'success' => false,
                     'result' => [
-                        'message' => 'User not found'
+                        'message' => 'Không có người dùng'
                     ]
                 ], 404);
             }
@@ -261,18 +259,18 @@ class AuthController extends Controller
                 return response()->json([
                     'success' => false,
                     'result' => [
-                        'message' => 'OTP expired'
+                        'message' => 'OTP hết hạn'
                     ]
-                ], 401);
+                ], 422);
             }
 
             if (!Hash::check($request->OTP, $userRegistration->OTP)) {
                 return response()->json([
                     'success' => false,
                     'result' => [
-                        'message' => 'Invalid OTP'
+                        'message' => 'OTP không đúng'
                     ]
-                ], 401);
+                ], 422);
             }
 
             UserRegistration::where('email', $userRegistration->email)->delete();
@@ -295,7 +293,7 @@ class AuthController extends Controller
                 'result' => [
                     'data' => $user,
                     'access_token' => $token,
-                    'token_type' => 'bearer',
+                    'token_type' => 'Bearer',
                 ]
             ], 200);
 
@@ -314,7 +312,7 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'result' => [
-                    'message' => $e->getMessage()
+                    'message' => 'serve error',
                 ],
             ], 500);
 
@@ -325,7 +323,7 @@ class AuthController extends Controller
         $request->validate([
             'email' => 'email|required',
         ],[
-            'email.required' => 'Email is required',
+            'email.required' => 'Trường email là bắt buộc',
         ]);
 
         $user = User::where('email', $request->email)->first();
@@ -334,7 +332,7 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'result' => [
-                    'message' => 'User not found'
+                    'message' => 'Khng tìm thấy người dùng'
                 ]
             ]);
         }
@@ -342,9 +340,10 @@ class AuthController extends Controller
 
     }
 
-    public function login(Request $request){
+    public function login(Request $request)
+    {
 
-        try{
+        try {
 
             $request->validate([
                 'email' => 'required|email',
@@ -359,42 +358,42 @@ class AuthController extends Controller
 
             $user = User::where('email', $request->email)->first();
 
-            if(!$user || !Hash::check($request->password, $user->password)){
+            if (!$user || !Hash::check($request->password, $user->password)) {
                 return response()->json([
                     'success' => false,
                     'result' => [
                         'message' => 'email or password is incorrect'
                     ]
-                ], 401);
+                ], 422);
             };
 
-            if(!$token = $user->createToken('authToken')->plainTextToken){
+            if (!$token = $user->createToken('authToken')->plainTextToken) {
                 return response()->json([
                     'success' => false,
                     'result' => [
                         'message' => 'Invalid OTP'
                     ]
-                ], 401);
+                ], 422);
             }
 
             return response()->json([
                 'success' => true,
                 'result' => [
+                    'message' => 'login success',
                     'data' => $user,
                     'access_token' => $token,
-                    'token_type' => 'bearer',
+                    'token_type' => 'Bearer',
                 ]
             ]);
 
-        }catch (ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'result' => [
                     'message' => $e->getMessage()
                 ]
             ], 422);
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'result' => [
@@ -402,21 +401,28 @@ class AuthController extends Controller
                 ]
             ], 500);
         }
-
     }
 
     public function logout() {
 
-        Auth::logout();
-        Auth::user()->tokens()->delete();
+        try {
+            Auth::user()->tokens()->delete();
 
-        return response()->json([
+            return response()->json([
                 'success' => true,
                 'result' => [
                     'message' => 'logout success'
                 ]
-            ], 200
-        );
+            ], 200);
+
+        }catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'result' => [
+                    'message' => $e->getMessage()
+                ]
+            ], 500);
+        }
     }
 
 }
