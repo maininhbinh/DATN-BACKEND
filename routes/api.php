@@ -5,6 +5,7 @@ use App\Http\Controllers\api\CategoryAttributeController;
 use App\Http\Controllers\api\ParametersController;
 use App\Http\Controllers\api\ValueAttributeController;
 use App\Http\Controllers\api\AuthController;
+use App\Http\Controllers\api\IntroduceController;
 use App\Http\Controllers\api\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -77,6 +78,16 @@ Route::prefix('value-attribute')
         Route::delete('/{id}', [ValueAttributeController::class, 'destroy']);
         Route::post('/{id}/restore', [ValueAttributeController::class, 'restore']);
     });
+    Route::prefix('introduce')
+    ->group(function () {
+        Route::get('/', [IntroduceController::class, 'index']);
+        Route::post('/', [IntroduceController::class, 'store']);
+        Route::get('/{id}', [IntroduceController::class, 'show']);
+        Route::post('/{id}', [IntroduceController::class, 'update']);
+        Route::delete('/{id}', [IntroduceController::class, 'destroy']);
+        Route::post('/{id}', [IntroduceController::class, 'destroy']);
+        Route::post('/{id}/restore', [IntroduceController::class, 'restore']);
+    });
 Route::prefix('category-attribute')
     ->group(function () {
         Route::get('/', [CategoryAttributeController::class, 'index']);
@@ -87,3 +98,5 @@ Route::prefix('category-attribute')
         Route::post('/{id}', [CategoryAttributeController::class, 'destroy']);
         Route::post('/{id}/restore', [CategoryAttributeController::class, 'restore']);
     });
+
+    
