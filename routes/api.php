@@ -6,6 +6,7 @@ use App\Http\Controllers\api\ParametersController;
 use App\Http\Controllers\api\ValueAttributeController;
 use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\UserController;
+use App\Http\Controllers\SlideController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -87,3 +88,7 @@ Route::prefix('category-attribute')
         Route::post('/{id}', [CategoryAttributeController::class, 'destroy']);
         Route::post('/{id}/restore', [CategoryAttributeController::class, 'restore']);
     });
+Route::post('/create-slides', [SlideController::class, 'createSlides']);
+Route::get('/slides', [SlideController::class, 'getSlides']);
+Route::delete('/delete-slides/{id}', [SlideController::class, 'destroy']);
+Route::put('/update-slides/{id}', [SlideController::class, 'update']);
