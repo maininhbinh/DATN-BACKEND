@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Parameter;
+use App\Models\ProductsParameter;
+use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
-class ParametersController extends Controller
+class ProductParameterController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -16,37 +17,30 @@ class ParametersController extends Controller
     public function index()
     {
         try {
-            $items = Parameter::all();
-            if ($items->isEmpty()) {
-                return response()->json(
-                    [
-                        'success' => false,
-                        'result' => [
-                            'message' => "Không tìm thấy dữ liệu"
-                        ]
-                    ],
-                    404
-                );
-            }
-            return response()->json(
-                [
-                    'success' => true,
+            $item = ProductsParameter::all();
+            if ($item->isEmpty()) {
+                return response()->json([
+                    'success' => false,
                     'result' => [
-                        'data' => $items,
+                        'message' => "Không có dữ liệu",
                     ]
-                ],
-                200
-            );
+                ], 404);
+            }
+            return response()->json([
+                'success' => true,
+                'result' => [
+                    'data' => $item
+                ]
+            ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'result' => [
-                    'message' => 'Lỗi không xác thực'
+                    'message' => "Lỗi máy chủ"
                 ]
             ], 500);
         }
     }
-
 
     /**
      * Show the form for creating a new resource.
@@ -62,73 +56,51 @@ class ParametersController extends Controller
     public function store(Request $request)
     {
         try {
-            $validatedData = $request->validate([
-                'name' => 'required|string|max:255|unique:parameters,name',
-                'description' => 'nullable|string',
-            ], [
-                'name.required' => 'Tên là bắt buộc.',
-                'name.string' => 'Tên phải là chuỗi ký tự.',
-                'name.max' => 'Tên không được vượt quá 255 ký tự.',
-                'name.unique' => 'Tham số đã tồn tại.',
-                'description.string' => 'Mô tả phải là chuỗi ký tự.',
-            ]);
-
-            $item = Parameter::create($validatedData);
-
-            if (!$item) {
-                return response()->json(
-                    [
-                        'success' => false,
-                        'result' => [
-                            'message' => 'Không thể tạo mục.'
-                        ]
-                    ],
-                    500
-                );
-            }
-
-            return response()->json(
+            $request->validate(
                 [
-                    'success' => true,
-                    'result' => [
-                        'data' => $item,
-                        'message' => 'Mục đã được tạo thành công.'
-                    ]
+                    'product_id' => 'required|exists:products,id',
+                    'parameter_id' => 'required|exists:parameters,id',
+                    'name' => 'required'
                 ],
-                201
-            );
-        } catch (ValidationException $e) {
-            return response()->json(
                 [
-                    'success' => false,
-                    'result' => [
-                        'message' => 'Lỗi xác thực.',
-                    ]
-                ],
-                422
+                    'product_id.required' => 'Không bỏ trống danh mục.',
+                    'product_id.exists' => 'Sản phẩm không tồn tại.',
+                    'parameter_id.required' => 'Không bỏ trống tham số.',
+                    'parameter_id.exists' => 'Không tồn tại parameter_id.',
+                    'name.required' => "Không được bỏ trống tên"
+                ]
             );
-        } catch (\Exception $e) {
-            return response()->json(
-                [
-                    'success' => false,
-                    'result' => [
-                        'message' => 'Lỗi máy chủ.'
-                    ]
-                ],
-                500
-            );
+            $item = ProductsParameter::create($request->all());
+            return response()->json([
+                'success' => true,
+                'result' => [
+                    'data' => $item
+                ]
+            ], 201);
+        } catch (ValidationException $th) {
+            return response()->json([
+                'success' => false,
+                'result' => [
+                    'message' => "Lỗi xác thực dữ liệu"
+                ]
+            ], 422);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'result' => [
+                    'message' => "Lỗi máy chủ"
+                ]
+            ], 500);
         }
     }
-
-
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $itemId)
     {
         try {
-            $item = Parameter::findOrFail($id);
+            $item = ProductsParameter::findOrFail($itemId);
             return response()->json(
                 [
                     'success' => true,
@@ -160,8 +132,6 @@ class ParametersController extends Controller
             );
         }
     }
-
-
     /**
      * Show the form for editing the specified resource.
      */
@@ -176,18 +146,22 @@ class ParametersController extends Controller
     public function update(Request $request, string $id)
     {
         try {
-            $item = Parameter::findOrFail($id);
+            $item = ProductsParameter::findOrFail($id);
             if ($item) {
-                $request->validate([
-                    'name' => 'required|string|max:255|unique:parameters,name,' . $item->id,
-                    'description' => 'nullable|string',
-                ], [
-                    'name.required' => 'Tên là bắt buộc.',
-                    'name.string' => 'Tên phải là chuỗi ký tự.',
-                    'name.max' => 'Tên không được vượt quá 255 ký tự.',
-                    'name.unique' => 'Tham số đã tồn tại.',
-                    'description.string' => 'Mô tả phải là chuỗi ký tự.',
-                ]);
+                $request->validate(
+                    [
+                        'product_id' => 'required|exists:products,id',
+                        'parameter_id' => 'required|exists:parameters,id',
+                        'name' => 'required'
+                    ],
+                    [
+                        'product_id.required' => 'Không bỏ trống danh mục.',
+                        'product_id.exists' => 'Sản phẩm không tồn tại.',
+                        'parameter_id.required' => 'Không bỏ trống tham số.',
+                        'parameter_id.exists' => 'Không tồn tại parameter_id.',
+                        'name.required' => "Không được bỏ trống tên"
+                    ]
+                );
 
                 $item->update($request->all());
 
@@ -237,7 +211,7 @@ class ParametersController extends Controller
     public function destroy(string $id)
     {
         try {
-            $item = Parameter::findOrFail($id);
+            $item = ProductsParameter::findOrFail($id);
             $item->delete();
             return response()->json(
                 [
@@ -264,7 +238,7 @@ class ParametersController extends Controller
     public function restore(string $id)
     {
         try {
-            $item = Parameter::withTrashed()->find($id);
+            $item = ProductsParameter::withTrashed()->find($id);
 
             if ($item && $item->trashed()) {
                 $item->restore();
