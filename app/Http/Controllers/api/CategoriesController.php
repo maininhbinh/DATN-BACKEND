@@ -334,14 +334,14 @@ class CategoriesController extends Controller
                     'result' => [
                         'message' => 'Đã khôi phục thành công'
                     ]
-                ], 200, [], JSON_UNESCAPED_UNICODE);
+                ], 200);
             } else {
                 return response()->json([
                     'success' => false,
                     'result' => [
                         'message' => 'Không tồn tại hoặc chưa bị xoá'
                     ]
-                ], 404, [], JSON_UNESCAPED_UNICODE);
+                ], 404);
             }
         } catch (\Exception $e) {
             return response()->json([
@@ -349,7 +349,7 @@ class CategoriesController extends Controller
                 'result' => [
                     'message' => 'Lỗi máy chủ'
                 ]
-            ], 500, [], JSON_UNESCAPED_UNICODE);
+            ], 500);
         }
     }
 }

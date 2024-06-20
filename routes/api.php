@@ -5,6 +5,7 @@ use App\Http\Controllers\api\CategoryAttributeController;
 use App\Http\Controllers\api\ParametersController;
 use App\Http\Controllers\api\ValueAttributeController;
 use App\Http\Controllers\api\AuthController;
+use App\Http\Controllers\api\ProductParameterController;
 use App\Http\Controllers\api\IntroduceController;
 use App\Http\Controllers\api\UserController;
 use Illuminate\Http\Request;
@@ -55,7 +56,6 @@ Route::prefix('category')
         //xoá lớp cha(đã kiểm tra sự tồn tại nếu có lớp con)
         Route::delete('/{id}', [CategoriesController::class, 'destroy']);
         Route::post('/{id}/restore', [CategoriesController::class, 'restore']);
-
     });
 
 // parameter
@@ -67,7 +67,6 @@ Route::prefix('parameter')
         Route::post('/{id}', [ParametersController::class, 'update']);
         Route::delete('/{id}', [ParametersController::class, 'destroy']);
         Route::post('/{id}/restore', [ParametersController::class, 'restore']);
-
     });
 Route::prefix('value-attribute')
     ->group(function () {
@@ -99,4 +98,12 @@ Route::prefix('category-attribute')
         Route::post('/{id}/restore', [CategoryAttributeController::class, 'restore']);
     });
 
-    
+Route::prefix('product-parameter')
+    ->group(function () {
+        Route::get('/', [ProductParameterController::class, 'index']);
+        Route::post('/', [ProductParameterController::class, 'store']);
+        Route::get('/{id}', [ProductParameterController::class, 'show']);
+        Route::post('/{id}', [ProductParameterController::class, 'update']);
+        Route::delete('/{id}', [ProductParameterController::class, 'destroy']);
+        Route::post('/{id}/restore', [ProductParameterController::class, 'restore']);
+    });
