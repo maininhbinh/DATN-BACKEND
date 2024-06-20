@@ -95,11 +95,12 @@ class ValueAttributeController extends Controller
                     'data' => $item
                 ]
             ], 201);
-        } catch (ValidationException $th) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'result' => [
-                    'message' => 'Lỗi xác thực dữ liệu'
+                    'message' => 'Lỗi xác thực dữ liệu',
+                    'errors' => $e->errors()
                 ]
             ], 404);
         } catch (Exception $e) {
@@ -199,6 +200,7 @@ class ValueAttributeController extends Controller
                 'success' => false,
                 'result' => [
                     'message' => 'Lỗi xác thực dữ liệu.',
+                    'errors' => $e->errors()
                 ]
             ], 422);
         } catch (ModelNotFoundException $e) {

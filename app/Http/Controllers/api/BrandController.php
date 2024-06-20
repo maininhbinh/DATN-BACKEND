@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
-use App\Models\ProductsParameter;
+use App\Models\Brands;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
-class ProductParameterController extends Controller
+class BrandController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -17,14 +17,17 @@ class ProductParameterController extends Controller
     public function index()
     {
         try {
-            $item = ProductsParameter::all();
+            $item = Brands::all();
             if ($item->isEmpty()) {
-                return response()->json([
-                    'success' => false,
-                    'result' => [
-                        'message' => "Không có dữ liệu",
-                    ]
-                ], 404);
+                return response()->json(
+                    [
+                        'success' => false,
+                        'result' => [
+                            'message' => "Không có dữ liệu"
+                        ]
+                    ],
+                    404
+                );
             }
             return response()->json([
                 'success' => true,
@@ -34,9 +37,9 @@ class ProductParameterController extends Controller
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
+                'success' => true,
                 'result' => [
-                    'message' => "Lỗi máy chủ"
+                    'message' => $e
                 ]
             ], 500);
         }
@@ -56,21 +59,23 @@ class ProductParameterController extends Controller
     public function store(Request $request)
     {
         try {
-            $request->validate(
-                [
-                    'product_id' => 'required|exists:products,id',
-                    'parameter_id' => 'required|exists:parameters,id',
-                    'name' => 'required'
-                ],
-                [
-                    'product_id.required' => 'Không bỏ trống danh mục.',
-                    'product_id.exists' => 'Sản phẩm không tồn tại.',
-                    'parameter_id.required' => 'Không bỏ trống tham số.',
-                    'parameter_id.exists' => 'Không tồn tại parameter_id.',
-                    'name.required' => "Không được bỏ trống tên"
-                ]
-            );
-            $item = ProductsParameter::create($request->all());
+            $request->validate([
+                'name' => 'required|string|max:255|unique:brands,name',
+                'logo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // Kiểm tra logo là file hình ảnh và các điều kiện khác
+            ]);
+
+            // Lấy thông tin hình ảnh từ request
+            $logo = $request->file('logo');
+            $ext = $logo->getClientOriginalExtension(); // Lấy đuôi mở rộng của file
+            $imageName = time() . '.' . $ext; // Đặt tên cho hình ảnh dựa trên thời gian hiện tại và đuôi mở rộng
+            $logo->move(public_path('upload'), $imageName); // Di chuyển hình ảnh vào thư mục public/upload
+
+            // Tạo mới brand với thông tin từ request
+            $item = Brands::create([
+                'name' => $request->name,
+                'logo' => '/upload/' . $imageName, // Lưu đường dẫn của hình ảnh vào cơ sở dữ liệu
+            ]);
+
             return response()->json([
                 'success' => true,
                 'result' => [
@@ -81,7 +86,7 @@ class ProductParameterController extends Controller
             return response()->json([
                 'success' => false,
                 'result' => [
-                    'message' => "Lỗi xác thực dữ liệu",
+                    'message' => 'Có lỗi validate dữ liệu',
                     'errors' => $e->errors()
                 ]
             ], 422);
@@ -95,44 +100,39 @@ class ProductParameterController extends Controller
         }
     }
 
+
     /**
      * Display the specified resource.
      */
-    public function show(string $itemId)
+    public function show($id)
     {
         try {
-            $item = ProductsParameter::findOrFail($itemId);
-            return response()->json(
-                [
-                    'success' => true,
-                    'result' => [
-                        'data' => $item,
-                    ]
-                ],
-                200
-            );
+            // Tìm brand theo ID
+            $brand = Brands::findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'result' => [
+                    'data' => $brand
+                ]
+            ], 200);
         } catch (ModelNotFoundException $e) {
-            return response()->json(
-                [
-                    'success' => false,
-                    'result' => [
-                        'message' => 'Dữ liệu không tồn tại'
-                    ]
-                ],
-                404
-            );
-        } catch (\Exception $e) {
-            return response()->json(
-                [
-                    'success' => false,
-                    'result' => [
-                        'message' => 'Lỗi máy chủ'
-                    ]
-                ],
-                500
-            );
+            return response()->json([
+                'success' => false,
+                'result' => [
+                    'message' => 'Không tìm thấy brand'
+                ]
+            ], 404);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'result' => [
+                    'message' => $e->getMessage()
+                ]
+            ], 500);
         }
     }
+
     /**
      * Show the form for editing the specified resource.
      */
@@ -144,63 +144,60 @@ class ProductParameterController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
         try {
-            $item = ProductsParameter::findOrFail($id);
-            if ($item) {
-                $request->validate(
-                    [
-                        'product_id' => 'required|exists:products,id',
-                        'parameter_id' => 'required|exists:parameters,id',
-                        'name' => 'required'
-                    ],
-                    [
-                        'product_id.required' => 'Không bỏ trống danh mục.',
-                        'product_id.exists' => 'Sản phẩm không tồn tại.',
-                        'parameter_id.required' => 'Không bỏ trống tham số.',
-                        'parameter_id.exists' => 'Không tồn tại parameter_id.',
-                        'name.required' => "Không được bỏ trống tên"
-                    ]
-                );
+            // Validate dữ liệu từ request
+            $request->validate([
+                'name' => 'required|string|max:255|unique:brands,name,' . $id,
+                'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Logo có thể null nếu không cần thay đổi
+            ]);
 
-                $item->update($request->all());
+            // Tìm brand cần cập nhật
+            $brand = Brands::findOrFail($id);
 
-                return response()->json([
-                    'success' => true,
-                    'result' => [
-                        'message' => 'Cập nhật biến thể thành công!',
-                        'data' => $item
-                    ]
-                ], 200);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'result' => [
-                        'message' => 'Biến thể không tồn tại'
-                    ]
-                ], 404);
+            // Cập nhật các trường thông tin của brand
+            $brand->name = $request->name;
+
+            // Xử lý upload logo mới nếu có
+            if ($request->hasFile('logo')) {
+                $logo = $request->file('logo');
+                $ext = $logo->getClientOriginalExtension();
+                $imageName = time() . '.' . $ext;
+                $logo->move(public_path('upload'), $imageName);
+                // Xóa logo cũ nếu có và lưu lại đường dẫn logo mới
+                $brand->logo = '/upload/' . $imageName;
             }
-        } catch (ValidationException $e) {
+
+            // Lưu lại các thay đổi vào cơ sở dữ liệu
+            $brand->save();
+
             return response()->json([
-                'success' => false,
+                'success' => true,
                 'result' => [
-                    'message' => 'Lỗi xác thực dữ liệu.', 
-                    'errors' => $e->errors()
+                    'data' => $brand
                 ]
-            ], 422);
+            ], 200);
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
                 'result' => [
-                    'message' => 'Dữ liệu không tồn tại.'
+                    'message' => 'Không tìm thấy brand'
                 ]
             ], 404);
-        } catch (\Exception $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'result' => [
-                    'message' => 'Lỗi máy chủ.'
+                    'message' => 'Có lỗi validate dữ liệu',
+                    'errors' => $e->errors()
+                ]
+            ], 422);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'result' => [
+                    'message' => $e->getMessage()
                 ]
             ], 500);
         }
@@ -213,7 +210,7 @@ class ProductParameterController extends Controller
     public function destroy(string $id)
     {
         try {
-            $item = ProductsParameter::findOrFail($id);
+            $item = Brands::findOrFail($id);
             $item->delete();
             return response()->json(
                 [
@@ -240,7 +237,7 @@ class ProductParameterController extends Controller
     public function restore(string $id)
     {
         try {
-            $item = ProductsParameter::withTrashed()->find($id);
+            $item = Brands::withTrashed()->find($id);
 
             if ($item && $item->trashed()) {
                 $item->restore();

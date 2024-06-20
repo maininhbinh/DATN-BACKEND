@@ -40,7 +40,7 @@ class CategoriesController extends Controller
             return response()->json([
                 'success' => false,
                 'result' => [
-                    'message' => 'Lỗi serve'
+                    'message' => 'Lỗi máy chủ'
                 ]
             ], 500);
         }
@@ -87,7 +87,8 @@ class CategoriesController extends Controller
             return response()->json([
                 'success' => false,
                 'result' => [
-                    'message' => 'Lỗi xác validate'
+                    'message' => 'Lỗi xác thực dữ liệu',
+                    'errors' => $e->errors()
                 ]
             ], 422);
         } catch (Exception $e) {
@@ -130,7 +131,8 @@ class CategoriesController extends Controller
             return response()->json([
                 'success' => false,
                 'result' => [
-                    'message' => 'Lỗi xác thực.',
+                    'message' => 'Lỗi xác thực dữ liệu',
+                    'errors' => $e->errors()
                 ]
             ], 422);
         } catch (\Exception $e) {
@@ -204,7 +206,8 @@ class CategoriesController extends Controller
             return response()->json([
                 'success' => false,
                 'result' => [
-                    'message' => 'Lỗi validate dữ liệu'
+                    'message' => 'Lỗi validate dữ liệu',
+                    'errors' => $e->errors()
                 ]
             ], 422);
         } catch (\Exception $e) {
@@ -268,6 +271,7 @@ class CategoriesController extends Controller
                 'success' => false,
                 'result' => [
                     'message' => 'Lỗi xác thực dữ liệu.',
+                    'errors' => $e->errors()
                 ]
             ], 422);
         } catch (\Exception $e) {

@@ -5,6 +5,7 @@ use App\Http\Controllers\api\CategoryAttributeController;
 use App\Http\Controllers\api\ParametersController;
 use App\Http\Controllers\api\ValueAttributeController;
 use App\Http\Controllers\api\AuthController;
+use App\Http\Controllers\api\BrandController;
 use App\Http\Controllers\api\IntroduceController;
 use App\Http\Controllers\api\ProductParameterController;
 use App\Http\Controllers\api\UserController;
@@ -76,7 +77,7 @@ Route::prefix('value-attribute')
         Route::delete('/{id}', [ValueAttributeController::class, 'destroy']);
         Route::post('/{id}/restore', [ValueAttributeController::class, 'restore']);
     });
-    Route::prefix('introduce')
+Route::prefix('introduce')
     ->group(function () {
         Route::get('/', [IntroduceController::class, 'index']);
         Route::post('/', [IntroduceController::class, 'store']);
@@ -105,4 +106,14 @@ Route::prefix('product-parameter')
         Route::post('/{id}', [ProductParameterController::class, 'update']);
         Route::delete('/{id}', [ProductParameterController::class, 'destroy']);
         Route::post('/{id}/restore', [ProductParameterController::class, 'restore']);
+    });
+
+Route::prefix('brand')
+    ->group(function () {
+        Route::get('/', [BrandController::class, 'index']);
+        Route::post('/', [BrandController::class, 'store']);
+        Route::get('/{id}', [BrandController::class, 'show']);
+        Route::post('/{id}', [BrandController::class, 'update']);
+        Route::delete('/{id}', [BrandController::class, 'destroy']);
+        Route::post('/{id}/restore', [BrandController::class, 'restore']);
     });
