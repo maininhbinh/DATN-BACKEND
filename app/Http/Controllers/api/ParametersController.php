@@ -103,6 +103,7 @@ class ParametersController extends Controller
                     'success' => false,
                     'result' => [
                         'message' => 'Lỗi xác thực.',
+                        'errors' => $e->errors()
                     ]
                 ],
                 422
@@ -211,6 +212,7 @@ class ParametersController extends Controller
                 'success' => false,
                 'result' => [
                     'message' => 'Lỗi xác thực dữ liệu.',
+                    'errors' => $e->errors()
                 ]
             ], 422);
         } catch (ModelNotFoundException $e) {

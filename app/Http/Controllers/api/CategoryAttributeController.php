@@ -74,11 +74,12 @@ class CategoryAttributeController extends Controller
                     'data' => $item
                 ]
             ], 201);
-        } catch (ValidationException $th) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'result' => [
-                    'message' => 'Lỗi xác thực dữ liệu'
+                    'message' => 'Lỗi xác thực dữ liệu',
+                    'errors' => $e->errors()
                 ]
             ], 422);
         } catch (Exception $e) {
@@ -181,6 +182,7 @@ class CategoryAttributeController extends Controller
                 'success' => false,
                 'result' => [
                     'message' => 'Lỗi xác thực dữ liệu.',
+                    'errors' => $e->errors()
                 ]
             ], 422);
         } catch (ModelNotFoundException $e) {
