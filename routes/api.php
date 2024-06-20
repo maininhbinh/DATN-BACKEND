@@ -5,8 +5,8 @@ use App\Http\Controllers\api\CategoryAttributeController;
 use App\Http\Controllers\api\ParametersController;
 use App\Http\Controllers\api\ValueAttributeController;
 use App\Http\Controllers\api\AuthController;
-use App\Http\Controllers\api\ProductParameterController;
 use App\Http\Controllers\api\IntroduceController;
+use App\Http\Controllers\api\ProductParameterController;
 use App\Http\Controllers\api\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -28,7 +28,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')
     ->group(function () {
-
         Route::post('signup', [AuthController::class, 'signup']);
         Route::post('verifyOTP', [AuthController::class, 'verifyOTP']);
         Route::post('login', [AuthController::class, 'login']);
