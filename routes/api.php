@@ -50,8 +50,8 @@ Route::prefix('brand')
 
 Route::prefix('category')
     ->group(function () {
-
+        Route::get('', [CategoryController::class, 'index']);
         Route::post('create', [CategoryController::class, 'store']);
-
+        Route::get('{id}', [CategoryController::class, 'edit']);
     });
 
