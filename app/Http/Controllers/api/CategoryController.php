@@ -36,7 +36,7 @@ class CategoryController extends Controller
 
     public function show(Request $request, $id){
         try {
-            
+
         }catch (\Exception $exception){
             return response()->json([
                 'success' => false,
@@ -73,44 +73,17 @@ class CategoryController extends Controller
     }
 
     public function update(Request $request, $id){
-        
-       var_dump($request->all());
-     die();
 
         try {
             $request->validate([
                 'name' => 'required',
-                'image' => 'required|image|mimes:jpeg,png,jpg,gif',
+                'image' => 'image|mimes:jpeg,png,jpg,gif',
                 'active' => 'required'
+            ],
+            [
+                'name' => 'không được để trống',
+                'image.image' => 'file phải là ảnh'
             ]);
-
-            
-            $image = $request->hasFile('image');
-
-            if (!$image) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ảnh danh mục không có'
-                ], 404);
-            }
-//
-            $file = $request->file('image');
-            $fileName = $file->getClientOriginalName() . '-' . time() . '.' . rand(1, 1000000);
-//
-            $url = Cloudinary::upload($file->getRealPath(), [
-                'folder' => self::FOLDER,
-                'public_id' => $fileName
-            ])->getSecurePath();
-//
-            if (!$url) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Không thể tải ảnh'
-                ], 500);
-            }
-//
-            $public_id = Cloudinary::getPublicId();
-            $active = $request->get('active') ? 1 : 0;
 
             $category = Category::find($id);
 
@@ -120,6 +93,32 @@ class CategoryController extends Controller
                     'message' => 'Không tìm thấy danh mục'
                 ], 404);
             }
+
+            $url = $category->image;
+            $public_id = $category->public_id;
+
+            $image = $request->hasFile('image');
+
+            if ($image) {
+                $file = $request->file('image');
+                $fileName = $file->getClientOriginalName() . '-' . time() . '.' . rand(1, 1000000);
+//
+                $url = Cloudinary::upload($file->getRealPath(), [
+                    'folder' => self::FOLDER,
+                    'public_id' => $fileName
+                ])->getSecurePath();
+//
+                if (!$url) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Không thể tải ảnh'
+                    ], 500);
+                }
+//
+                $public_id = Cloudinary::getPublicId();
+            }
+//
+            $active = $request->get('active') ? 1 : 0;
 
             $newCategory = [
                 'name' => $request->get('name'),
@@ -150,7 +149,6 @@ class CategoryController extends Controller
     }
 
     public function store(Request $request){
-      
         try {
 
             $request->validate([
@@ -230,7 +228,7 @@ class CategoryController extends Controller
                 'message' => 'Category created successfully',
                 'data' => $category
             ], 201);
-           
+
 
         } catch (QueryException $e) {
 
@@ -257,7 +255,6 @@ class CategoryController extends Controller
     }
 
     public function destroy($id){
-        var_dump($id); die();
         try {
             $category = Category::find($id);
 
