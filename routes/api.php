@@ -5,6 +5,7 @@ use App\Http\Controllers\api\CategoriesController;
 use App\Http\Controllers\api\CategoryAttributeController;
 use App\Http\Controllers\api\CategoryController;
 use App\Http\Controllers\api\ParametersController;
+use App\Http\Controllers\api\ProductController;
 use App\Http\Controllers\api\ValueAttributeController;
 use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\UserController;
@@ -53,5 +54,11 @@ Route::prefix('category')
         Route::get('', [CategoryController::class, 'index']);
         Route::post('create', [CategoryController::class, 'store']);
         Route::get('{id}', [CategoryController::class, 'edit']);
+    });
+
+Route::prefix('product')
+    ->group(function () {
+//        Route::get('', [ProductController::class, 'index']);
+        Route::post('create', [ProductController::class, 'create']);
     });
 

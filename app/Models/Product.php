@@ -7,16 +7,23 @@ use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
+    use HasFactory;
+
+    const TYPE_DISCOUNT = [
+        'PERCENTAGE',
+        'FIXED PRICE'
+    ];
+
     protected $fillable = [
         'category_id',
         'thumbnail',
         'name',
         'description',
         'discount',
-        'total_review',
+        'type_discount',
         'brand_id',
+        'total_review',
         'avg_stars',
-        'in_active'
+        'active'
     ];
-    use HasFactory;
 }

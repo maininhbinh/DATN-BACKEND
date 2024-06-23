@@ -44,13 +44,6 @@ class BrandController extends Controller
                 'public_id' => $fileName
             ])->getSecurePath();
 
-            if(!$url){
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tải file không thành công'
-                ]);
-            }
-
             $public_id = Cloudinary::getPublicId();
 
             $result = Brand::create([
