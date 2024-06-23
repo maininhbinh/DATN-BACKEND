@@ -19,7 +19,7 @@ class CategoryController extends Controller
     public function index(Request $request){
         try {
 
-            $categories = Category::all();
+            $categories = Category::orderBy('id', 'DESC')->get();;
 
             return response()->json([
                 'success' => true,
@@ -73,6 +73,10 @@ class CategoryController extends Controller
     }
 
     public function update(Request $request, $id){
+        
+       var_dump($request->all());
+     die();
+
         try {
             $request->validate([
                 'name' => 'required',
@@ -80,6 +84,7 @@ class CategoryController extends Controller
                 'active' => 'required'
             ]);
 
+            
             $image = $request->hasFile('image');
 
             if (!$image) {
@@ -145,6 +150,7 @@ class CategoryController extends Controller
     }
 
     public function store(Request $request){
+      
         try {
 
             $request->validate([
@@ -221,8 +227,10 @@ class CategoryController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Tạo danh mục thành công'
-            ]);
+                'message' => 'Category created successfully',
+                'data' => $category
+            ], 201);
+           
 
         } catch (QueryException $e) {
 
@@ -249,6 +257,7 @@ class CategoryController extends Controller
     }
 
     public function destroy($id){
+        var_dump($id); die();
         try {
             $category = Category::find($id);
 

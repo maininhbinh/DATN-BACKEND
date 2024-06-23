@@ -53,5 +53,7 @@ Route::prefix('category')
         Route::get('', [CategoryController::class, 'index']);
         Route::post('create', [CategoryController::class, 'store']);
         Route::get('{id}', [CategoryController::class, 'edit']);
+        Route::post('{id}', [CategoryController::class, 'update']);
+        Route::delete('{id}', [CategoryController::class, 'destroy']);
     });
 
