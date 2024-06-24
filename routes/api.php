@@ -59,7 +59,7 @@ Route::prefix('detail')->group(function () {
     Route::post('', [DetailController::class, 'store']);
     Route::get('/{id}', [DetailController::class, 'edit']);
     Route::post('/{id}', [DetailController::class, 'update']);
-    Route::delete('/{id}', [DetailController::class, 'delete']);
+    Route::delete('/{id}', [DetailController::class, 'destroy']);
     Route::post('/{id}/restore', [DetailController::class, 'restore']);
 });
 Route::prefix('attribute')->group(function () {
@@ -67,7 +67,7 @@ Route::prefix('attribute')->group(function () {
     Route::post('', [AttributeController::class, 'store']);
     Route::get('/{id}', [AttributeController::class, 'edit']);
     Route::post('/{id}', [AttributeController::class, 'update']);
-    Route::delete('/{id}', [AttributeController::class, 'delete']);
+    Route::delete('/{id}', [AttributeController::class, 'destroy']);
     Route::post('/{id}/restore', [AttributeController::class, 'restore']);
 });
 Route::prefix('value')->group(function () {
@@ -75,6 +75,6 @@ Route::prefix('value')->group(function () {
     Route::post('', [ValueController::class, 'store']);
     Route::get('/{id}', [ValueController::class, 'edit']);
     Route::post('/{id}', [ValueController::class, 'update']);
-    Route::delete('/{id}', [ValueController::class, 'delete']);
+    Route::delete('/{id}', [ValueController::class, 'destroy']);
     Route::post('/{id}/restore', [ValueController::class, 'restore']);
 });

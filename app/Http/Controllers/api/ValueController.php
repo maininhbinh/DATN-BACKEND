@@ -33,21 +33,24 @@ class ValueController extends Controller
      */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'attribute_id' => 'required|string|max:255|exists:attributes,id',
-            'name' => 'required|string|max:255',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => $validator->errors()
-            ], 400);
-        }
 
         try {
+
+            $validator = Validator::make($request->all(), [
+                'attribute_id' => 'required|string|max:255|exists:attributes,id',
+                'name' => 'required|string|max:255',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()
+                ], 400);
+            }
+
             $item = Value::create($request->all());
             return response()->json($item, 201);
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
