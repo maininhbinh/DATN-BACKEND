@@ -48,7 +48,7 @@ class CategoryController extends Controller
     public function edit($id){
         try {
 
-            $category = Category::where('active', true)->with('details.attributes')->find($id);
+            $category = Category::with('details.attributes')->find($id);
 
             if(!$category){
                 return response()->json([
@@ -118,8 +118,8 @@ class CategoryController extends Controller
                 $public_id = Cloudinary::getPublicId();
             }
 //
-            $active = $request->get('active') ? 1 : 0;
-
+            $active = (int)$request['active'] == 1 ? true : false;
+           
             $newCategory = [
                 'name' => $request->get('name'),
                 'image' => $url,
