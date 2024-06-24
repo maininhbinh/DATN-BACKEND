@@ -22,4 +22,8 @@ class Category extends Model
     public function details(){
         return $this->hasMany(Detail::class);
     }
+
+    public function parent(){
+        return $this->belongsTo(Category::class);
+    }
 }

@@ -20,12 +20,12 @@ class BrandController extends Controller
                 'name' => 'required',
                 'logo' => 'required|image|mimes:jpeg,png,jpg,gif',
             ],
-            [
-                'name.required' => 'Vui lòng nhập tên thương hiệu',
-                'logo.required' => 'Thương hiệu phải kèm logo',
-                'logo.image' => 'Logo phải là file hình ảnh',
-                'logo.mimes' => 'Định dạng của logo phải là jpeg, png, jpg hoặc gif',
-            ]);
+                [
+                    'name.required' => 'Vui lòng nhập tên thương hiệu',
+                    'logo.required' => 'Thương hiệu phải kèm logo',
+                    'logo.image' => 'Logo phải là file hình ảnh',
+                    'logo.mimes' => 'Định dạng của logo phải là jpeg, png, jpg hoặc gif',
+                ]);
 
             $logo = $request->hasFile('logo');
 
@@ -47,9 +47,9 @@ class BrandController extends Controller
             $public_id = Cloudinary::getPublicId();
 
             $result = Brand::create([
-               'name' => $request->name,
-               'public_id' => $public_id,
-               'logo' => $url
+                'name' => $request->name,
+                'public_id' => $public_id,
+                'logo' => $url
             ]);
 
             if(!$result){

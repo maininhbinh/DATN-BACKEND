@@ -17,7 +17,7 @@ return new class extends Migration
             $table->text('image')->nullable();
             $table->string('public_id')->nullable();
             $table->foreignId('parent_id')->nullable()->constrained('categories');
-            $table->boolean('active')->default(true);
+            $table->boolean('active');
             $table->softDeletes('deleted_at')->nullable();
             $table->timestamps();
         });

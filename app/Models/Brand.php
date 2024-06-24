@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Brand extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'name',
         'public_id',
         'logo',
     ];
-    use HasFactory;
 }

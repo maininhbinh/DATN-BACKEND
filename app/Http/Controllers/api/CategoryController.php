@@ -19,7 +19,7 @@ class CategoryController extends Controller
     public function index(Request $request){
         try {
 
-            $categories = Category::all();
+            $categories = Category::orderBy('id', 'DESC')->get();;
 
             return response()->json([
                 'success' => true,
@@ -36,7 +36,7 @@ class CategoryController extends Controller
 
     public function show(Request $request, $id){
         try {
-            
+
         }catch (\Exception $exception){
             return response()->json([
                 'success' => false,
@@ -73,39 +73,17 @@ class CategoryController extends Controller
     }
 
     public function update(Request $request, $id){
+
         try {
             $request->validate([
                 'name' => 'required',
-                'image' => 'required|image|mimes:jpeg,png,jpg,gif',
+                'image' => 'image|mimes:jpeg,png,jpg,gif',
                 'active' => 'required'
+            ],
+            [
+                'name' => 'không được để trống',
+                'image.image' => 'file phải là ảnh'
             ]);
-
-            $image = $request->hasFile('image');
-
-            if (!$image) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ảnh danh mục không có'
-                ], 404);
-            }
-//
-            $file = $request->file('image');
-            $fileName = $file->getClientOriginalName() . '-' . time() . '.' . rand(1, 1000000);
-//
-            $url = Cloudinary::upload($file->getRealPath(), [
-                'folder' => self::FOLDER,
-                'public_id' => $fileName
-            ])->getSecurePath();
-//
-            if (!$url) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Không thể tải ảnh'
-                ], 500);
-            }
-//
-            $public_id = Cloudinary::getPublicId();
-            $active = $request->get('active') ? 1 : 0;
 
             $category = Category::find($id);
 
@@ -115,6 +93,32 @@ class CategoryController extends Controller
                     'message' => 'Không tìm thấy danh mục'
                 ], 404);
             }
+
+            $url = $category->image;
+            $public_id = $category->public_id;
+
+            $image = $request->hasFile('image');
+
+            if ($image) {
+                $file = $request->file('image');
+                $fileName = $file->getClientOriginalName() . '-' . time() . '.' . rand(1, 1000000);
+//
+                $url = Cloudinary::upload($file->getRealPath(), [
+                    'folder' => self::FOLDER,
+                    'public_id' => $fileName
+                ])->getSecurePath();
+//
+                if (!$url) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Không thể tải ảnh'
+                    ], 500);
+                }
+//
+                $public_id = Cloudinary::getPublicId();
+            }
+//
+            $active = $request->get('active') ? 1 : 0;
 
             $newCategory = [
                 'name' => $request->get('name'),
@@ -221,8 +225,10 @@ class CategoryController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Tạo danh mục thành công'
-            ]);
+                'message' => 'Category created successfully',
+                'data' => $category
+            ], 201);
+
 
         } catch (QueryException $e) {
 
@@ -256,7 +262,7 @@ class CategoryController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Không tìm thấy danh mục'
-                ]);
+                ], 404);
             }
 
             $category->delete();
@@ -264,7 +270,7 @@ class CategoryController extends Controller
             return response()->json([
                 'success' => true,
                 'massage' => 'Xóa danh mục thành công'
-            ]);
+            ], 200);
 
         }catch (ValidationException $exception){
             return response()->json([
