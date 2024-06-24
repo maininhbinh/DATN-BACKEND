@@ -33,8 +33,12 @@ class AttributeController extends Controller
      */
     public function store(Request $request)
     {
+
+       
+
+
         $validator = Validator::make($request->all(), [
-            'detail_id' => 'required|string|max:255|exists:details,id',
+            'detail_id' => 'required|string|max:255',
             'name' => 'required|string|max:255',
         ]);
 
@@ -79,7 +83,6 @@ class AttributeController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
-            'detail_id' => 'sometimes|string|max:255|exists:details,id',
             'name' => 'sometimes|string|max:255',
         ]);
 

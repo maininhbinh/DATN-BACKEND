@@ -78,6 +78,8 @@ class DetailController extends Controller
 
     public function update(Request $request, string $id)
     {
+
+        
         $validator = Validator::make($request->all(), [
             'category_id' => 'sometimes|string|max:255|exists:categories,id',
             'name' => 'sometimes|string|max:255',
