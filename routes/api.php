@@ -48,7 +48,7 @@ Route::prefix('brand')
 Route::prefix('category')
     ->group(function () {
         Route::get('', [CategoryController::class, 'index']);
-        Route::post('create', [CategoryController::class, 'store']);
+        Route::post('', [CategoryController::class, 'store']);
         Route::get('{id}', [CategoryController::class, 'edit']);
         Route::post('{id}', [CategoryController::class, 'update']);
         Route::delete('{id}', [CategoryController::class, 'destroy']);
@@ -57,7 +57,7 @@ Route::prefix('category')
 Route::prefix('detail')->group(function () {
     Route::get('', [DetailController::class, 'index']);
     Route::post('', [DetailController::class, 'store']);
-    Route::get('/{id}', [DetailController::class, 'show']);
+    Route::get('/{id}', [DetailController::class, 'edit']);
     Route::post('/{id}', [DetailController::class, 'update']);
     Route::delete('/{id}', [DetailController::class, 'delete']);
     Route::post('/{id}/restore', [DetailController::class, 'restore']);
@@ -65,7 +65,7 @@ Route::prefix('detail')->group(function () {
 Route::prefix('attribute')->group(function () {
     Route::get('', [AttributeController::class, 'index']);
     Route::post('', [AttributeController::class, 'store']);
-    Route::get('/{id}', [AttributeController::class, 'show']);
+    Route::get('/{id}', [AttributeController::class, 'edit']);
     Route::post('/{id}', [AttributeController::class, 'update']);
     Route::delete('/{id}', [AttributeController::class, 'delete']);
     Route::post('/{id}/restore', [AttributeController::class, 'restore']);
@@ -73,7 +73,7 @@ Route::prefix('attribute')->group(function () {
 Route::prefix('value')->group(function () {
     Route::get('', [ValueController::class, 'index']);
     Route::post('', [ValueController::class, 'store']);
-    Route::get('/{id}', [ValueController::class, 'show']);
+    Route::get('/{id}', [ValueController::class, 'edit']);
     Route::post('/{id}', [ValueController::class, 'update']);
     Route::delete('/{id}', [ValueController::class, 'delete']);
     Route::post('/{id}/restore', [ValueController::class, 'restore']);
