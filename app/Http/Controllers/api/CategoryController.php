@@ -262,7 +262,7 @@ class CategoryController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Không tìm thấy danh mục'
-                ]);
+                ], 404);
             }
 
             $category->delete();
@@ -270,7 +270,7 @@ class CategoryController extends Controller
             return response()->json([
                 'success' => true,
                 'massage' => 'Xóa danh mục thành công'
-            ]);
+            ], 200);
 
         }catch (ValidationException $exception){
             return response()->json([
