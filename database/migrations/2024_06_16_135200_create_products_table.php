@@ -21,7 +21,7 @@ return new class extends Migration
             $table->unsignedBigInteger('total_review')->nullable();
             $table->foreignId('brand_id')->constrained('brands');
             $table->unsignedBigInteger('avg_stars')->nullable();
-            $table->boolean('in_active')->default(true);
+            $table->boolean('active')->default(true);
             $table->softDeletes('deleted_at')->nullable();
             $table->timestamps();
         });

@@ -16,7 +16,7 @@ class Product extends Model
         'total_review',
         'brand_id',
         'avg_stars',
-        'in_active'
+        'active'
     ];
     use HasFactory;
 }

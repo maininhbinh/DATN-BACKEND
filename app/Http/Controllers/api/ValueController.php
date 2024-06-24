@@ -22,7 +22,6 @@ class ValueController extends Controller
         }
     }
 
-
     public function create()
     {
         //
