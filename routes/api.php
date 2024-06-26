@@ -5,6 +5,7 @@ use App\Http\Controllers\api\BrandController;
 use App\Http\Controllers\api\CategoryController;
 use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\DetailController;
+use App\Http\Controllers\api\IntroduceController;
 use App\Http\Controllers\api\UserController;
 use App\Http\Controllers\api\ValueController;
 use Illuminate\Http\Request;
@@ -81,4 +82,14 @@ Route::prefix('value')
     Route::post('/{id}', [ValueController::class, 'update']);
     Route::delete('/{id}', [ValueController::class, 'destroy']);
     Route::post('/{id}/restore', [ValueController::class, 'restore']);
+});
+
+Route::prefix('introduce')
+->group(function () {
+    Route::get('', [IntroduceController::class, 'index']);
+    Route::post('', [IntroduceController::class, 'store']);
+    Route::get('/{id}', [IntroduceController::class, 'edit']);
+    Route::post('/{id}', [IntroduceController::class, 'update']);
+    Route::delete('/{id}', [IntroduceController::class, 'destroy']);
+    Route::post('/{id}/restore', [IntroduceController::class, 'restore']);
 });
