@@ -118,7 +118,7 @@ class BrandController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            // Xác thực dữ liệu đầu vào
+            
             $request->validate(
                 [
                     'name' => 'required',
@@ -140,11 +140,11 @@ class BrandController extends Controller
                 ], 404);
             }
 
-            // Lưu thông tin logo hiện tại
+        
             $url = $brand->logo;
             $public_id = $brand->public_id;
 
-            // Kiểm tra và xử lý file logo mới
+           
             $logo = $request->hasFile('logo');
             if ($logo) {
                 $file = $request->file('logo');
