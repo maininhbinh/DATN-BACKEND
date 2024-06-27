@@ -42,7 +42,11 @@ Route::prefix('user')
 
 Route::prefix('brand')
     ->group(function () {
-        Route::post('create', [BrandController::class, 'store']);
+        Route::get('', [BrandController::class, 'index']);
+        Route::post('', [BrandController::class, 'store']);
+        Route::get('{id}', [BrandController::class, 'edit']);
+        Route::post('{id}', [BrandController::class, 'update']);
+        Route::delete('{id}', [BrandController::class, 'destroy']);
     });
 
 Route::prefix('category')

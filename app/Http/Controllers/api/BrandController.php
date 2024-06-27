@@ -12,24 +12,38 @@ class BrandController extends Controller
 {
     //
     const FOLDER = 'developer';
+    public function index()
+    {
+        try {
+            $items = Brand::orderBy('created_at', 'desc')->get();
+            return response()->json($items, 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Đã xảy ra lỗi khi lấy dữ liệu.'
+            ], 500);
+        }
+    }
+    public function store(Request $request)
+    {
+        try {
 
-    public function store(Request $request){
-        try{
-
-            $request->validate([
-                'name' => 'required',
-                'logo' => 'required|image|mimes:jpeg,png,jpg,gif',
-            ],
-            [
-                'name.required' => 'Vui lòng nhập tên thương hiệu',
-                'logo.required' => 'Thương hiệu phải kèm logo',
-                'logo.image' => 'Logo phải là file hình ảnh',
-                'logo.mimes' => 'Định dạng của logo phải là jpeg, png, jpg hoặc gif',
-            ]);
+            $request->validate(
+                [
+                    'name' => 'required',
+                    'logo' => 'required|image|mimes:jpeg,png,jpg,gif',
+                ],
+                [
+                    'name.required' => 'Vui lòng nhập tên thương hiệu',
+                    'logo.required' => 'Thương hiệu phải kèm logo',
+                    'logo.image' => 'Logo phải là file hình ảnh',
+                    'logo.mimes' => 'Định dạng của logo phải là jpeg, png, jpg hoặc gif',
+                ]
+            );
 
             $logo = $request->hasFile('logo');
 
-            if(!$logo){
+            if (!$logo) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Logo thượng hiệu không có'
@@ -44,7 +58,7 @@ class BrandController extends Controller
                 'public_id' => $fileName
             ])->getSecurePath();
 
-            if(!$url){
+            if (!$url) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Tải file không thành công'
@@ -54,12 +68,12 @@ class BrandController extends Controller
             $public_id = Cloudinary::getPublicId();
 
             $result = Brand::create([
-               'name' => $request->name,
-               'public_id' => $public_id,
-               'logo' => $url
+                'name' => $request->name,
+                'public_id' => $public_id,
+                'logo' => $url
             ]);
 
-            if(!$result){
+            if (!$result) {
                 Cloudinary::destroy($public_id);
                 return response()->json([
                     'success' => false,
@@ -71,17 +85,135 @@ class BrandController extends Controller
                 'success' => true,
                 'message' => 'Tạo thương hiệu thành công'
             ]);
+        } catch (\Exception $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ]);
+        } catch (ValidationException $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ]);
+        }
+    }
+    public function edit($id)
+    {
+        try {
+            // Tìm thương hiệu theo ID
+            $brand = Brand::findOrFail($id);
 
-        }catch (\Exception $exception){
+            return response()->json([
+                'success' => true,
+                'data' => $brand
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Đã xảy ra lỗi khi lấy dữ liệu thương hiệu.'
+            ], 500);
+        }
+    }
+    public function update(Request $request, $id)
+    {
+        try {
+            // Xác thực dữ liệu đầu vào
+            $request->validate(
+                [
+                    'name' => 'required',
+                    'logo' => 'image|mimes:jpeg,png,jpg,gif',
+                ],
+                [
+                    'name.required' => 'Vui lòng nhập tên thương hiệu',
+                    'logo.image' => 'Logo phải là file hình ảnh',
+                    'logo.mimes' => 'Định dạng của logo phải là jpeg, png, jpg hoặc gif',
+                ]
+            );
+
+            // Tìm thương hiệu theo ID
+            $brand = Brand::find($id);
+            if (!$brand) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không tìm thấy thương hiệu'
+                ], 404);
+            }
+
+            // Lưu thông tin logo hiện tại
+            $url = $brand->logo;
+            $public_id = $brand->public_id;
+
+            // Kiểm tra và xử lý file logo mới
+            $logo = $request->hasFile('logo');
+            if ($logo) {
+                $file = $request->file('logo');
+                $fileName = $file->getClientOriginalName() . '-' . time() . '.' . rand(1, 1000000);
+
+                $url = Cloudinary::upload($file->getRealPath(), [
+                    'folder' => self::FOLDER,
+                    'public_id' => $fileName
+                ])->getSecurePath();
+
+                if (!$url) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Tải file không thành công'
+                    ], 500);
+                }
+
+                $public_id = Cloudinary::getPublicId();
+            }
+
+            // Cập nhật các thuộc tính của thương hiệu
+            $newBrandData = [
+                'name' => $request->name,
+                'logo' => $url,
+                'public_id' => $public_id,
+            ];
+
+            $brand->update($newBrandData);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cập nhật thương hiệu thành công'
+            ]);
+        } catch (\Exception $exception) {
             return response()->json([
                 'success' => false,
                 'message' => $exception->getMessage()
-            ]);
-        }catch (ValidationException $exception){
+            ], 500);
+        } catch (ValidationException $exception) {
             return response()->json([
                 'success' => false,
                 'message' => $exception->getMessage()
-            ]);
+            ], 500);
+        }
+    }
+  
+
+    public function destroy($id)
+    {
+        try {
+            $brand = Brand::findOrFail($id);
+
+            
+            Cloudinary::destroy($brand->public_id);
+            $brand->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Xóa thương hiệu thành công'
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy thương hiệu'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Đã xảy ra lỗi khi xóa thương hiệu.'
+            ], 500);
         }
     }
 }
