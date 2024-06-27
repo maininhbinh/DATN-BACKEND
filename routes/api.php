@@ -100,10 +100,15 @@ Route::prefix('category-attribute')
         Route::post('/{id}/restore', [CategoryAttributeController::class, 'restore']);
     });
 
-Route::post('/create-slides', [SlideController::class, 'createSlides']);
-Route::get('/slides', [SlideController::class, 'getSlides']);
-Route::delete('/delete-slides/{id}', [SlideController::class, 'destroy']);
-Route::put('/update-slides/{id}', [SlideController::class, 'update']);
+
+Route::prefix('slider')
+    ->group(function () {
+
+        Route::post('/', [SlideController::class, 'store']);
+        Route::get('/', [SlideController::class, 'show']);
+        Route::delete('/{id}', [SlideController::class, 'destroy']);
+        Route::put('/{id}', [SlideController::class, 'update']);
+    });
 
 
     

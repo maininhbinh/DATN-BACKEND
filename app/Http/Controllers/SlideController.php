@@ -13,7 +13,7 @@ use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class SlideController extends Controller
 {
-    public function createSlides(Request $request)
+    public function store(Request $request)
     {
         $request->validate([
             'image' => 'required',
@@ -34,7 +34,7 @@ class SlideController extends Controller
         return response()->json(['message' => 'Image uploaded successfully', 'url' => $uploadedFileUrl]);
     }
 
-    public function getSlides()
+    public function show()
     {
         $slides = Slide::all();
         return response()->json($slides);
