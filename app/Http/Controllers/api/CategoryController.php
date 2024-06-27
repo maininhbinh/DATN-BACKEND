@@ -7,6 +7,7 @@ use App\Models\Attribute;
 use App\Models\Category;
 use App\Models\Detail;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
