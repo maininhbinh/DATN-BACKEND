@@ -6,6 +6,7 @@ use App\Http\Controllers\api\CategoryController;
 use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\CartController;
 use App\Http\Controllers\api\DetailController;
+use App\Http\Controllers\api\RoleController;
 use App\Http\Controllers\api\UserController;
 use App\Http\Controllers\api\ValueController;
 use Illuminate\Http\Request;
@@ -93,4 +94,13 @@ Route::prefix('value')->group(function () {
     Route::post('/{id}', [ValueController::class, 'update']);
     Route::delete('/{id}', [ValueController::class, 'delete']);
     Route::post('/{id}/restore', [ValueController::class, 'restore']);
+});
+
+Route::prefix('role')->group(function () {
+    Route::get('', [RoleController::class, 'index']);
+    Route::post('', [RoleController::class, 'store']);
+    Route::get('/{id}', [RoleController::class, 'edit']);
+    Route::post('/{id}', [RoleController::class, 'update']);
+    Route::delete('/{id}', [RoleController::class, 'delete']);
+    Route::post('/{id}/restore', [RoleController::class, 'restore']);
 });
