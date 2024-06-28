@@ -4,6 +4,7 @@ use App\Http\Controllers\api\AttributeController;
 use App\Http\Controllers\api\BrandController;
 use App\Http\Controllers\api\CategoryController;
 use App\Http\Controllers\api\AuthController;
+use App\Http\Controllers\api\CartController;
 use App\Http\Controllers\api\DetailController;
 use App\Http\Controllers\api\UserController;
 use App\Http\Controllers\api\ValueController;
@@ -40,8 +41,14 @@ Route::prefix('user')
         Route::post('', [UserController::class, 'store'])->middleware('auth:sanctum');
         Route::post('/{id}', [UserController::class, 'update'])->middleware('auth:sanctum');
         Route::post('/{id}', [UserController::class, 'destroy'])->middleware('auth:sanctum');
-
     });
+
+Route::middleware('auth:sanctum')->prefix('cart')->group(function () {
+    Route::get('', [CartController::class, 'index']);
+    Route::post('', [CartController::class, 'store']);
+    Route::put('/{id}', [CartController::class, 'update']);
+    Route::delete('/{id}', [CartController::class, 'destroy']);
+});
 
 Route::prefix('brand')
     ->group(function () {
@@ -69,6 +76,7 @@ Route::prefix('detail')->group(function () {
     Route::delete('/{id}', [DetailController::class, 'delete']);
     Route::post('/{id}/restore', [DetailController::class, 'restore']);
 });
+
 Route::prefix('attribute')->group(function () {
     Route::get('', [AttributeController::class, 'index']);
     Route::post('', [AttributeController::class, 'store']);
@@ -77,6 +85,7 @@ Route::prefix('attribute')->group(function () {
     Route::delete('/{id}', [AttributeController::class, 'delete']);
     Route::post('/{id}/restore', [AttributeController::class, 'restore']);
 });
+
 Route::prefix('value')->group(function () {
     Route::get('', [ValueController::class, 'index']);
     Route::post('', [ValueController::class, 'store']);
