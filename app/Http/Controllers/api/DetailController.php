@@ -131,4 +131,5 @@ class DetailController extends Controller
             ], 500);
         }
     }
+
 }

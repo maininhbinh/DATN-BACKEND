@@ -13,6 +13,14 @@ class BrandController extends Controller
     //
     const FOLDER = 'developer';
 
+    public function index(){
+        $brands = Brand::all();
+        return response()->json([
+            'success' => true,
+            'brands' => $brands
+        ]);
+    }
+
     public function store(Request $request){
         try{
 

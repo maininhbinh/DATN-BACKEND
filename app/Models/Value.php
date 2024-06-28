@@ -11,6 +11,10 @@ class Value extends Model
 
     protected $fillable = [
         'attribute_id',
-        'value',
+        'name',
     ];
+
+    public function details(){
+        return $this->hasMany(Product_detail::class, 'value_id');
+    }
 }

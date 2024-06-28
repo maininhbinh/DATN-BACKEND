@@ -13,15 +13,21 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('category_id')->constrained('categories');
             $table->text('thumbnail');
             $table->string('name');
-            $table->text('description');
+            $table->text('content');
+            $table->foreignId('category_id')->constrained('categories');
+            $table->foreignId('brand_id')->constrained('brands');
+            $table->boolean('is_active')->default(true);
+            $table->boolean('is_hot_deal')->default(true);
+            $table->boolean('is_good_deal')->default(true);
+            $table->boolean('is_new')->default(true);
+            $table->boolean('is_show_home')->default(true);
+            $table->string('type_discount')->nullable();
             $table->decimal('discount')->nullable();
             $table->unsignedBigInteger('total_review')->nullable();
-            $table->foreignId('brand_id')->constrained('brands');
             $table->unsignedBigInteger('avg_stars')->nullable();
-            $table->boolean('in_active')->default(true);
+            $table->text('public_id');
             $table->softDeletes('deleted_at')->nullable();
             $table->timestamps();
         });

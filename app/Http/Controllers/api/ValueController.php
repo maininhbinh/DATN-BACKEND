@@ -5,6 +5,7 @@ namespace App\Http\Controllers\api;
 use App\Http\Controllers\Controller;
 use App\Models\Value;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class ValueController extends Controller
@@ -51,6 +52,7 @@ class ValueController extends Controller
             return response()->json($item, 201);
 
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Đã xảy ra lỗi khi tạo Value.'
@@ -94,6 +96,7 @@ class ValueController extends Controller
             $item->update($request->all());
             return response()->json($item, 200);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Đã xảy ra lỗi khi cập nhật Value.'
@@ -124,6 +127,7 @@ class ValueController extends Controller
             $item->restore();
             return response()->json($item, 200);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Đã xảy ra lỗi khi khôi phục Value.'

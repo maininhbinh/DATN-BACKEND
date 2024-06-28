@@ -10,20 +10,45 @@ class Product extends Model
     use HasFactory;
 
     const TYPE_DISCOUNT = [
-        'PERCENTAGE',
-        'FIXED PRICE'
+        'percentage',
+        'fixed'
     ];
 
     protected $fillable = [
-        'category_id',
         'thumbnail',
         'name',
-        'description',
-        'discount',
-        'type_discount',
+        'content',
+        'category_id',
         'brand_id',
+        'is_active',
+        'is_hot_deal',
+        'is_good_deal',
+        'is_new',
+        'is_show_home',
+        'type_discount',
+        'discount',
         'total_review',
         'avg_stars',
-        'active'
+        'public_id'
     ];
+
+    public function category(){
+        return $this->belongsTo(Category::class);
+    }
+
+    public function brand(){
+        return $this->belongsTo(Brand::class);
+    }
+
+    public function products(){
+        return $this->hasMany(Product_item::class);
+    }
+
+    public function galleries(){
+        return $this->hasMany(Gallery::class);
+    }
+
+    public function details(){
+        return $this->hasMany(Product_detail::class, 'product_id');
+    }
 }

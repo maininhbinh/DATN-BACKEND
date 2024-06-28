@@ -11,4 +11,8 @@ class Variant extends Model
     protected $fillable = [
         'name'
     ];
+
+    public function variants(){
+        return $this->hasMany(Varian_option::class);
+    }
 }
