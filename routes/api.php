@@ -36,9 +36,11 @@ Route::prefix('auth')
 
 Route::prefix('user')
     ->group(function () {
-        Route::get('profile', [UserController::class, 'profile'])->middleware('auth:sanctum');
-        Route::post('store', [UserController::class, 'store'])->middleware('auth:sanctum');
-        Route::post('update/{id}', [UserController::class, 'update'])->middleware('auth:sanctum');
+        Route::get('', [UserController::class, 'profile'])->middleware('auth:sanctum');
+        Route::post('', [UserController::class, 'store'])->middleware('auth:sanctum');
+        Route::post('/{id}', [UserController::class, 'update'])->middleware('auth:sanctum');
+        Route::post('/{id}', [UserController::class, 'destroy'])->middleware('auth:sanctum');
+
     });
 
 Route::prefix('brand')

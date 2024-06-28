@@ -28,7 +28,6 @@ class BrandController extends Controller
     public function store(Request $request)
     {
         try {
-
             $request->validate(
                 [
                     'name' => 'required',
@@ -118,7 +117,7 @@ class BrandController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            
+
             $request->validate(
                 [
                     'name' => 'required',
@@ -140,11 +139,11 @@ class BrandController extends Controller
                 ], 404);
             }
 
-        
+
             $url = $brand->logo;
             $public_id = $brand->public_id;
 
-           
+
             $logo = $request->hasFile('logo');
             if ($logo) {
                 $file = $request->file('logo');
@@ -178,26 +177,26 @@ class BrandController extends Controller
                 'success' => true,
                 'message' => 'Cập nhật thương hiệu thành công'
             ]);
-        } catch (\Exception $exception) {
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $exception->getMessage()
+                'message' => $e->getMessage()
             ], 500);
-        } catch (ValidationException $exception) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => $exception->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }
-  
+
 
     public function destroy($id)
     {
         try {
             $brand = Brand::findOrFail($id);
 
-            
+
             Cloudinary::destroy($brand->public_id);
             $brand->delete();
 
