@@ -12,11 +12,13 @@ class CartController extends Controller
     public function index()
     {
         try {
+
             $items = Cart::where('user_id', Auth::id())->get();
             return response()->json([
                 'success' => true,
                 'data' => $items
             ], 200);
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -48,6 +50,7 @@ class CartController extends Controller
                 'message' => 'Sản phẩm đã được thêm vào giỏ hàng',
                 'data' => $cart
             ], 201);
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
