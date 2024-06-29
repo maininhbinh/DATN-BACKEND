@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('sku')->nullable();
             $table->text('image')->nullable();
             $table->text('public_id')->nullable();
+            $table->softDeletes()->nullable();
             $table->timestamps();
         });
     }
