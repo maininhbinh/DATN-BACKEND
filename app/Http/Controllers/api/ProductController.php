@@ -23,18 +23,11 @@ class ProductController extends Controller
 
     public function index(){
         try {
-
-            $products = Product::with(['galleries', 'details' => function($query){
-                $query->with(['attributes' => function($query){
-                    $query->with(['values']);
-                }]);
-            },'products.variants'])->get();
-
+            $products = Product::with(['products.variants', 'category'])->get();
             return response()->json([
                 'success' => true,
                 'data' => $products
-            ]);
-
+            ], 200);
         }catch (\Exception $exception){
             return response()->json([
                 'success' => false,
