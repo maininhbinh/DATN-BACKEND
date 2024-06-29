@@ -145,12 +145,12 @@ class CategoryController extends Controller
 
             $category->update($newCategory);
 
+            DB::commit();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Chỉnh sửa danh mục thành công'
             ]);
-
-            DB::commit();
 
         }catch (\Exception $exception){
             DB::rollBack();
@@ -236,14 +236,15 @@ class CategoryController extends Controller
                 }
             }
 
+            DB::commit();
+
+
             return response()->json([
                 'success' => true,
                 'message' => 'Category created successfully',
                 'data' => $category
             ], 201);
 
-
-            DB::commit();
         }catch (\Exception $exception){
             DB::rollBack();
             return response()->json([

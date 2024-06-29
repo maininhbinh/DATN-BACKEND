@@ -265,13 +265,15 @@ class ProductController extends Controller
                 ]);
             }
 
+            DB::commit();
+
+
             return response()->json([
                 'success' => true,
                 'message' => 'Product added successfully!',
                 'data' => $product,
             ]);
 
-            DB::commit();
         }catch (\Exception $exception){
             DB::rollBack();
             return response()->json([
