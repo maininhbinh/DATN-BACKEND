@@ -14,7 +14,7 @@ class Value extends Model
         'name',
     ];
 
-    public function details(){
-        return $this->hasMany(Product_detail::class, 'value_id');
+    public function attribute(){
+        return $this->belongsTo(Attribute::class);
     }
 }

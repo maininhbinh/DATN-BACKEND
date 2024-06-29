@@ -49,6 +49,7 @@ class Product extends Model
     }
 
     public function details(){
-        return $this->hasMany(Product_detail::class, 'product_id');
+        return $this->belongsToMany(Detail::class, 'product_details')->withPivot('value_id')->withTimestamps();
     }
+
 }

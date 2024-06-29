@@ -14,7 +14,11 @@ class Attribute extends Model
         'name'
     ];
 
-    public function details(){
-        return $this->hasMany(Product_detail::class, 'detail_id');
+    public function detail(){
+        return $this->belongsTo(Detail::class);
+    }
+
+    public function values(){
+        return $this->hasMany(Value::class);
     }
 }

@@ -22,8 +22,25 @@ class ProductController extends Controller
     const FOLDER = 'developer';
 
     public function index(){
-        $products = Product::with(['products.variants'])->get();
-        return response()->json(["products"=>$products]);
+        try {
+
+            $products = Product::with(['galleries', 'details' => function($query){
+                $query->with(['attributes' => function($query){
+                    $query->with(['values']);
+                }]);
+            },'products.variants'])->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $products
+            ]);
+
+        }catch (\Exception $exception){
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ]);
+        }
     }
     public function store(Request $request){
 

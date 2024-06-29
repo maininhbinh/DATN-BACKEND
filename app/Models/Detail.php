@@ -13,7 +13,7 @@ class Detail extends Model
         'category_id',
         'name'
     ];
-    
+
 
     public function category(){
         return $this->belongsTo(Category::class);
@@ -21,5 +21,9 @@ class Detail extends Model
 
     public function attributes(){
         return $this->hasMany(Attribute::class);
+    }
+
+    public function products(){
+        return $this->hasMany(Product::class, 'product_details')->withPivot('value_id')->withTimestamps();
     }
 }

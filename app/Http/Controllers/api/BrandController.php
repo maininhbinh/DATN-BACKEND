@@ -18,7 +18,10 @@ class BrandController extends Controller
     {
         try {
             $items = Brand::orderBy('created_at', 'desc')->get();
-            return response()->json($items, 200);
+            return response()->json([
+                'sucsess' => true,
+                'data' => $items
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
