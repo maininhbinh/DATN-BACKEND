@@ -9,7 +9,6 @@ use App\Models\Product_detail;
 use App\Models\Product_item;
 use App\Models\Value;
 use App\Models\Variant;
-use App\Models\VariantOption;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -277,11 +276,10 @@ class ProductController extends Controller
 
             DB::commit();
 
-
             return response()->json([
                 'success' => true,
                 'message' => 'Product added successfully!',
-                'data' => $product,
+                'data' => $product->id,
             ]);
 
         }catch (\Exception $exception){
