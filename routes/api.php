@@ -35,10 +35,12 @@ Route::prefix('auth')->group(function () {
 });
 
 Route::prefix('user')->group(function () {
-    Route::get('', [UserController::class, 'profile'])->middleware('auth:sanctum');
-    Route::post('', [UserController::class, 'store'])->middleware('auth:sanctum');
-    Route::post('/{id}', [UserController::class, 'update'])->middleware('auth:sanctum');
-    Route::post('/{id}', [UserController::class, 'destroy'])->middleware('auth:sanctum');
+    Route::get('list', [UserController::class, 'index']);
+    Route::get('', [UserController::class, 'profile']);
+    Route::post('', [UserController::class, 'store']);
+    Route::get('{id}', [UserController::class, 'edit']);
+    Route::post('/{id}', [UserController::class, 'update']);
+    Route::delete('/{id}', [UserController::class, 'delete']);
 });
 
 Route::middleware('auth:sanctum')->prefix('cart')->group(function () {
