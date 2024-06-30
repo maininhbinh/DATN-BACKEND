@@ -49,6 +49,7 @@ Route::middleware('auth:sanctum')->prefix('cart')->group(function () {
     Route::post('', [CartController::class, 'store']);
     Route::put('/{id}', [CartController::class, 'update']);
     Route::delete('/{id}', [CartController::class, 'destroy']);
+    Route::delete('/destroy-all', [CartController::class, 'destroyAll']);
 });
 
 Route::prefix('brand')

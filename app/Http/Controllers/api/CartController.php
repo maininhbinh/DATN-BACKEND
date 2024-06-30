@@ -100,4 +100,21 @@ class CartController extends Controller
             ], 500);
         }
     }
+    public function destroyAll()
+    {
+        try {
+            $userId = Auth::id();
+            Cart::where('user_id', $userId)->delete();
+            return response()->json([
+                'success' => true,
+                'message' => 'Tất cả sản phẩm đã xoá khỏi giỏ hàng'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi không xoá giỏ hàng được',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
