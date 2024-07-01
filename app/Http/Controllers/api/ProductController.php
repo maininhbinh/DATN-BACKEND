@@ -9,6 +9,7 @@ use App\Models\Product_detail;
 use App\Models\Product_item;
 use App\Models\Value;
 use App\Models\Variant;
+use App\Models\Variant_option;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -139,7 +140,7 @@ class ProductController extends Controller
                 }
 
                 foreach ($variants[0]->attribute as $attribute) {
-                    $variantParent = VariantOption::firstOrCreate([
+                    $variantParent = Variant_option::firstOrCreate([
                         'variant_id' => $variantId[0]->id,
                         'name' => $attribute,
                     ]);
@@ -171,7 +172,7 @@ class ProductController extends Controller
 
                                 }
 
-                                $variant_option = VariantOption::firstOrCreate([
+                                $variant_option = Variant_option::firstOrCreate([
                                     'variant_id' => $variantId[1]->id,
                                     'name' => $value,
                                 ]);
