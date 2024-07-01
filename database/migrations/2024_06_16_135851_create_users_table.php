@@ -24,7 +24,8 @@ return new class extends Migration
             $table->string('district')->nullable();
             $table->string('city')->nullable();
             $table->foreignId('role_id')->constrained('roles');
-            $table->boolean('in_active')->default(true);
+            $table->boolean('is_active')->default(true);
+            $table->boolean('is_vitual')->default(true);
             $table->rememberToken();
             $table->timestamps();
         });

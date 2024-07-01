@@ -219,7 +219,7 @@ class CategoryController extends Controller
                 'image' => $url,
                 'public_id' => $public_id,
                 'parent_id' => $parent_id,
-                'active' => $active
+                'is_active' => $active
             ]);
 
             foreach ($detail as $item) {
