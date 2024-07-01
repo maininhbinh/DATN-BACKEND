@@ -3,16 +3,16 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Value;
+use App\Models\ProductDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
-class ValueController extends Controller
+class ProductDetailController extends Controller
 {
     public function index()
     {
         try {
-            $items = Value::orderBy('created_at', 'desc')->get();
+            $items = ProductDetail::orderBy('created_at', 'desc')->get();
             return response()->json($items, 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -34,9 +34,8 @@ class ValueController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'attribute_id' => 'required|string|max:255|exists:attributes,id',
             'product_id' => 'required|string|max:255|exists:products,id',
-            'name' => 'required|string|max:255',
+            'detail_id' => 'required|string|max:255|exists:details,id',
         ]);
 
         if ($validator->fails()) {
@@ -47,12 +46,12 @@ class ValueController extends Controller
         }
 
         try {
-            $item = Value::create($request->all());
+            $item = ProductDetail::create($request->all());
             return response()->json($item, 201);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Đã xảy ra lỗi khi tạo Value.'
+                'message' => 'Đã xảy ra lỗi khi tạo chi tiết sản phẩm.'
             ], 500);
         }
     }
@@ -63,12 +62,12 @@ class ValueController extends Controller
     public function edit(string $id)
     {
         try {
-            $item = Value::findOrFail($id);
+            $item = ProductDetail::findOrFail($id);
             return response()->json($item, 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Không tìm thấy Value.'
+                'message' => 'Không tìm thấy chi tiết sản phẩm.'
             ], 404);
         }
     }
@@ -77,9 +76,8 @@ class ValueController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
-            'attribute_id' => 'sometimes|string|max:255|exists:attributes,id',
-            'product_id' => 'sometimes|string|max:255|exists:products,id',
-            'name' => 'sometimes|string|max:255',
+            'product_id' => 'required|string|max:255|exists:products,id',
+            'detail_id' => 'required|string|max:255|exists:details,id',
         ]);
 
         if ($validator->fails()) {
@@ -90,13 +88,13 @@ class ValueController extends Controller
         }
 
         try {
-            $item = Value::findOrFail($id);
+            $item = ProductDetail::findOrFail($id);
             $item->update($request->all());
             return response()->json($item, 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Đã xảy ra lỗi khi cập nhật Value.'
+                'message' => 'Đã xảy ra lỗi khi cập nhật chi tiết sản phẩm.'
             ], 500);
         }
     }
@@ -107,26 +105,26 @@ class ValueController extends Controller
     public function destroy(string $id)
     {
         try {
-            $item = Value::findOrFail($id);
+            $item = ProductDetail::findOrFail($id);
             $item->delete();
             return response()->json(null, 204);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Đã xảy ra lỗi khi xóa Value.'
+                'message' => 'Đã xảy ra lỗi khi xóa chi tiết sản phẩm.'
             ], 500);
         }
     }
     public function restore($id)
     {
         try {
-            $item = Value::withTrashed()->findOrFail($id);
+            $item = ProductDetail::withTrashed()->findOrFail($id);
             $item->restore();
             return response()->json($item, 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Đã xảy ra lỗi khi khôi phục Value.'
+                'message' => 'Đã xảy ra lỗi khi khôi phục chi tiết sản phẩm.'
             ], 500);
         }
     }
