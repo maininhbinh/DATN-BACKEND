@@ -11,8 +11,11 @@ use App\Http\Controllers\api\RoleController;
 use App\Http\Controllers\api\UserController;
 use App\Http\Controllers\api\ValueController;
 
+
 use Illuminate\Http\Request;
+
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\api\ProductController;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,22 +32,19 @@ use Illuminate\Support\Facades\Route;
 //     return $request->user();
 // });
 
-Route::prefix('auth')
-    ->group(function () {
+Route::prefix('auth')->group(function () {
+    Route::post('signup', [AuthController::class, 'signup']);
+    Route::post('verifyOTP', [AuthController::class, 'verifyOTP']);
+    Route::post('login', [AuthController::class, 'login']);
+    Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+});
 
-        Route::post('signup', [AuthController::class, 'signup']);
-        Route::post('verifyOTP', [AuthController::class, 'verifyOTP']);
-        Route::post('login', [AuthController::class, 'login']);
-        Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
-    });
-
-Route::prefix('user')
-    ->group(function () {
-        Route::get('', [UserController::class, 'profile'])->middleware('auth:sanctum');
-        Route::post('', [UserController::class, 'store'])->middleware('auth:sanctum');
-        Route::post('/{id}', [UserController::class, 'update'])->middleware('auth:sanctum');
-        Route::post('/{id}', [UserController::class, 'destroy'])->middleware('auth:sanctum');
-    });
+Route::prefix('user')->group(function () {
+    Route::get('', [UserController::class, 'profile'])->middleware('auth:sanctum');
+    Route::post('', [UserController::class, 'store'])->middleware('auth:sanctum');
+    Route::post('/{id}', [UserController::class, 'update'])->middleware('auth:sanctum');
+    Route::post('/{id}', [UserController::class, 'destroy'])->middleware('auth:sanctum');
+});
 
 Route::middleware('auth:sanctum')->prefix('cart')->group(function () {
     Route::get('', [CartController::class, 'index']);
@@ -54,23 +54,21 @@ Route::middleware('auth:sanctum')->prefix('cart')->group(function () {
     Route::delete('/destroy-all', [CartController::class, 'destroyAll']);
 });
 
-Route::prefix('brand')
-    ->group(function () {
-        Route::get('', [BrandController::class, 'index']);
-        Route::post('', [BrandController::class, 'store']);
-        Route::get('{id}', [BrandController::class, 'edit']);
-        Route::post('{id}', [BrandController::class, 'update']);
-        Route::delete('{id}', [BrandController::class, 'destroy']);
-    });
+Route::prefix('brand')->group(function () {
+    Route::get('', [BrandController::class, 'index']);
+    Route::post('', [BrandController::class, 'store']);
+    Route::get('{id}', [BrandController::class, 'edit']);
+    Route::post('{id}', [BrandController::class, 'update']);
+    Route::delete('{id}', [BrandController::class, 'destroy']);
+});
 
-Route::prefix('category')
-    ->group(function () {
-        Route::get('', [CategoryController::class, 'index']);
-        Route::post('', [CategoryController::class, 'store']);
-        Route::get('{id}', [CategoryController::class, 'edit']);
-        Route::post('{id}', [CategoryController::class, 'update']);
-        Route::delete('{id}', [CategoryController::class, 'destroy']);
-    });
+Route::prefix('category')->group(function () {
+    Route::get('', [CategoryController::class, 'index']);
+    Route::post('', [CategoryController::class, 'store']);
+    Route::get('{id}', [CategoryController::class, 'edit']);
+    Route::post('{id}', [CategoryController::class, 'update']);
+    Route::delete('{id}', [CategoryController::class, 'destroy']);
+});
 
 Route::prefix('detail')->group(function () {
     Route::get('', [DetailController::class, 'index']);
@@ -107,6 +105,7 @@ Route::prefix('role')->group(function () {
     Route::delete('/{id}', [RoleController::class, 'delete']);
     Route::post('/{id}/restore', [RoleController::class, 'restore']);
 });
+
 Route::prefix('product-detail')->group(function () {
     Route::get('', [ProductDetailController::class, 'index']);
     Route::post('', [ProductDetailController::class, 'store']);
@@ -115,3 +114,11 @@ Route::prefix('product-detail')->group(function () {
     Route::delete('/{id}', [ProductDetailController::class, 'delete']);
     Route::post('/{id}/restore', [ProductDetailController::class, 'restore']);
 });
+
+
+Route::prefix('product')->group(function () {
+    Route::get('', [ProductController::class, 'index']);
+    Route::post('', [ProductController::class, 'store']);
+});
+
+

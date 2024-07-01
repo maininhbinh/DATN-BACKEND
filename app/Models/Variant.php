@@ -4,15 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Role extends Model
+class Variant extends Model
 {
-    use HasFactory,SoftDeletes;
-
-    protected $table = 'roles';
-
+    use HasFactory;
     protected $fillable = [
         'name'
     ];
+
+    public function variants(){
+        return $this->hasMany(Varian_option::class);
+    }
 }

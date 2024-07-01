@@ -7,6 +7,7 @@ use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use App\Models\Brand;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 class BrandController extends Controller
@@ -17,7 +18,10 @@ class BrandController extends Controller
     {
         try {
             $items = Brand::orderBy('created_at', 'desc')->get();
-            return response()->json($items, 200);
+            return response()->json([
+                'sucsess' => true,
+                'data' => $items
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -25,21 +29,31 @@ class BrandController extends Controller
             ], 500);
         }
     }
-    public function store(Request $request)
-    {
+    public function store(Request $request){
+
+        $valid = Validator::make(
+            $request->all(),
+            [
+                'name' => 'required',
+                'logo' => 'required|image|mimes:jpeg,png,jpg,gif',
+            ],
+            [
+                'name.required' => 'Vui lòng nhập tên thương hiệu',
+                'logo.required' => 'Thương hiệu phải kèm logo',
+                'logo.image' => 'Logo phải là file hình ảnh',
+                'logo.mimes' => 'Định dạng của logo phải là jpeg, png, jpg hoặc gif',
+            ]
+        );
+
+        if ($valid->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $valid->errors()
+            ]);
+        }
+
         try {
-            $request->validate(
-                [
-                    'name' => 'required',
-                    'logo' => 'required|image|mimes:jpeg,png,jpg,gif',
-                ],
-                [
-                    'name.required' => 'Vui lòng nhập tên thương hiệu',
-                    'logo.required' => 'Thương hiệu phải kèm logo',
-                    'logo.image' => 'Logo phải là file hình ảnh',
-                    'logo.mimes' => 'Định dạng của logo phải là jpeg, png, jpg hoặc gif',
-                ]
-            );
+
 
             $logo = $request->hasFile('logo');
 
@@ -59,10 +73,7 @@ class BrandController extends Controller
             ])->getSecurePath();
 
             if (!$url) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tải file không thành công'
-                ]);
+                throw new \Error('upload ảnh không thành công');
             }
 
             $public_id = Cloudinary::getPublicId();
@@ -83,14 +94,11 @@ class BrandController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Tạo thương hiệu thành công'
+                'message' => 'Tạo thương hiệu thành công',
+                'data' => $result
             ]);
+
         } catch (\Exception $exception) {
-            return response()->json([
-                'success' => false,
-                'message' => $exception->getMessage()
-            ]);
-        } catch (ValidationException $exception) {
             return response()->json([
                 'success' => false,
                 'message' => $exception->getMessage()
@@ -116,19 +124,26 @@ class BrandController extends Controller
     }
     public function update(Request $request, $id)
     {
-        try {
+        $valid = Validator::make(
+            $request->all(),
+            [
+                'name' => 'required',
+                'logo' => 'image|mimes:jpeg,png,jpg,gif',
+            ],
+            [
+                'name.required' => 'Vui lòng nhập tên thương hiệu',
+                'logo.image' => 'Logo phải là file hình ảnh',
+                'logo.mimes' => 'Định dạng của logo phải là jpeg, png, jpg hoặc gif',
+            ]
+        );
 
-            $request->validate(
-                [
-                    'name' => 'required',
-                    'logo' => 'image|mimes:jpeg,png,jpg,gif',
-                ],
-                [
-                    'name.required' => 'Vui lòng nhập tên thương hiệu',
-                    'logo.image' => 'Logo phải là file hình ảnh',
-                    'logo.mimes' => 'Định dạng của logo phải là jpeg, png, jpg hoặc gif',
-                ]
-            );
+        if ($valid->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $valid->errors()
+            ]);
+        }
+        try {
 
             // Tìm thương hiệu theo ID
             $brand = Brand::find($id);
@@ -140,11 +155,12 @@ class BrandController extends Controller
             }
 
 
-            $url = $brand->logo;
-            $public_id = $brand->public_id;
+            $old_url = $brand->logo;
+            $old_public_id = $brand->public_id;
 
 
             $logo = $request->hasFile('logo');
+
             if ($logo) {
                 $file = $request->file('logo');
                 $fileName = $file->getClientOriginalName() . '-' . time() . '.' . rand(1, 1000000);
@@ -167,22 +183,18 @@ class BrandController extends Controller
             // Cập nhật các thuộc tính của thương hiệu
             $newBrandData = [
                 'name' => $request->name,
-                'logo' => $url,
-                'public_id' => $public_id,
+                'logo' => isset($url) && $url ? $url : $old_url,
+                'public_id' => isset($public_id) && $public_id ? $public_id : $old_public_id,
             ];
 
             $brand->update($newBrandData);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Cập nhật thương hiệu thành công'
+                'message' => 'Cập nhật thương hiệu thành công',
+                'data' => $brand
             ]);
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
-        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
@@ -195,7 +207,6 @@ class BrandController extends Controller
     {
         try {
             $brand = Brand::findOrFail($id);
-
 
             Cloudinary::destroy($brand->public_id);
             $brand->delete();

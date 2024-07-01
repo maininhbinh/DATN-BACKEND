@@ -17,7 +17,10 @@ class RoleController extends Controller
         //
         try {
             $items = Role::orderBy('created_at','desc')->get();
-            return response()->json($items, 200);
+            return response()->json([
+                'success' => true,
+                'data' => $items
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -44,12 +47,17 @@ class RoleController extends Controller
         }
 
         try {
+
             $item = Role::create($request->all());
-            return response()->json($item, 201);
+            return response()->json([
+                'success' => true,
+                'data' => $item
+            ], 300);
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Đã xảy ra lỗi khi tạo Role.'
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -58,12 +66,15 @@ class RoleController extends Controller
     {
         try {
             $item = Role::findOrFail($id);
-            return response()->json($item, 200);
+            return response()->json([
+                'success' => true,
+                'data' => $item
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Không tìm thấy Role.'
-            ], 404);
+                'message' => $e->getMessage()
+            ], 500);
         }
 
     }
@@ -87,12 +98,17 @@ class RoleController extends Controller
         try {
             $item = Role::findOrFail($id);
             $item->update($request->all());
-            return response()->json($item, 200);
+            return response()->json([
+                'success' => true,
+                'data' => $item
+            ]);
         } catch (\Exception $e) {
+
             return response()->json([
                 'success' => false,
                 'message' => 'Đã xảy ra lỗi khi cập nhật Role.'
             ], 500);
+
         }
     }
 
@@ -105,11 +121,14 @@ class RoleController extends Controller
         try {
             $item = Role::findOrFail($id);
             $item->delete();
-            return response()->json(null, 204);
+            return response()->json([
+                'success' => true,
+                'message' => 'Xoá thành công'
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Đã xảy ra lỗi khi xóa Role.'
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -119,11 +138,14 @@ class RoleController extends Controller
         try {
             $item = Role::withTrashed()->findOrFail($id);
             $item->restore();
-            return response()->json($item, 200);
+            return response()->json([
+                'success' => true,
+                'data' => $item
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Đã xảy ra lỗi khi khôi phục Role.'
+                'message' => $e->getMessage()
             ], 500);
         }
     }

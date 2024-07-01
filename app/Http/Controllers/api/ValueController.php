@@ -5,6 +5,7 @@ namespace App\Http\Controllers\api;
 use App\Http\Controllers\Controller;
 use App\Models\Value;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class ValueController extends Controller
@@ -22,7 +23,6 @@ class ValueController extends Controller
         }
     }
 
-
     public function create()
     {
         //
@@ -33,6 +33,7 @@ class ValueController extends Controller
      */
     public function store(Request $request)
     {
+
         $validator = Validator::make($request->all(), [
             'attribute_id' => 'required|string|max:255|exists:attributes,id',
             'product_id' => 'required|string|max:255|exists:products,id',
@@ -47,8 +48,10 @@ class ValueController extends Controller
         }
 
         try {
+
             $item = Value::create($request->all());
             return response()->json($item, 201);
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

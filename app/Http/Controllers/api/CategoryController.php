@@ -9,7 +9,9 @@ use App\Models\Detail;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 class CategoryController extends Controller
@@ -49,7 +51,7 @@ class CategoryController extends Controller
     public function edit($id){
         try {
 
-            $category = Category::where('active', true)->with('details.attributes')->find($id);
+            $category = Category::with('details.attributes')->find($id);
 
             if(!$category){
                 return response()->json([
@@ -75,16 +77,28 @@ class CategoryController extends Controller
 
     public function update(Request $request, $id){
 
+            $valid = Validator::make(
+                $request->all(),
+                [
+                    'name' => 'required',
+                    'image' => 'image|mimes:jpeg,png,jpg,gif',
+                    'active' => 'required'
+                ],
+                [
+                    'name' => 'không được để trống',
+                    'image.image' => 'file phải là ảnh'
+                ]
+            );
+
+            if($valid->fails()){
+                return response()->json([
+                    'success' => false,
+                    'message' => $valid->errors()
+                ]);
+            }
+
         try {
-            $request->validate([
-                'name' => 'required',
-                'image' => 'image|mimes:jpeg,png,jpg,gif',
-                'active' => 'required'
-            ],
-            [
-                'name' => 'không được để trống',
-                'image.image' => 'file phải là ảnh'
-            ]);
+            DB::beginTransaction();
 
             $category = Category::find($id);
 
@@ -119,7 +133,7 @@ class CategoryController extends Controller
                 $public_id = Cloudinary::getPublicId();
             }
 //
-            $active = $request->get('active') ? 1 : 0;
+            $active = (int)$request['active'] == 1 ? true : false;
 
             $newCategory = [
                 'name' => $request->get('name'),
@@ -131,17 +145,15 @@ class CategoryController extends Controller
 
             $category->update($newCategory);
 
+            DB::commit();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Chỉnh sửa danh mục thành công'
             ]);
 
         }catch (\Exception $exception){
-            return response()->json([
-                'success' => false,
-                'message' => $exception->getMessage()
-            ], 500);
-        }catch (ValidationException $exception){
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => $exception->getMessage()
@@ -150,22 +162,30 @@ class CategoryController extends Controller
     }
 
     public function store(Request $request){
+        $valid = Validator::make($request->all(), [
+            'name' => 'required|unique:categories,name',
+            'active' => 'required',
+            'detail' => 'required',
+            'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ],[
+            'name.required' => 'Không được để trống name',
+            'name.unique' => 'Danh mục đã tồn tại trong cơ sở dữ liệu',
+            'active.require' => 'Active cần phải được thể hiện',
+            'image.image' => 'File phải là ảnh',
+            'image.mimes' => 'Định dạng của logo phải là jpeg, png, jpg hoặc gif'
+        ]);
+
+        if($valid->fails()){
+            return response()->json([
+                'success' => false,
+                'message' => $valid->errors()
+            ]);
+        }
+
         try {
 
-            $request->validate([
-                'name' => 'required|unique:categories,name',
-                'active' => 'required',
-                'detail' => 'required',
-                'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            ],[
-                'name.required' => 'Không được để trống name',
-                'name.unique' => 'Danh mục đã tồn tại trong cơ sở dữ liệu',
-                'active.require' => 'Active cần phải được thể hiện',
-                'image.image' => 'File phải là ảnh',
-                'image.mimes' => 'Định dạng của logo phải là jpeg, png, jpg hoặc gif'
-            ]);
+            DB::beginTransaction();
 
-            $image = $request->hasFile('image');
             $detail = json_decode($request->get('detail'));
             $parent_id = $request->get('parent_id') ?? null;
 
@@ -173,13 +193,6 @@ class CategoryController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => "cần ít nhất 1 chi tiết danh mục"
-                ], 404);
-            }
-
-            if (!$image) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ảnh danh mục không có'
                 ], 404);
             }
 //
@@ -216,7 +229,6 @@ class CategoryController extends Controller
                 ]);
 
                 foreach ($item->attribute as $value) {
-
                     $attribute = Attribute::create([
                         'detail_id' => $detail->id,
                         'name' => $value->value
@@ -224,29 +236,17 @@ class CategoryController extends Controller
                 }
             }
 
+            DB::commit();
+
+
             return response()->json([
                 'success' => true,
                 'message' => 'Category created successfully',
                 'data' => $category
             ], 201);
 
-
-        } catch (QueryException $e) {
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi cơ sở dữ liệu: ' . $e->getMessage()
-            ], 500);
-
-        }catch(ValidationException $exception){
-
-            return response()->json([
-                'success' => false,
-                'message' => $exception->getMessage()
-            ], 500);
-
         }catch (\Exception $exception){
-
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => $exception->getMessage()
@@ -263,7 +263,7 @@ class CategoryController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Không tìm thấy danh mục'
-                ]);
+                ], 404);
             }
 
             $category->delete();
@@ -271,7 +271,7 @@ class CategoryController extends Controller
             return response()->json([
                 'success' => true,
                 'massage' => 'Xóa danh mục thành công'
-            ]);
+            ], 200);
 
         }catch (ValidationException $exception){
             return response()->json([
