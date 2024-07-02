@@ -9,6 +9,8 @@ use App\Http\Controllers\api\DetailController;
 use App\Http\Controllers\api\RoleController;
 use App\Http\Controllers\api\UserController;
 use App\Http\Controllers\api\ValueController;
+use App\Http\Controllers\SlideController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\api\ProductController;
 
@@ -35,10 +37,12 @@ Route::prefix('auth')->group(function () {
 });
 
 Route::prefix('user')->group(function () {
-    Route::get('', [UserController::class, 'profile'])->middleware('auth:sanctum');
-    Route::post('', [UserController::class, 'store'])->middleware('auth:sanctum');
-    Route::post('/{id}', [UserController::class, 'update'])->middleware('auth:sanctum');
-    Route::post('/{id}', [UserController::class, 'destroy'])->middleware('auth:sanctum');
+    Route::get('list', [UserController::class, 'index']);
+    Route::get('', [UserController::class, 'profile']);
+    Route::post('', [UserController::class, 'store']);
+    Route::get('{id}', [UserController::class, 'edit']);
+    Route::post('/{id}', [UserController::class, 'update']);
+    Route::delete('/{id}', [UserController::class, 'delete']);
 });
 
 Route::middleware('auth:sanctum')->prefix('cart')->group(function () {
@@ -105,3 +109,16 @@ Route::prefix('product')->group(function () {
     Route::post('', [ProductController::class, 'store']);
 });
 
+
+Route::prefix('slider')
+    ->group(function () {
+
+        Route::post('/', [SlideController::class, 'store']);
+        Route::get('/', [SlideController::class, 'show']);
+        Route::delete('/{id}', [SlideController::class, 'destroy']);
+        Route::get('/{id}', [SlideController::class, 'edit']);
+        Route::post('/{id}', [SlideController::class, 'update']);
+    });
+
+
+    

@@ -32,6 +32,21 @@ use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
+    
+    public function index(){
+        try {
+            $items = User::orderBy('created_at', 'desc')->get();
+            return response()->json([
+                'sucsess' => true,
+                'data' => $items
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Đã xảy ra lỗi khi lấy dữ liệu.'
+            ], 500);
+        }
+    }
     public function profile(Request $request)
     {
         try {
@@ -50,70 +65,77 @@ class UserController extends Controller
             ], 500);
         }
     }
-    public function store(Request $request)
+
+    public function edit($id)
     {
         try {
-            $validatedData = $request->validate([
-                'name' => 'required|string|max:255',
-                'email' => 'required|string|email|max:255|unique:users',
-                'password' => 'required|string|min:8',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
-                'phone' => 'nullable|string|max:20',
-                'address_line1' => 'nullable|string|max:255',
-                'address_line2' => 'nullable|string|max:255',
-                'county' => 'nullable|string|max:255',
-                'district' => 'nullable|string|max:255',
-                'city' => 'nullable|string|max:255',
-                'role_id' => 'nullable|integer',
-                'in_active' => 'nullable|integer',
-                'virtual' => 'nullable|integer',
-            ], [
-                'image.image' => 'Hình ảnh phải là file hình ảnh',
-                'image.mimes' => 'Định dạng của hình ảnh phải là jpeg, png, jpg hoặc gif',
-            ]);
-
-            $validatedData['password'] = bcrypt($request->password);
-
-            // Upload image if exists
-            if ($request->hasFile('image')) {
-                $file = $request->file('image');
-                $fileName = $file->getClientOriginalName() . '-' . time() . '.' . rand(1, 1000000);
-
-                $url = Cloudinary::upload($file->getRealPath(), [
-                    'folder' => 'users',  // Replace 'users' with your desired folder
-                    'public_id' => $fileName
-                ])->getSecurePath();
-
-                if (!$url) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Tải file không thành công'
-                    ]);
-                }
-
-                $public_id = Cloudinary::getPublicId();
-
-                $validatedData['image'] = $url;
-                $validatedData['public_id'] = $public_id;
-            }
-
-            $user = User::create($validatedData);
+            
+            $user = User::findOrFail($id);
 
             return response()->json([
                 'success' => true,
-                'data' => $user,
-            ], 201);
+                'data' => $user
+            ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Máy chủ không hoạt động',
+                'message' => 'Đã xảy ra lỗi khi lấy dữ liệu thương hiệu.'
             ], 500);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ]);
         }
+    }
+    public function store(Request $request)
+    {
+        $validatedData = $request->validate([
+            'username' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
+            'phone' => 'nullable|string|max:20',
+            'address_line1' => 'nullable|string|max:255',
+            'address_line2' => 'nullable|string|max:255',
+            'county' => 'nullable|string|max:255',
+            'district' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'role_id' => 'nullable|integer',
+            'in_active' => 'nullable|integer',
+            'virtual' => 'nullable|integer',
+        ], [
+            'image.image' => 'Hình ảnh phải là file hình ảnh',
+            'image.mimes' => 'Định dạng của hình ảnh phải là jpeg, png, jpg hoặc gif',
+        ]);
+
+        $validatedData['password'] = bcrypt($request->password);
+
+        // Upload image if exists
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $fileName = $file->getClientOriginalName() . '-' . time() . '.' . rand(1, 1000000);
+
+            $url = Cloudinary::upload($file->getRealPath(), [
+                'folder' => 'users',  // Replace 'users' with your desired folder
+                'public_id' => $fileName
+            ])->getSecurePath();
+
+            if (!$url) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tải file không thành công'
+                ]);
+            }
+
+            $public_id = Cloudinary::getPublicId();
+
+            $validatedData['image'] = $url;
+            $validatedData['public_id'] = $public_id;
+            $validatedData['in_active'] = (int)$request->get("in_active");
+        }
+
+        $user = User::create($validatedData);
+
+        return response()->json([
+            'success' => true,
+            'data' => $user,
+        ], 201);
     }
 
     public function update(Request $request, $id)
