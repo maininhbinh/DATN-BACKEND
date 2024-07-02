@@ -236,15 +236,14 @@ class ProductController extends Controller
 
             foreach ($product_details as $detail) {
                 foreach ($detail->values as $value) {
-                    $valueModel = Value::create([
+                    Value::create([
                         'attribute_id' => $detail->id,
+                        'category_id' => $category_id,
                         'name' => $value,
                     ]);
 
-                    Log::channel('debug')->debug($detail->idDetail);
                     Product_detail::create([
                         'product_id' => $product->id,
-                        'value_id' => $valueModel->id,
                         'detail_id' => $detail->idDetail,
                     ]);
                 }
