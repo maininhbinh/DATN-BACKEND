@@ -102,6 +102,7 @@ Route::prefix('role')->group(function () {
 
 Route::prefix('product')->group(function () {
     Route::get('', [ProductController::class, 'index']);
+    Route::get('/{id}', [ProductController::class, 'detail']);
     Route::post('', [ProductController::class, 'store']);
 });
 

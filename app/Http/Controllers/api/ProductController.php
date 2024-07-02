@@ -35,6 +35,26 @@ class ProductController extends Controller
             ]);
         }
     }
+    public function detail(Request $request){
+        if($request->id != ""){
+            $id = 0;
+        }else{
+            $id = $request->id;
+        }
+
+        try {
+            $products = Product::with(['products.variants', 'category'])->where('id', $request->id)->first();
+            return response()->json([
+                'success' => true,
+                'data' => $products
+            ], 200);
+        }catch (\Exception $exception){
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ]);
+        }
+    }
     public function store(Request $request){
 
         $valid = Validator::make($request->all(),[
