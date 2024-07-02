@@ -27,7 +27,7 @@ class Product_item extends Model
     }
 
     public function variants(){
-        return $this->belongsToMany(Variant_option::class, 'product_configurations');
+        return $this->belongsToMany(Variant_option::class, 'product_configurations')->withPivot('id');
     }
 
 }

@@ -23,8 +23,10 @@ class ProductController extends Controller
 
     public function index(){
         try {
-            $products = Product::with(['products.variants' => function ($query){
-                $query->softBy('id', 'asc');
+            $products = Product::with(['products' => function ($query){
+                $query->with(['variants' => function ($query) {
+                    $query->orderBy('product_configurations.id', 'asc');
+                }]);
             }, 'category'])->get();
             return response()->json([
                 'success' => true,
