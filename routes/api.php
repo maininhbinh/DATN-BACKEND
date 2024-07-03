@@ -6,6 +6,8 @@ use App\Http\Controllers\api\CategoryController;
 use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\CartController;
 use App\Http\Controllers\api\DetailController;
+
+use App\Http\Controllers\api\OrderController;
 use App\Http\Controllers\api\ProductDetailController;
 use App\Http\Controllers\api\RoleController;
 use App\Http\Controllers\api\UserController;
@@ -121,4 +123,10 @@ Route::prefix('product')->group(function () {
     Route::post('', [ProductController::class, 'store']);
 });
 
-
+Route::prefix('order')->group(function () {
+    Route::get('', [OrderController::class, 'index']);
+    Route::post('', [OrderController::class, 'store']);
+    Route::get('/{id}', [OrderController::class, 'edit']);
+    Route::post('/{id}', [OrderController::class, 'update']);
+  
+});
