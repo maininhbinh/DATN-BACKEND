@@ -36,14 +36,8 @@ class ProductController extends Controller
         }
     }
     public function detail(Request $request){
-        if($request->id != ""){
-            $id = 0;
-        }else{
-            $id = $request->id;
-        }
-
         try {
-            $products = Product::with(['products.variants', 'category'])->where('id', $request->id)->first();
+            $products = Product::with(['products.variants', 'category'])->where('public_id', $request->slug)->first();
             return response()->json([
                 'success' => true,
                 'data' => $products
