@@ -7,14 +7,15 @@ use App\Models\Gallery;
 use App\Models\Product;
 use App\Models\Product_detail;
 use App\Models\Product_item;
+use App\Models\Product_value;
 use App\Models\Value;
 use App\Models\Variant;
 use App\Models\Variant_option;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use App\Helpers\Validator as IValidator;
 
 class ProductController extends Controller
 {
@@ -23,10 +24,54 @@ class ProductController extends Controller
 
     public function index(){
         try {
-            $products = Product::with(['products.variants', 'category'])->get();
+            $products = Product::with(['products.variants'])->get();
             return response()->json([
                 'success' => true,
                 'data' => $products
+            ], 200);
+        }catch (\Exception $exception){
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ]);
+        }
+    }
+
+    public function featProducts(Request $request){
+        try{
+            $products = Product::where($request->feat, true)->get();
+            return response()->json([
+                'success' => true,
+                'data' => $products
+            ], 200);
+        }catch (\Exception $exception){
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ]);
+        }
+    }
+
+    public function show(Request $request){
+
+        try {
+            $product = Product::where('slug', $request->slug)->with(['products.variants', 'category', 'brand', 'details.attributes' => function ($query) use ($request){
+                $query->with(['values' => function($query) use ($request) {
+                    $query->whereHas('products', function ($query) use ($request) {
+                        $query->where('slug', $request->slug);
+                    });
+                }]);
+            }])->firstOrFail();
+
+            if(!$product){
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Không thể tìm thấy sản phẩm'
+                ], 404);
+            }
+            return response()->json([
+                'success' => true,
+                'data' => $product
             ], 200);
         }catch (\Exception $exception){
             return response()->json([
@@ -135,15 +180,32 @@ class ProductController extends Controller
                 $product_index = 0;
 
                 foreach ($variants as $variant) {
-                    $variantModel = Variant::firstOrCreate(['name' => $variant->name]);
+                    $name = IValidator::validatorName($variant->name);
+                    $variantModel = Variant::firstOrCreate(
+                        [
+                            'name' => $name
+                        ],
+                        [
+                            'category_id' => $category_id,
+                            'name' => $name
+                        ]
+                    );
                     array_push($variantId, $variantModel);
                 }
 
                 foreach ($variants[0]->attribute as $attribute) {
-                    $variantParent = Variant_option::firstOrCreate([
-                        'variant_id' => $variantId[0]->id,
-                        'name' => $attribute,
-                    ]);
+
+                    $name = IValidator::validatorName($attribute);
+
+                    $variantParent = Variant_option::firstOrCreate(
+                        [
+                            'name' => $name
+                        ],
+                        [
+                            'variant_id' => $variantId[0]->id,
+                            'name' => $name,
+                        ]
+                    );
 
                     if (count($variants) > 1) {
 
@@ -172,10 +234,15 @@ class ProductController extends Controller
 
                                 }
 
-                                $variant_option = Variant_option::firstOrCreate([
+                                $variant_option = Variant_option::firstOrCreate(
+                                    [
+                                        'name' => $value
+                                    ],
+                                    [
                                     'variant_id' => $variantId[1]->id,
                                     'name' => $value,
-                                ]);
+                                    ]
+                                );
 
                                 $product_item = Product_item::create([
                                     'product_id' => $product->id,
@@ -236,10 +303,20 @@ class ProductController extends Controller
 
             foreach ($product_details as $detail) {
                 foreach ($detail->values as $value) {
-                    Value::create([
-                        'attribute_id' => $detail->id,
-                        'category_id' => $category_id,
-                        'name' => $value,
+                    $name = IValidator::validatorName($value);
+                    $value = Value::firstOrCreate(
+                        [
+                          'name' => $name
+                        ],
+                        [
+                            'attribute_id' => $detail->id,
+                            'name' => $name,
+                        ]
+                    );
+
+                    Product_value::create([
+                        'product_id' => $product->id,
+                        'value_id' => $value->id
                     ]);
 
                     Product_detail::create([

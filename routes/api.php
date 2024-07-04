@@ -107,6 +107,8 @@ Route::prefix('role')->group(function () {
 Route::prefix('product')->group(function () {
     Route::get('', [ProductController::class, 'index']);
     Route::post('', [ProductController::class, 'store']);
+    Route::get('/{slug}', [ProductController::class, 'show']);
+    Route::get('/home/{feat}', [ProductController::class, 'featProducts']);
 });
 
 
@@ -121,4 +123,4 @@ Route::prefix('slider')
     });
 
 
-    
+

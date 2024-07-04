@@ -6,11 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Attribute;
 use App\Models\Category;
 use App\Models\Detail;
+use App\Models\detail_category;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
@@ -224,8 +223,12 @@ class CategoryController extends Controller
 
             foreach ($detail as $item) {
                 $detail = Detail::create([
-                    'category_id' => $category->id,
                     'name' => $item->name,
+                ]);
+
+                Detail_category::create([
+                    'detail_id' => $detail->id,
+                    'category_id' => $category->id,
                 ]);
 
                 foreach ($item->attribute as $value) {
