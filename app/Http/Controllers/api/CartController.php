@@ -12,13 +12,25 @@ class CartController extends Controller
     public function index()
     {
         try {
+            $items = Cart::where('user_id', Auth::id())->with('productItem')->get();
 
-            $items = Cart::where('user_id', Auth::id())->get();
+            $items = $items->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'user_id' => $item->user_id,
+                    'product_item_id' => $item->product_item_id,
+                    'quantity' => $item->quantity,
+                    'product' => [
+                        'image' => $item->productItem->image,
+                        'price' => $item->productItem->price,
+                    ],
+                ];
+            });
+
             return response()->json([
                 'success' => true,
                 'data' => $items
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -27,18 +39,19 @@ class CartController extends Controller
             ], 500);
         }
     }
+
     public function store(Request $request)
     {
         try {
             $request->validate([
-                'product_attr_id' => 'required|exists:product_attrs,id',
+                'product_item_id' => 'required|exists:products_item,id',
                 'quantity' => 'required|integer|min:1',
             ]);
 
             $cart = Cart::updateOrCreate(
                 [
                     'user_id' => Auth::id(),
-                    'product_attr_id' => $request->product_attr_id,
+                    'product_item_id' => $request->product_item_id,
                 ],
                 [
                     'quantity' => $request->quantity,
@@ -50,7 +63,6 @@ class CartController extends Controller
                 'message' => 'Sản phẩm đã được thêm vào giỏ hàng',
                 'data' => $cart
             ], 201);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -103,6 +115,7 @@ class CartController extends Controller
             ], 500);
         }
     }
+
     public function destroyAll()
     {
         try {
