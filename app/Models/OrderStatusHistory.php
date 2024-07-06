@@ -9,11 +9,11 @@ class OrderStatusHistory extends Model
 {
     use HasFactory;
     protected $table = 'order_status_histories';
-    protected $fillable = ['order_id', 'order_status_id'];
+    protected $fillable = ['order_id', 'status'];
 
-    // Định nghĩa mối quan hệ với OrderStatus
-    public function status()
+
+    public function order()
     {
-        return $this->belongsTo(OrderStatus::class, 'order_status_id');
+        return $this->belongsTo(Order::class);
     }
 }

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\api;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderStatus;
+use App\Models\OrderStatusHistory;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -104,6 +106,13 @@ class OrderController extends Controller
             $orderData['order_status_name'] = $orderStatus->name;
 
             $item = Order::create($orderData);
+            OrderStatusHistory::create(
+                [
+                    'order_id' => $item->id,
+                    'status' => $item->order_status_name,
+                    'timestamp' => Carbon::now()
+                ]
+            );
             return response()->json($item, 201);
         } catch (\Exception $e) {
             return response()->json([
@@ -117,19 +126,6 @@ class OrderController extends Controller
     /**
      * Display the specified resource.
      */
-    public function edit(string $id)
-    {
-        try {
-            $item = Order::findOrFail($id);
-            return response()->json($item, 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Không tìm thấy đơn hàng.'
-            ], 404);
-        }
-    }
-
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
@@ -149,12 +145,58 @@ class OrderController extends Controller
 
         try {
             $item = Order::findOrFail($id);
+
+            $statuses = OrderStatus::pluck('id')->toArray();
+            $cancelledStatusId = OrderStatus::where('name', 'Cancelled')->first()->id;
+            $currentStatusId = $item->order_status_id;
+            $newStatusId = $request->order_status_id;
+
+            if (!in_array($newStatusId, $statuses)) {
+                return response()->json(['message' => 'Trạng thái không hợp lệ'], 400);
+            }
+
+            $currentIndex = array_search($currentStatusId, $statuses);
+            $newIndex = array_search($newStatusId, $statuses);
+
+            if ($newStatusId != $currentStatusId && $newStatusId != $cancelledStatusId && $newIndex !== $currentIndex + 1) {
+                return response()->json(['message' => 'Trạng thái không hợp lệ. Vui lòng cập nhật theo thứ tự.'], 400);
+            }
+
             $item->update($request->all());
+
+            if ($newStatusId != $currentStatusId) {
+                $item->order_status_id = $newStatusId;
+                $item->save();
+
+                OrderStatusHistory::create([
+                    'order_id' => $item->id,
+                    'status' => OrderStatus::find($newStatusId)->name, // lấy tên trạng thái mới
+                    'timestamp' => Carbon::now()
+                ]);
+            }
+
             return response()->json($item);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Đã xảy ra lỗi khi cập nhật hoá đơn.'
+            ], 500);
+        }
+    }
+    public function getOrderStatusHistory($orderId)
+    {
+        try {
+            $orderStatusHistory = OrderStatusHistory::where('order_id', $orderId)->get();
+
+            if ($orderStatusHistory->isEmpty()) {
+                return response()->json(['message' => 'Không có lịch sử trạng thái cho đơn hàng này.'], 404);
+            }
+
+            return response()->json($orderStatusHistory);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Đã xảy ra lỗi khi lấy lịch sử trạng thái đơn hàng.'
             ], 500);
         }
     }

@@ -108,15 +108,6 @@ Route::prefix('role')->group(function () {
     Route::post('/{id}/restore', [RoleController::class, 'restore']);
 });
 
-Route::prefix('product-detail')->group(function () {
-    Route::get('', [ProductDetailController::class, 'index']);
-    Route::post('', [ProductDetailController::class, 'store']);
-    Route::get('/{id}', [ProductDetailController::class, 'edit']);
-    Route::post('/{id}', [ProductDetailController::class, 'update']);
-    Route::delete('/{id}', [ProductDetailController::class, 'delete']);
-    Route::post('/{id}/restore', [ProductDetailController::class, 'restore']);
-});
-
 
 Route::prefix('product')->group(function () {
     Route::get('', [ProductController::class, 'index']);
@@ -128,5 +119,5 @@ Route::prefix('order')->group(function () {
     Route::post('', [OrderController::class, 'store']);
     Route::get('/{id}', [OrderController::class, 'edit']);
     Route::post('/{id}', [OrderController::class, 'update']);
-  
+    Route::get('/{id}/status-history', [OrderController::class, 'getOrderStatusHistory']);
 });

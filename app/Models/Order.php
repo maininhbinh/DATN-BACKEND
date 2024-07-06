@@ -49,4 +49,16 @@ class Order extends Model
     {
         return $this->hasMany(OrderStatusHistory::class);
     }
+
+    // protected static function booted()
+    // {
+    //     static::created(function ($order) {
+    //         // Khi một bản ghi được tạo trong bảng Orders, tạo một bản ghi tương ứng trong bảng OrderStatusHistories
+    //         OrderStatusHistory::create([
+    //             'order_id' => $order->id,
+    //             'status' => $order->order_status_name,
+    //             'changed_at' => now(),
+    //         ]);
+    //     });
+    // }
 }
