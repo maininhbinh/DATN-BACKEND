@@ -14,7 +14,7 @@ class Order extends Model
         'total_price',
         'note',
         'order_type',
-        'status',
+        'order_status_id',
         'receiver_name',
         'receiver_email',
         'receiver_phone',
@@ -28,5 +28,25 @@ class Order extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+    public function status()
+    {
+        return $this->belongsTo(OrderStatus::class, 'status_name', 'name');
+    }
+    public function orderStatus()
+    {
+        return $this->belongsTo(OrderStatus::class);
+    }
+
+    protected $appends = ['order_status_name'];
+
+    public function getOrderStatusNameAttribute()
+    {
+        return $this->orderStatus ? $this->orderStatus->name : null;
+    }
+
+    public function statusHistories()
+    {
+        return $this->hasMany(OrderStatusHistory::class);
     }
 }

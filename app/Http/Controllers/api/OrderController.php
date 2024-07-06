@@ -4,6 +4,7 @@ namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\OrderStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -37,12 +38,45 @@ class OrderController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+    // public function store(Request $request)
+    // {
+    //     $validator = Validator::make($request->all(), [
+    //         'total_price' => 'required|numeric',
+    //         'order_type' => 'required|string',
+    //         'receiver_name' => 'required|string',
+    //         'receiver_email' => 'required|string|email',
+    //         'receiver_phone' => 'required|string',
+    //         'receiver_address' => 'required|string',
+    //         'shipping_status' => 'string',
+    //         'payment_status' => 'required|string',
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return response()->json(['message' => $validator->errors()], 400);
+    //     }
+
+    //     try {
+    //         $orderData = $request->all();
+    //         if (Auth::check()) {
+    //             $orderData['user_id'] = Auth::id();
+    //         } else {
+    //             $orderData['user_id'] = null;
+    //         }
+
+    //         $item = Order::create($orderData);
+    //         return response()->json($item, 201);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => $e
+    //         ], 500);
+    //     }
+    // }
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'total_price' => 'required|numeric',
             'order_type' => 'required|string',
-            'status' => 'required|string',
             'receiver_name' => 'required|string',
             'receiver_email' => 'required|string|email',
             'receiver_phone' => 'required|string',
@@ -63,15 +97,22 @@ class OrderController extends Controller
                 $orderData['user_id'] = null;
             }
 
+            // Nếu order_status_id không tồn tại trong request, sử dụng giá trị mặc định là 1
+            $orderStatusId = $request->order_status_id ?? 1;
+            $orderStatus = OrderStatus::findOrFail($orderStatusId);
+            $orderData['order_status_id'] = $orderStatusId;
+            $orderData['order_status_name'] = $orderStatus->name;
+
             $item = Order::create($orderData);
             return response()->json($item, 201);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Đã xảy ra lỗi khi lấy dữ liệu.'
+                'message' => 'Đã xảy ra lỗi khi tạo đơn hàng: ' . $e->getMessage()
             ], 500);
         }
     }
+
 
     /**
      * Display the specified resource.
@@ -94,7 +135,6 @@ class OrderController extends Controller
         $validator = Validator::make($request->all(), [
             'total_price' => 'required|numeric',
             'order_type' => 'required|string',
-            'status' => 'required|string',
             'receiver_name' => 'required|string',
             'receiver_email' => 'required|string|email',
             'receiver_phone' => 'required|string',
@@ -117,14 +157,5 @@ class OrderController extends Controller
                 'message' => 'Đã xảy ra lỗi khi cập nhật hoá đơn.'
             ], 500);
         }
-    }
-
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
     }
 }

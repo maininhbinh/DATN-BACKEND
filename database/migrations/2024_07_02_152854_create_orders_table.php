@@ -17,7 +17,7 @@ return new class extends Migration
             $table->float('total_price');
             $table->string('note')->nullable();
             $table->string('order_type');
-            $table->string('status');
+            $table->unsignedBigInteger('order_status_id')->default(1);
             $table->string('receiver_name');
             $table->string('receiver_email');
             $table->string('receiver_phone');
