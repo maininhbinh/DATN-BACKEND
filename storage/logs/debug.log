@@ -6,3 +6,24 @@
 [2024-07-04 01:55:40] local.DEBUG: 190hz  
 [2024-07-04 01:55:40] local.DEBUG: 880hz  
 [2024-07-04 01:55:40] local.DEBUG: 553hz  
+[2024-07-08 02:36:49] local.DEBUG: array (
+  0 => 
+  (object) array(
+     'variant' => 'color',
+     'attribute' => 'xanh',
+  ),
+)  
+[2024-07-08 02:37:55] local.DEBUG: array (
+  0 => 
+  (object) array(
+     'variant' => 'color',
+     'attribute' => 'xanh',
+  ),
+)  
+[2024-07-08 02:40:25] local.DEBUG: array (
+  0 => 
+  (object) array(
+     'variant' => 'color',
+     'attribute' => 'xanh',
+  ),
+)  

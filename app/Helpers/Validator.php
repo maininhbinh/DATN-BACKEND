@@ -2,7 +2,6 @@
 namespace App\Helpers;
 
 use Illuminate\Support\Facades\Validator as UseValidator;
-use Illuminate\Validation\Rule;
 
 class Validator
 {
