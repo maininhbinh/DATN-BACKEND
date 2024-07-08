@@ -72,12 +72,8 @@ class SlideController extends Controller
         $slide = Slide::findOrFail($id); // Tìm slide hoặc trả về lỗi 404 nếu không tìm thấy
 
 
-
-
-
         $old_image_url = $slide->image_url;
         $old_public_id = $slide->public_id;
-
 
         $image_url = $request->hasFile('image');
 
