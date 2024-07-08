@@ -1,14 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\api;
 
+use App\Http\Controllers\Controller;
+use App\Models\Slide;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-
-
-use App\Models\Slide;
-
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 
 class SlideController extends Controller
@@ -43,7 +41,7 @@ class SlideController extends Controller
     public function edit($id)
     {
         try {
-            
+
             $slider = Slide::findOrFail($id);
 
             return response()->json([
