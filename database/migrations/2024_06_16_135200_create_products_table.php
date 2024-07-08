@@ -28,6 +28,7 @@ return new class extends Migration
             $table->unsignedBigInteger('total_review')->nullable();
             $table->unsignedBigInteger('avg_stars')->nullable();
             $table->text('public_id');
+            $table->string('slug');
             $table->softDeletes('deleted_at')->nullable();
             $table->timestamps();
         });

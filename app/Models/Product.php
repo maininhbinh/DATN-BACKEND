@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use Cviebrock\EloquentSluggable\Sluggable;
+use Cviebrock\EloquentSluggable\SluggableScopeHelpers;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, Sluggable, SluggableScopeHelpers;
 
     const TYPE_DISCOUNT = [
         'percentage',
@@ -30,7 +32,8 @@ class Product extends Model
         'discount',
         'total_review',
         'avg_stars',
-        'public_id'
+        'public_id',
+        'slug'
     ];
 
     public function category(){
@@ -50,7 +53,20 @@ class Product extends Model
     }
 
     public function details(){
-        return $this->belongsToMany(Detail::class, 'product_details')->withPivot('value_id')->withTimestamps();
+        return $this->belongsToMany(Detail::class, 'product_details');
+    }
+
+    public function values(){
+        return $this->belongsToMany(Value::class, 'product_values');
+    }
+
+    public function sluggable(): array
+    {
+        return [
+            'slug' => [
+                'source' => 'name'
+            ]
+        ];
     }
 
 }
