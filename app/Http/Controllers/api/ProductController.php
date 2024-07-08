@@ -43,7 +43,7 @@ class ProductController extends Controller
 
     public function featProducts(Request $request){
         try{
-            $products = Product::where($request->feat, true)->with(['products.variants', 'category', 'brand', 'details.attributes'])->get();
+            $products = Product::where($request->feat, true)->with(['products.variants'])->get();
             return response()->json([
                 'success' => true,
                 'data' => $products
