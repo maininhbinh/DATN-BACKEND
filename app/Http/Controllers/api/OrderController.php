@@ -18,8 +18,14 @@ class OrderController extends Controller
      */
     public function index()
     {
+        $user = Auth::user();
         try {
             $item = Order::orderBy('created_at', 'desc')->get();
+            if ($user->role_id == 1 || $user->role_id == 2) {
+                $item = Order::orderBy('created_at', 'desc')->get();
+            } else {
+                $item = Order::where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
+            }
             return response()->json($item, 200);
         } catch (\Exception $e) {
             return response()->json([
