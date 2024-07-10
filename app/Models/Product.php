@@ -45,7 +45,7 @@ class Product extends Model
     }
 
     public function products(){
-        return $this->hasMany(Product_item::class);
+        return $this->hasMany(ProductItem::class);
     }
 
     public function galleries(){

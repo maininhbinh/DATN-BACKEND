@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Attribute;
 use App\Models\Category;
 use App\Models\Detail;
-use App\Models\detail_category;
+use App\Models\DetailCategory;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -226,7 +226,7 @@ class CategoryController extends Controller
                     'name' => $item->name,
                 ]);
 
-                Detail_category::create([
+                DetailCategory::create([
                     'detail_id' => $detail->id,
                     'category_id' => $category->id,
                 ]);

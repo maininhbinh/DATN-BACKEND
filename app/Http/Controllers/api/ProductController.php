@@ -5,12 +5,12 @@ namespace App\Http\Controllers\api;
 use App\Http\Controllers\Controller;
 use App\Models\Gallery;
 use App\Models\Product;
-use App\Models\Product_detail;
-use App\Models\Product_item;
-use App\Models\Product_value;
+use App\Models\ProductDetail;
+use App\Models\ProductItem;
+use App\Models\ProductValue;
 use App\Models\Value;
 use App\Models\Variant;
-use App\Models\Variant_option;
+use App\Models\VariantOption;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,20 +24,25 @@ class ProductController extends Controller
 
     public function index(){
         try {
+
             $products = Product::with(['products' => function ($query){
                 $query->with(['variants' => function ($query) {
                     $query->orderBy('product_configurations.id', 'asc');
                 }]);
             }, 'category'])->get();
+
             return response()->json([
                 'success' => true,
                 'data' => $products
             ], 200);
+
         }catch (\Exception $exception){
+
             return response()->json([
                 'success' => false,
                 'message' => $exception->getMessage()
             ]);
+
         }
     }
 
@@ -198,7 +203,7 @@ class ProductController extends Controller
 
                     }
 
-                    $product_item = Product_item::create([
+                    $product_item = ProductItem::create([
                         'product_id' => $product->id,
                         'price' => $item->price,
                         'price_sale' => $item->price_sale,
@@ -223,7 +228,7 @@ class ProductController extends Controller
                         );
 
 
-                        $variant_option = Variant_option::firstOrCreate(
+                        $variant_option = VariantOption::firstOrCreate(
                             [
                                 'name' => $attribute
                             ],
@@ -257,12 +262,12 @@ class ProductController extends Controller
                         ]
                     );
 
-                    Product_value::create([
+                    ProductValue::create([
                         'product_id' => $product->id,
                         'value_id' => $value->id
                     ]);
 
-                    Product_detail::create([
+                    ProductDetail::create([
                         'product_id' => $product->id,
                         'detail_id' => $detail->idDetail,
                     ]);

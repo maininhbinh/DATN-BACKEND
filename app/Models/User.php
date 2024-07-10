@@ -12,12 +12,6 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    const Role_id = [
-        'USER' => 1,
-        'STAFF' => 2,
-        'ADMIN' => 3,
-    ];
-
     /**
      * The attributes that are mass assignable.
      *
@@ -36,8 +30,6 @@ class User extends Authenticatable
         'city',
         'role_id',
         'in_active',
-        'virtual'
-        
     ];
 
     public function role()
@@ -85,9 +77,5 @@ class User extends Authenticatable
     public function getJWTCustomClaims()
     {
         return [];
-    }
-    public function orders()
-    {
-        return $this->hasMany(Orders::class);
     }
 }

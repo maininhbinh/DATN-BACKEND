@@ -14,6 +14,6 @@ class Variant extends Model
     ];
 
     public function variants(){
-        return $this->hasMany(Varian_option::class);
+        return $this->hasMany(VariantOption::class);
     }
 }
