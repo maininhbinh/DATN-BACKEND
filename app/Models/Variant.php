@@ -12,7 +12,12 @@ class Variant extends Model
         'name'
     ];
 
-    public function variants(){
-        return $this->hasMany(Varian_option::class);
+    public function variants()
+    {
+        return $this->hasMany(Variant_option::class);
+    }
+    public function variantOptions()
+    {
+        return $this->hasMany(Variant_option::class);
     }
 }
