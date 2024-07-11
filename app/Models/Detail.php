@@ -10,13 +10,12 @@ class Detail extends Model
     use HasFactory;
     protected $table = 'details';
     protected $fillable = [
-        'category_id',
         'name'
     ];
 
 
     public function category(){
-        return $this->belongsTo(Category::class);
+        return $this->belongsToMany(Category::class, 'detail_categories');
     }
 
     public function attributes(){

@@ -5,16 +5,17 @@ namespace App\Http\Controllers\api;
 use App\Http\Controllers\Controller;
 use App\Models\Gallery;
 use App\Models\Product;
-use App\Models\Product_detail;
-use App\Models\Product_item;
+use App\Models\ProductDetail;
+use App\Models\ProductItem;
+use App\Models\ProductValue;
 use App\Models\Value;
 use App\Models\Variant;
-use App\Models\Variant_option;
+use App\Models\VariantOption;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use App\Helpers\Validator as IValidator;
 
 class ProductController extends Controller
 {
@@ -23,7 +24,31 @@ class ProductController extends Controller
 
     public function index(){
         try {
-            $products = Product::with(['products.variants', 'category'])->get();
+
+            $products = Product::with(['products' => function ($query){
+                $query->with(['variants' => function ($query) {
+                    $query->orderBy('product_configurations.id', 'asc');
+                }]);
+            }, 'category'])->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $products
+            ], 200);
+
+        }catch (\Exception $exception){
+
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ]);
+
+        }
+    }
+
+    public function featProducts(Request $request){
+        try{
+            $products = Product::where($request->feat, true)->with(['products.variants'])->get();
             return response()->json([
                 'success' => true,
                 'data' => $products
@@ -35,19 +60,47 @@ class ProductController extends Controller
             ]);
         }
     }
+
+    public function show(Request $request){
+
+        try {
+            $product = Product::where('slug', $request->slug)->with(['products.variants', 'category', 'brand', 'details.attributes' => function ($query) use ($request){
+                $query->with(['values' => function($query) use ($request) {
+                    $query->whereHas('products', function ($query) use ($request) {
+                        $query->where('slug', $request->slug);
+                    });
+                }]);
+            }])->firstOrFail();
+
+            if(!$product){
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Không thể tìm thấy sản phẩm'
+                ], 404);
+            }
+            return response()->json([
+                'success' => true,
+                'data' => $product
+            ], 200);
+        }catch (\Exception $exception){
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ]);
+        }
+    }
     public function store(Request $request){
 
         $valid = Validator::make($request->all(),[
-                'thumbnail' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-                "name" => "required|max:155|min:10",
-                "content" => "required",
-                "category_id" => "required",
-                'brand_id' => "required",
-                "is_active" => "required",
-                "product_details" => "required",
-                "product_items" => "required",
-                "variants" => "required",
-            ],
+            'thumbnail' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            "name" => "required|max:155|min:10",
+            "content" => "required",
+            "category_id" => "required",
+            'brand_id' => "required",
+            "is_active" => "required",
+            "product_details" => "required",
+            "product_items" => "required",
+        ],
             [
                 "thumbnail" => "Sản phẩm phải có ảnh đại diện",
                 "thumbnail.image" => 'thumbnail phải là ảnh',
@@ -61,7 +114,6 @@ class ProductController extends Controller
                 "is_active" => "Chưa lựa chọn loại hiển thị",
                 "product_details" => 'Chưa có thông tin chi tiết',
                 "product_items" => "Chưa có biến thể",
-                "variants" => 'Chưa có biến thể',
             ]
         );
 
@@ -85,20 +137,12 @@ class ProductController extends Controller
         $discount = $request->get("discount") ? $request->get("discount") : null;
         $product_details = json_decode($request->get('product_details'));
         $product_items = json_decode($request->get('product_items'));
-        $variants = json_decode($request->get('variants'));
         $gallery = json_decode($request->get('gallery'));
 
         if(count($product_items)<1){
             return response()->json([
                 "success" => false,
                 "message" => 'Chưa có sản phẩm'
-            ], 404);
-        }
-
-        if(count($variants) < 1){
-            return response()->json([
-                "success" => false,
-                "message" => 'Sản phẩm phải có biến thể'
             ], 404);
         }
 
@@ -131,126 +175,106 @@ class ProductController extends Controller
                 'public_id' => $public_id,
             ]);
 
-                $variantId  = [];
-                $product_index = 0;
+            foreach ($product_items as $item) {
+                if (!empty($item)) {
 
-                foreach ($variants as $variant) {
-                    $variantModel = Variant::firstOrCreate(['name' => $variant->name]);
-                    array_push($variantId, $variantModel);
-                }
+                    $hasFile = isset($item->image);
 
-                foreach ($variants[0]->attribute as $attribute) {
-                    $variantParent = Variant_option::firstOrCreate([
-                        'variant_id' => $variantId[0]->id,
-                        'name' => $attribute,
-                    ]);
+                    if($hasFile){
 
-                    if (count($variants) > 1) {
+                        $imageData = $item->image;
+                        $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $imageData);
+                        $imageData = base64_decode($imageData);
 
-                        foreach ($variants[1]->attribute as $value) {
-                            if (!empty($value)) {
+                        $tempImagePath = storage_path('app/temp_image.jpg');
+                        file_put_contents($tempImagePath, $imageData);
 
-                                $hasFile = isset($product_items[$product_index]->image);
+                        $url_item = Cloudinary::upload($tempImagePath, [
+                            'folder' => self::FOLDER,
+                            'public_id' => "variant-".implode('-', array_reduce($item->variants, function($array, $item){
+                                    $array[] = $item->attribute;
+                                    return $array;
+                                }, []))."-".rand(1, 1000000)
+                        ])->getSecurePath();
 
-                                if($hasFile){
+                        $public_id = Cloudinary::getPublicId();
 
-                                    $imageData = $product_items[$product_index]->image;
-                                    $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $imageData);
-                                    $imageData = base64_decode($imageData);
-
-                                    $tempImagePath = storage_path('app/temp_image.jpg');
-                                    file_put_contents($tempImagePath, $imageData);
-
-                                    $url_item = Cloudinary::upload($tempImagePath, [
-                                        'folder' => self::FOLDER,
-                                        'public_id' => "variant-$attribute-".rand(1, 1000000)
-                                    ])->getSecurePath();
-
-                                    $public_id = Cloudinary::getPublicId();
-
-                                    unlink($tempImagePath);
-
-                                }
-
-                                $variant_option = Variant_option::firstOrCreate([
-                                    'variant_id' => $variantId[1]->id,
-                                    'name' => $value,
-                                ]);
-
-                                $product_item = Product_item::create([
-                                    'product_id' => $product->id,
-                                    'price' => $product_items[$product_index]->price,
-                                    'price_sale' => $product_items[$product_index]->price_sale,
-                                    'image' => $hasFile ? $url_item : null,
-                                    'quantity' => $product_items[$product_index]->quantity,
-                                    'sku' => $product_items[$product_index]->sku,
-                                    'public_id' => $hasFile ? $public_id : null,
-                                ]);
-
-                                $product_item->variants()->attach($variantParent->id);
-                                $product_item->variants()->attach($variant_option->id);
-
-                                $product_index++;
-
-                            }
-                        }
-
-                    } else {
-
-                        $hasFile = isset($product_items[$product_index]->image);
-
-                        if($hasFile){
-                            $imageData = $product_items[$product_index]->image;
-                            $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $imageData);
-                            $imageData = base64_decode($imageData);
-
-                            $tempImagePath = storage_path('app/temp_image.jpg');
-                            file_put_contents($tempImagePath, $imageData);
-
-                            $url_item = Cloudinary::upload($tempImagePath, [
-                                'folder' => self::FOLDER,
-                                'public_id' => "variant-$attribute-".rand(1, 1000000)
-                            ])->getSecurePath();
-
-                            $public_id = Cloudinary::getPublicId();
-
-                            unlink($tempImagePath);
-
-                        }
-
-                        $product_item = Product_item::create([
-                            'product_id' => $product->id,
-                            'price' => $product_items[$product_index]->price,
-                            'price_sale' => $product_items[$product_index]->price_sale,
-                            'image' => $hasFile ? $url_item : null,
-                            'quantity' => $product_items[$product_index]->quantity,
-                            'sku' => $product_items[$product_index]->sku,
-                            'public_id' => $hasFile ? $public_id : null,
-                        ]);
-
-                        $product_item->variants()->attach($variantParent->id);
-                        $product_index++;
+                        unlink($tempImagePath);
 
                     }
+
+                    $product_item = ProductItem::create([
+                        'product_id' => $product->id,
+                        'price' => $item->price,
+                        'price_sale' => $item->price_sale,
+                        'image' => $hasFile ? $url_item : null,
+                        'quantity' => $item->quantity,
+                        'sku' => $item->sku,
+                        'public_id' => $hasFile ? $public_id : null,
+                    ]);
+
+                    foreach ($item->variants as $variant) {
+                        $variant = \App\Helpers\Validator::validatorName($variant->variant);
+                        $attribute = \App\Helpers\Validator::validatorName($variant->attribute);
+
+                        $variantModel = Variant::firstOrCreate(
+                            [
+                                'name' => $variant
+                            ],
+                            [
+                                'category_id' => $category_id,
+                                'name' => $variant
+                            ]
+                        );
+
+
+                        $variant_option = VariantOption::firstOrCreate(
+                            [
+                                'name' => $attribute
+                            ],
+                            [
+                                'variant_id' => $variantModel->id,
+                                'name' => $attribute,
+                            ]
+                        );
+
+                        $product_item->variants()->attach($variant_option->id);
+                    }
+
+                }else{
+                    return response()->json([
+                        "success" => false,
+                        "message" => 'Thêm sản phẩm không thành công'
+                    ], 500);
                 }
+            }
 
             foreach ($product_details as $detail) {
                 foreach ($detail->values as $value) {
-                    $valueModel = Value::create([
-                        'attribute_id' => $detail->id,
-                        'name' => $value,
+                    $name = IValidator::validatorName($value);
+                    $value = Value::firstOrCreate(
+                        [
+                            'name' => $name
+                        ],
+                        [
+                            'attribute_id' => $detail->id,
+                            'name' => $name,
+                        ]
+                    );
+
+                    ProductValue::create([
+                        'product_id' => $product->id,
+                        'value_id' => $value->id
                     ]);
 
-                    Log::channel('debug')->debug($detail->idDetail);
-                    Product_detail::create([
+                    ProductDetail::create([
                         'product_id' => $product->id,
-                        'value_id' => $valueModel->id,
                         'detail_id' => $detail->idDetail,
                     ]);
                 }
             }
 
-            foreach ($gallery as $item) {
+            foreach ($gallery as $key => $item) {
                 $image = $item->image;
 
                 $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $image);
@@ -261,7 +285,7 @@ class ProductController extends Controller
 
                 $url_gallery = Cloudinary::upload($tempImagePath, [
                     'folder' => self::FOLDER,
-                    'public_id' => "variant-$attribute-".rand(1, 1000000)
+                    'public_id' => "$name-$key".rand(1, 1000000)
                 ])->getSecurePath();
 
                 $public_id = Cloudinary::getPublicId();

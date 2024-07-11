@@ -6,11 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Attribute;
 use App\Models\Category;
 use App\Models\Detail;
+use App\Models\DetailCategory;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
@@ -77,25 +76,25 @@ class CategoryController extends Controller
 
     public function update(Request $request, $id){
 
-            $valid = Validator::make(
-                $request->all(),
-                [
-                    'name' => 'required',
-                    'image' => 'image|mimes:jpeg,png,jpg,gif',
-                    'active' => 'required'
-                ],
-                [
-                    'name' => 'không được để trống',
-                    'image.image' => 'file phải là ảnh'
-                ]
-            );
+        $valid = Validator::make(
+            $request->all(),
+            [
+                'name' => 'required',
+                'image' => 'image|mimes:jpeg,png,jpg,gif',
+                'is_active' => 'required'
+            ],
+            [
+                'name' => 'không được để trống',
+                'image.image' => 'file phải là ảnh'
+            ]
+        );
 
-            if($valid->fails()){
-                return response()->json([
-                    'success' => false,
-                    'message' => $valid->errors()
-                ]);
-            }
+        if($valid->fails()){
+            return response()->json([
+                'success' => false,
+                'message' => $valid->errors()
+            ]);
+        }
 
         try {
             DB::beginTransaction();
@@ -133,12 +132,12 @@ class CategoryController extends Controller
                 $public_id = Cloudinary::getPublicId();
             }
 //
-            $active = (int)$request['active'] == 1 ? true : false;
+            $is_active = (int)$request['is_active'] == 1 ? true : false;
 
             $newCategory = [
                 'name' => $request->get('name'),
                 'image' => $url,
-                'active' => $active,
+                'is_active' => $is_active,
                 'parent_id' => $request->get('parent_id'),
                 'public_id' => $public_id
             ];
@@ -164,13 +163,13 @@ class CategoryController extends Controller
     public function store(Request $request){
         $valid = Validator::make($request->all(), [
             'name' => 'required|unique:categories,name',
-            'active' => 'required',
+            'is_active' => 'required',
             'detail' => 'required',
             'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ],[
             'name.required' => 'Không được để trống name',
             'name.unique' => 'Danh mục đã tồn tại trong cơ sở dữ liệu',
-            'active.require' => 'Active cần phải được thể hiện',
+            'is_active.require' => 'Active cần phải được thể hiện',
             'image.image' => 'File phải là ảnh',
             'image.mimes' => 'Định dạng của logo phải là jpeg, png, jpg hoặc gif'
         ]);
@@ -212,24 +211,28 @@ class CategoryController extends Controller
             }
 //
             $public_id = Cloudinary::getPublicId();
-            $active = $request->get('active') ? 1 : 0;
+            $is_active = $request->get('is_active') ? 1 : 0;
 //
             $category = Category::create([
                 'name' => $request->name,
                 'image' => $url,
                 'public_id' => $public_id,
                 'parent_id' => $parent_id,
-                'is_active' => $active
+                'is_active' => $is_active
             ]);
 
             foreach ($detail as $item) {
                 $detail = Detail::create([
-                    'category_id' => $category->id,
                     'name' => $item->name,
                 ]);
 
+                DetailCategory::create([
+                    'detail_id' => $detail->id,
+                    'category_id' => $category->id,
+                ]);
+
                 foreach ($item->attribute as $value) {
-                    $attribute = Attribute::create([
+                    Attribute::create([
                         'detail_id' => $detail->id,
                         'name' => $value->value
                     ]);

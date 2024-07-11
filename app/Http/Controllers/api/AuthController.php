@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\api;
 
+use App\Enums\Roles;
 use App\Events\OtpRequested;
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -279,7 +280,7 @@ class AuthController extends Controller
                 'username' => $userRegistration->username,
                 'email' => $userRegistration->email,
                 'password' => bcrypt($userRegistration->password),
-                'role_id' => User::Role_id['USER']
+                'role_id' => Roles::USER
             ];
 
             $user = User::create($addUser)->first();

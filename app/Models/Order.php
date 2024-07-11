@@ -8,57 +8,39 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Order extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
+
+    protected $table = 'orders';
+
     protected $fillable = [
         'user_id',
         'total_price',
-        'note',
-        'order_type',
-        'order_status_id',
+        'status_id',
         'receiver_name',
         'receiver_email',
         'receiver_phone',
+        'receiver_city',
+        'receiver_county',
+        'receiver_district',
         'receiver_address',
-        'shipping_status',
         'payment_status',
-        'sku',
+        'payment_method_id',
+        'pick_up_required',
+        'discount_price',
         'discount_code',
+        'note',
+        'sku',
     ];
 
-    public function user()
-    {
+    public function user(){
         return $this->belongsTo(User::class);
     }
-    public function status()
-    {
-        return $this->belongsTo(OrderStatus::class, 'status_name', 'name');
-    }
-    public function orderStatus()
-    {
-        return $this->belongsTo(OrderStatus::class);
+
+    public function status(){
+        return $this->belongsTo(Status::class);
     }
 
-    protected $appends = ['order_status_name'];
-
-    public function getOrderStatusNameAttribute()
-    {
-        return $this->orderStatus ? $this->orderStatus->name : null;
+    public function paymentMethod(){
+        return $this->belongsTo(PaymentMethod::class);
     }
-
-    public function statusHistories()
-    {
-        return $this->hasMany(OrderStatusHistory::class);
-    }
-
-    // protected static function booted()
-    // {
-    //     static::created(function ($order) {
-    //         // Khi một bản ghi được tạo trong bảng Orders, tạo một bản ghi tương ứng trong bảng OrderStatusHistories
-    //         OrderStatusHistory::create([
-    //             'order_id' => $order->id,
-    //             'status' => $order->order_status_name,
-    //             'changed_at' => now(),
-    //         ]);
-    //     });
-    // }
 }

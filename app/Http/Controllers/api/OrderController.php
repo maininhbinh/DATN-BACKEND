@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
@@ -13,6 +12,7 @@ use Illuminate\Support\Facades\Validator;
 
 class OrderController extends Controller
 {
+
     /**
      * Display a listing of the resource.
      */
