@@ -23,4 +23,5 @@ class VariantOption extends Model
     public function products(){
         return $this->belongsToMany(ProductItem::class, 'product_configurations');
     }
+    
 }

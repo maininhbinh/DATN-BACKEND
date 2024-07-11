@@ -31,6 +31,7 @@ return new class extends Migration
             $table->string('discount_code')->nullable();
             $table->text('note')->nullable();
             $table->string('sku');
+            $table->softDeletes()->nullable();
             $table->timestamps();
         });
     }

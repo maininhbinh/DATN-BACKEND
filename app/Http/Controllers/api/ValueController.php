@@ -36,6 +36,7 @@ class ValueController extends Controller
 
         $validator = Validator::make($request->all(), [
             'attribute_id' => 'required|string|max:255|exists:attributes,id',
+            'product_id' => 'required|string|max:255|exists:products,id',
             'name' => 'required|string|max:255',
         ]);
 
@@ -80,6 +81,7 @@ class ValueController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'attribute_id' => 'sometimes|string|max:255|exists:attributes,id',
+            'product_id' => 'sometimes|string|max:255|exists:products,id',
             'name' => 'sometimes|string|max:255',
         ]);
 

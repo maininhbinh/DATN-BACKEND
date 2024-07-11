@@ -22,12 +22,18 @@ class ProductItem extends Model
         'public_id',
     ];
 
-    public function product(){
+    public function product()
+    {
         return $this->belongsTo(Product::class);
     }
 
     public function variants(){
         return $this->belongsToMany(VariantOption::class, 'product_configurations')->withPivot('id');
+    }
+
+    public function carts()
+    {
+        return $this->hasMany(Cart::class, 'product_item_id');
     }
 
 }

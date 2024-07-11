@@ -6,11 +6,11 @@ use App\Http\Controllers\api\CategoryController;
 use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\CartController;
 use App\Http\Controllers\api\DetailController;
+use App\Http\Controllers\api\OrderController;
 use App\Http\Controllers\api\RoleController;
 use App\Http\Controllers\api\UserController;
 use App\Http\Controllers\api\ValueController;
-use App\Http\Controllers\SlideController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\api\SlideController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\api\ProductController;
 
@@ -50,6 +50,7 @@ Route::middleware('auth:sanctum')->prefix('cart')->group(function () {
     Route::post('', [CartController::class, 'store']);
     Route::put('/{id}', [CartController::class, 'update']);
     Route::delete('/{id}', [CartController::class, 'destroy']);
+    Route::delete('/destroy-all', [CartController::class, 'destroyAll']);
 });
 
 Route::prefix('brand')->group(function () {
@@ -104,6 +105,7 @@ Route::prefix('role')->group(function () {
     Route::post('/{id}/restore', [RoleController::class, 'restore']);
 });
 
+
 Route::prefix('product')->group(function () {
     Route::get('', [ProductController::class, 'index']);
     Route::post('', [ProductController::class, 'store']);
@@ -124,3 +126,10 @@ Route::prefix('slider')
 
 
 
+Route::prefix('order')->group(function () {
+    Route::get('', [OrderController::class, 'index']);
+    Route::post('', [OrderController::class, 'store']);
+    Route::get('/{id}', [OrderController::class, 'edit']);
+    Route::post('/{id}', [OrderController::class, 'update']);
+    Route::get('/{id}/status-history', [OrderController::class, 'getOrderStatusHistory']);
+});
