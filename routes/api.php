@@ -18,6 +18,8 @@ use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\api\ProductController;
+use App\Http\Controllers\api\VariantController;
+use App\Http\Controllers\api\VariantOptionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -120,4 +122,23 @@ Route::prefix('order')->group(function () {
     Route::get('/{id}', [OrderController::class, 'edit']);
     Route::post('/{id}', [OrderController::class, 'update']);
     Route::get('/{id}/status-history', [OrderController::class, 'getOrderStatusHistory']);
+});
+
+Route::prefix('variant')->group(function () {
+    Route::get('', [VariantController::class, 'index']);
+    Route::post('', [VariantController::class, 'store']);
+    Route::get('/{id}', [VariantController::class, 'edit']);
+    Route::post('/{id}', [VariantController::class, 'update']);
+    Route::delete('/{id}', [VariantController::class, 'destroy']);
+    Route::post('/{id}/restore', [VariantController::class, 'restore']);
+});
+
+
+Route::prefix('variant_option')->group(function () {
+    Route::get('', [VariantOptionController::class, 'index']);
+    Route::post('', [VariantOptionController::class, 'store']);
+    Route::get('/{id}', [VariantOptionController::class, 'edit']);
+    Route::post('/{id}', [VariantOptionController::class, 'update']);
+    Route::delete('/{id}', [VariantOptionController::class, 'destroy']);
+    Route::post('/{id}/restore', [VariantOptionController::class, 'restore']);
 });
