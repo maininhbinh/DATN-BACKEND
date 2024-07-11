@@ -13,32 +13,36 @@ class CartController extends Controller
     public function index()
     {
         try {
-            $items = Cart::where('user_id', Auth::id())->with(['productItem.variantOptions.variant'])->get();
-    
+            if (Auth::check()) {
+                $items = Cart::where('user_id', Auth::id())->with(['productItem.variantOptions.variant'])->get();
+            } else {
+                $items = collect(session('cart', []));
+            }
+
             $items = $items->map(function ($item) {
                 return [
-                    'id' => $item->id,
-                    'user_id' => $item->user_id,
-                    'product_item_id' => $item->product_item_id,
-                    'quantity' => $item->quantity,
+                    'id' => $item['id'],
+                    'user_id' => $item['user_id'] ?? null,
+                    'product_item_id' => $item['product_item_id'],
+                    'quantity' => $item['quantity'],
                     'product' => [
-                        'name' => $item->productItem->name,
-                        'image' => $item->productItem->image,
-                        'price' => $item->productItem->price,
-                        'variant_options' => $item->productItem->variantOptions->map(function ($variantOption) {
+                        'name' => $item['product']['name'],
+                        'image' => $item['product']['image'],
+                        'price' => $item['product']['price'],
+                        'variant_options' => collect($item['product']['variant_options'])->map(function ($variantOption) {
                             return [
-                                'id' => $variantOption->id,
-                                'name' => $variantOption->name,
+                                'id' => $variantOption['id'],
+                                'name' => $variantOption['name'],
                                 'variant' => [
-                                    'id' => $variantOption->variant->id,
-                                    'name' => $variantOption->variant->name,
+                                    'id' => $variantOption['variant']['id'],
+                                    'name' => $variantOption['variant']['name'],
                                 ],
                             ];
                         }),
                     ],
                 ];
             });
-    
+
             return response()->json([
                 'success' => true,
                 'data' => $items
@@ -57,13 +61,27 @@ class CartController extends Controller
         $this->validateRequest($request);
 
         try {
-            $cart = Cart::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
-            $cart->quantity = $request->quantity;
-            $cart->save();
+            if (Auth::check()) {
+                $cart = Cart::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+                $cart->quantity = $request->quantity;
+                $cart->save();
+            } else {
+                $cart = collect(session('cart', []));
+                $itemKey = $cart->search(function ($item) use ($id) {
+                    return $item['id'] == $id;
+                });
+
+                if ($itemKey !== false) {
+                    $cart[$itemKey]['quantity'] = $request->quantity;
+                    session(['cart' => $cart]);
+                } else {
+                    throw new \Exception('Item not found in cart');
+                }
+            }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Giỏ hàng đã được update',
+                'message' => 'Cart updated successfully',
                 'data' => $cart
             ], 200);
         } catch (ValidationException $e) {
@@ -75,7 +93,7 @@ class CartController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Lỗi update giỏ hàng.',
+                'message' => 'Error updating cart.',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -84,17 +102,31 @@ class CartController extends Controller
     public function destroy($id)
     {
         try {
-            $cart = Cart::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
-            $cart->delete();
+            if (Auth::check()) {
+                $cart = Cart::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+                $cart->delete();
+            } else {
+                $cart = collect(session('cart', []));
+                $itemKey = $cart->search(function ($item) use ($id) {
+                    return $item['id'] == $id;
+                });
+
+                if ($itemKey !== false) {
+                    $cart->forget($itemKey);
+                    session(['cart' => $cart]);
+                } else {
+                    throw new \Exception('Item not found in cart');
+                }
+            }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Sản phẩm đã xoá khỏi giỏ hàng'
+                'message' => 'Item removed from cart'
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Không xoá khỏi giỏ hàng được',
+                'message' => 'Unable to remove item from cart',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -103,11 +135,16 @@ class CartController extends Controller
     public function destroyAll()
     {
         try {
-            $userId = Auth::id();
-            Cart::where('user_id', $userId)->delete();
+            if (Auth::check()) {
+                $userId = Auth::id();
+                Cart::where('user_id', $userId)->delete();
+            } else {
+                session()->forget('cart');
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => 'Tất cả sản phẩm đã xoá khỏi giỏ hàng'
+                'message' => 'All items removed from cart'
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
