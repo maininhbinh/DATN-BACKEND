@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('details', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('category_id')->constrained('categories');
             $table->string('name');
             $table->softDeletes('deleted_at')->nullable();
             $table->timestamps();

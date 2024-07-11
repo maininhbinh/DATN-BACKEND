@@ -10,18 +10,11 @@ class Variant extends Model
 {
     use HasFactory,SoftDeletes;
     protected $fillable = [
-       'category_id',
-        'name'
+        'name',
+        'category_id'
     ];
 
-   
-
-    public function variants()
-    {
-        return $this->hasMany(Variant_option::class);
-    }
-    public function variantOptions()
-    {
-        return $this->hasMany(Variant_option::class);
+    public function variants(){
+        return $this->hasMany(VariantOption::class);
     }
 }
