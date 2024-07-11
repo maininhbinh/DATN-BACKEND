@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('product_details', function (Blueprint $table) {
             $table->foreignId('product_id')->constrained('products');
             $table->foreignId('detail_id')->constrained('details');
-            $table->foreignId('value_id')->constrained('values');
             $table->softDeletes('deleted_at')->nullable();
             $table->timestamps();
         });

@@ -13,4 +13,10 @@ class Variant extends Model
         'category_id',
         'name'
     ];
+
+
+    public function variants(){
+        return $this->hasMany(VariantOption::class);
+    }
+
 }
