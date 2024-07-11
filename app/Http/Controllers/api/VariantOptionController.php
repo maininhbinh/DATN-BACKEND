@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Variant_option;
+use App\Models\VariantOption;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -16,7 +16,7 @@ class VariantOptionController extends Controller
     {
         //
         try {
-            $item = Variant_option::orderBy('created_at', 'desc')->get();
+            $item = VariantOption::orderBy('created_at', 'desc')->get();
             return response()->json($item, 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -27,45 +27,13 @@ class VariantOptionController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-        
-        $validator = Validator::make($request->all(), [
-            'variant_id' => 'required|string|max:255|exists:variants,id',
-            'name' => 'required|string|max:255',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => $validator->errors()
-            ], 400);
-        }
-
-        try {
-            $item = Variant_option::create($request->all());
-            return response()->json($item, 201);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e
-            ], 500);
-        }
-    }
-
- 
-    /**
      * Show the form for editing the specified resource.
      */
     public function edit(string $id)
     {
         //
         try {
-            $item = Variant_option::findOrFail($id);
+            $item = VariantOption::findOrFail($id);
             return response()->json($item, 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -94,7 +62,7 @@ class VariantOptionController extends Controller
         }
 
         try {
-            $item = Variant_option::findOrFail($id);
+            $item = VariantOption::findOrFail($id);
             $item->update($request->all());
             return response()->json($item, 200);
         } catch (\Exception $e) {
@@ -112,7 +80,7 @@ class VariantOptionController extends Controller
     {
         //
         try {
-            $item = Variant_option::findOrFail($id);
+            $item = VariantOption::findOrFail($id);
             $item->delete();
             return response()->json([
                 'success' => true,
@@ -128,7 +96,7 @@ class VariantOptionController extends Controller
     public function restore($id)
     {
         try {
-            $item = Variant_option::withTrashed()->findOrFail($id);
+            $item = VariantOption::withTrashed()->findOrFail($id);
             $item->restore();
             return response()->json($item, 200);
         } catch (\Exception $e) {

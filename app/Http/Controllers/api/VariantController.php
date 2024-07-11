@@ -14,36 +14,10 @@ class VariantController extends Controller
     {
         try {
             $item = Variant::orderBy('created_at', 'desc')->get();
-            return response()->json($item, 200);
-        } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
-                'message' => $e
-            ], 500);
-        }
-    }
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-
-        $validator = Validator::make($request->all(), [
-            'category_id' => 'required|string|max:255|exists:categories,id',
-            'name' => 'required|string|max:255',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => $validator->errors()
-            ], 400);
-        }
-
-        try {
-            $item = Variant::create($request->all());
-            return response()->json($item, 201);
-
+                'success' => true,
+                'data' => $item
+            ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -59,7 +33,10 @@ class VariantController extends Controller
     {
         try {
             $item = Variant::findOrFail($id);
-            return response()->json($item, 200);
+            return response()->json([
+                'success' => true,
+                'data' => $item
+            ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -86,7 +63,10 @@ class VariantController extends Controller
         try {
             $item = Variant::findOrFail($id);
             $item->update($request->all());
-            return response()->json($item, 200);
+            return response()->json([
+                'success' => true,
+                'data' => $item
+            ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -119,7 +99,10 @@ class VariantController extends Controller
         try {
             $item = Variant::withTrashed()->findOrFail($id);
             $item->restore();
-            return response()->json($item, 200);
+            return response()->json([
+                'success' => true,
+                'data' => $item
+            ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

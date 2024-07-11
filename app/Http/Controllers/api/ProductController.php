@@ -213,9 +213,9 @@ class ProductController extends Controller
                         'public_id' => $hasFile ? $public_id : null,
                     ]);
 
-                    foreach ($item->variants as $variant) {
-                        $variant = \App\Helpers\Validator::validatorName($variant->variant);
-                        $attribute = \App\Helpers\Validator::validatorName($variant->attribute);
+                    foreach ($item->variants as $variantModel) {
+                        $variant = \App\Helpers\Validator::validatorName($variantModel->variant);
+                        $attribute = \App\Helpers\Validator::validatorName($variantModel->attribute);
 
                         $variantModel = Variant::firstOrCreate(
                             [

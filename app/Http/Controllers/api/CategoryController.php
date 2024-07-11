@@ -178,7 +178,7 @@ class CategoryController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $valid->errors()
-            ]);
+            ], 422);
         }
 
         try {
