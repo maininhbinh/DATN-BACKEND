@@ -19,7 +19,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        foreach (OrderStatus::getValues() as $key => $value){
+        foreach (OrderStatus::getValues() as $value){
             Status::create([
                 'name' => $value,
             ]);

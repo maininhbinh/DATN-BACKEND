@@ -20,9 +20,9 @@ return new class extends Migration
             $table->foreignId('brand_id')->constrained('brands');
             $table->boolean('is_active')->default(true);
             $table->boolean('is_hot_deal')->default(true);
-            $table->boolean('is_good_deal')->default(true);
+            $table->boolean('is_good_deal')->default(false);
             $table->boolean('is_new')->default(true);
-            $table->boolean('is_show_home')->default(true);
+            $table->boolean('is_show_home')->default(false);
             $table->string('type_discount')->nullable();
             $table->decimal('discount')->nullable();
             $table->unsignedBigInteger('total_review')->nullable();

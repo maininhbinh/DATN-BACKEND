@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\PaymentStatuses;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -23,8 +24,13 @@ return new class extends Migration
             $table->string('receiver_county');
             $table->string('receiver_district');
             $table->string('receiver_address');
-            $table->
-            $table->decimal('discount_code');
+            $table->integer('payment_status')->default(PaymentStatuses::PENDING);
+            $table->foreignId('payment_method_id')->constrained('payment_methods');
+            $table->boolean('pick_up_required')->default(false);
+            $table->decimal('discount_price')->nullable();
+            $table->string('discount_code')->nullable();
+            $table->text('note')->nullable();
+            $table->string('sku');
             $table->timestamps();
         });
     }

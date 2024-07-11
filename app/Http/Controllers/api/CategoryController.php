@@ -232,7 +232,7 @@ class CategoryController extends Controller
                 ]);
 
                 foreach ($item->attribute as $value) {
-                    $attribute = Attribute::create([
+                    Attribute::create([
                         'detail_id' => $detail->id,
                         'name' => $value->value
                     ]);

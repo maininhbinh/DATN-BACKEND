@@ -5,17 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Status extends Model
+class StatusHistory extends Model
 {
     use HasFactory;
 
-    protected $table = 'statuses';
+    protected $table = 'status_history';
 
     protected $fillable = [
-        'name'
+        'user_id',
+        'order_id',
+        'status_id',
     ];
-
-    public function Orders(){
-        return $this->hasMany(Order::class);
-    }
 }
