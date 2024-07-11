@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Variant_option extends Model
 {
-    use HasFactory;
+    use HasFactory,SoftDeletes;
 
     protected $table = 'variant_options';
 
@@ -21,6 +22,6 @@ class Variant_option extends Model
     }
 
     public function products(){
-        return $this->belongsToMany(Product_item::class, 'product_configurations');
+        return $this->belongsToMany(Product_item::class, 'product_configurations'); 
     }
 }

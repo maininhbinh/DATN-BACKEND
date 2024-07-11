@@ -13,6 +13,9 @@ use App\Http\Controllers\SlideController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\api\ProductController;
+use App\Http\Controllers\api\VariantController;
+use App\Http\Controllers\api\VariantOptionController;
+use App\Models\Variant_option;
 
 /*
 |--------------------------------------------------------------------------
@@ -42,7 +45,7 @@ Route::prefix('user')->group(function () {
     Route::post('', [UserController::class, 'store']);
     Route::get('{id}', [UserController::class, 'edit']);
     Route::post('/{id}', [UserController::class, 'update']);
-    Route::delete('/{id}', [UserController::class, 'delete']);
+    Route::delete('/{id}', [UserController::class, 'destroy']);
 });
 
 Route::middleware('auth:sanctum')->prefix('cart')->group(function () {
@@ -73,7 +76,7 @@ Route::prefix('detail')->group(function () {
     Route::post('', [DetailController::class, 'store']);
     Route::get('/{id}', [DetailController::class, 'edit']);
     Route::post('/{id}', [DetailController::class, 'update']);
-    Route::delete('/{id}', [DetailController::class, 'delete']);
+    Route::delete('/{id}', [DetailController::class, 'destroy']);
     Route::post('/{id}/restore', [DetailController::class, 'restore']);
 });
 
@@ -82,7 +85,7 @@ Route::prefix('attribute')->group(function () {
     Route::post('', [AttributeController::class, 'store']);
     Route::get('/{id}', [AttributeController::class, 'edit']);
     Route::post('/{id}', [AttributeController::class, 'update']);
-    Route::delete('/{id}', [AttributeController::class, 'delete']);
+    Route::delete('/{id}', [AttributeController::class, 'destroy']);
     Route::post('/{id}/restore', [AttributeController::class, 'restore']);
 });
 
@@ -91,7 +94,7 @@ Route::prefix('value')->group(function () {
     Route::post('', [ValueController::class, 'store']);
     Route::get('/{id}', [ValueController::class, 'edit']);
     Route::post('/{id}', [ValueController::class, 'update']);
-    Route::delete('/{id}', [ValueController::class, 'delete']);
+    Route::delete('/{id}', [ValueController::class, 'destroy']);
     Route::post('/{id}/restore', [ValueController::class, 'restore']);
 });
 
@@ -100,7 +103,7 @@ Route::prefix('role')->group(function () {
     Route::post('', [RoleController::class, 'store']);
     Route::get('/{id}', [RoleController::class, 'edit']);
     Route::post('/{id}', [RoleController::class, 'update']);
-    Route::delete('/{id}', [RoleController::class, 'delete']);
+    Route::delete('/{id}', [RoleController::class, 'destroy']);
     Route::post('/{id}/restore', [RoleController::class, 'restore']);
 });
 
@@ -121,4 +124,19 @@ Route::prefix('slider')
     });
 
 
-    
+Route::prefix('variant')->group(function () {
+    Route::get('', [VariantController::class, 'index']);
+    Route::post('', [VariantController::class, 'store']);
+    Route::get('/{id}', [VariantController::class, 'edit']);
+    Route::post('/{id}', [VariantController::class, 'update']);
+    Route::delete('/{id}', [VariantController::class, 'destroy']);
+    Route::post('/{id}/restore', [VariantController::class, 'restore']);
+});
+Route::prefix('variant_option')->group(function () {
+    Route::get('', [VariantOptionController::class, 'index']);
+    Route::post('', [VariantOptionController::class, 'store']);
+    Route::get('/{id}', [VariantOptionController::class, 'edit']);
+    Route::post('/{id}', [VariantOptionController::class, 'update']);
+    Route::delete('/{id}', [VariantOptionController::class, 'destroy']);
+    Route::post('/{id}/restore', [VariantOptionController::class, 'restore']);
+});
