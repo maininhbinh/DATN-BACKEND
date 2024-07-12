@@ -133,7 +133,7 @@ class ProductController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $valid->errors()
-            ], 200);
+            ], 422);
         }
 
         $name = $request->get("name");
@@ -257,7 +257,7 @@ class ProductController extends Controller
                     return response()->json([
                         "success" => false,
                         "message" => 'Thêm sản phẩm không thành công'
-                    ], 500);
+                    ], 422);
                 }
             }
 
@@ -317,7 +317,7 @@ class ProductController extends Controller
                 'success' => true,
                 'message' => 'Product added successfully!',
                 'data' => $product->id,
-            ]);
+            ], 200);
 
         }catch (\Exception $exception){
             DB::rollBack();
