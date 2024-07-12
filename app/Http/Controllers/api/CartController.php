@@ -132,13 +132,13 @@ class CartController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
-            ]);
+            ], 422);
 
         }catch (\Exception $e){
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
-            ]);
+            ], 500);
         }
     }
 
