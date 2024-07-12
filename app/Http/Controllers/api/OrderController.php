@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Validator;
 class OrderController extends Controller
 {
 
-    /**
+    /**í
      * Display a listing of the resource.
      */
     public function index()

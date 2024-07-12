@@ -26,4 +26,8 @@ class Category extends Model
     public function parent(){
         return $this->belongsTo(Category::class);
     }
+
+    public function variants(){
+        return $this->hasMany(Variant::class);
+    }
 }

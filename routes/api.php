@@ -154,3 +154,10 @@ Route::prefix('variant_option')->group(function () {
     Route::delete('/{id}', [VariantOptionController::class, 'destroy']);
     Route::post('/{id}/restore', [VariantOptionController::class, 'restore']);
 });
+
+Route::prefix('enum')->group(function () {
+   Route::get('', function (){
+      var_dump(\App\Enums\OrderStatus::getValues());
+      die();
+   });
+});

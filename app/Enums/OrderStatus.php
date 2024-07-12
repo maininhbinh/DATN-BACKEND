@@ -26,4 +26,9 @@ enum OrderStatus: string
     case PROCESSING_PAYMENT = "Thanh toán đang được xử lý và chưa hoàn tất";
     case COMPLETED_WITH_ISSUES = "Trang thái đã được hoàn thành nhưng có vấn đề cần giải quyết";
     case READY_FOR_PICUP = "Đơn hàng sẵn sàng để khách nhận tại cửa hàng";
+
+    public static function getValues(): array
+    {
+        return array_column(OrderStatus::cases(), 'value');
+    }
 }

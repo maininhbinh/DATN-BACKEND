@@ -19,11 +19,11 @@ return new class extends Migration
             $table->timestamps();
         });
 
-//        foreach (Roles::getValues() as $role) {
-//            Role::create([
-//                'name' => $role,
-//            ]);
-//        }
+        foreach (Roles::getValues() as $role) {
+            Role::create([
+                'name' => $role,
+            ]);
+        }
     }
 
     /**
