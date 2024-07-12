@@ -47,12 +47,12 @@ Route::prefix('user')->group(function () {
     Route::delete('/{id}', [UserController::class, 'delete']);
 });
 
-Route::middleware('auth:sanctum')->prefix('cart')->group(function () {
+Route::prefix('cart')->group(function () {
     Route::get('', [CartController::class, 'index']);
-    Route::post('', [CartController::class, 'store']);
-    Route::put('/{id}', [CartController::class, 'update']);
-    Route::delete('/{id}', [CartController::class, 'destroy']);
-    Route::delete('/destroy-all', [CartController::class, 'destroyAll']);
+    Route::post('add', [CartController::class, 'store']);
+    Route::put('', [CartController::class, 'updateQuantity']);
+    Route::delete('', [CartController::class, 'destroy']);
+    Route::delete('delete/all', [CartController::class, 'destroyAll']);
 });
 
 Route::prefix('brand')->group(function () {
@@ -116,15 +116,15 @@ Route::prefix('product')->group(function () {
 });
 
 
-Route::prefix('slider')
-    ->group(function () {
+Route::prefix('slider')->group(function () {
 
-        Route::post('/', [SlideController::class, 'store']);
-        Route::get('/', [SlideController::class, 'show']);
-        Route::delete('/{id}', [SlideController::class, 'destroy']);
-        Route::get('/{id}', [SlideController::class, 'edit']);
-        Route::post('/{id}', [SlideController::class, 'update']);
-    });
+    Route::post('/', [SlideController::class, 'store']);
+    Route::get('/', [SlideController::class, 'show']);
+    Route::delete('/{id}', [SlideController::class, 'destroy']);
+    Route::get('/{id}', [SlideController::class, 'edit']);
+    Route::post('/{id}', [SlideController::class, 'update']);
+
+});
 
 
 
@@ -133,7 +133,7 @@ Route::prefix('order')->group(function () {
     Route::post('', [OrderController::class, 'store']);
     Route::get('/{id}', [OrderController::class, 'edit']);
     Route::post('/{id}', [OrderController::class, 'update']);
-    Route::get('/{id}/status-history', [OrderController::class, 'getOrderStatusHistory']);
+    Route::get('/status/history/{id}', [OrderController::class, 'getOrderStatusHistory']);
 });
 
 Route::prefix('variant')->group(function () {
@@ -155,9 +155,3 @@ Route::prefix('variant_option')->group(function () {
     Route::post('/{id}/restore', [VariantOptionController::class, 'restore']);
 });
 
-Route::prefix('enum')->group(function () {
-   Route::get('', function (){
-      var_dump(\App\Enums\OrderStatus::getValues());
-      die();
-   });
-});
