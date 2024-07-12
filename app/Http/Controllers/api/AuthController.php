@@ -274,8 +274,6 @@ class AuthController extends Controller
                 ], 422);
             }
 
-            UserRegistration::where('email', $userRegistration->email)->delete();
-
             $addUser = [
                 'username' => $userRegistration->username,
                 'email' => $userRegistration->email,
@@ -288,6 +286,8 @@ class AuthController extends Controller
             if (!$token = $user->createToken('authToken')->plainTextToken) {
                 return response()->json(['error' => 'Unauthorized'], 401);
             }
+
+            UserRegistration::where('email', $userRegistration->email)->delete();
 
             return response()->json([
                 'success' => true,
@@ -313,7 +313,7 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'result' => [
-                    'message' => 'serve error',
+                    'message' => $e->getMessage(),
                 ],
             ], 500);
 

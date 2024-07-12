@@ -16,7 +16,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users');
             $table->decimal('total_price');
-            $table->foreignId('status_id')->constrained('order_status');
+            $table->foreignId('status_id')->constrained('statuses');
             $table->string('receiver_name');
             $table->string('receiver_email');
             $table->string('receiver_phone');
