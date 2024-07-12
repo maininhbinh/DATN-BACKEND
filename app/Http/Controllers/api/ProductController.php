@@ -15,7 +15,7 @@ use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use App\Helpers\Validator as IValidator;
+use App\Helpers\ValidatorHelpers as IValidator;
 
 class ProductController extends Controller
 {
@@ -64,13 +64,25 @@ class ProductController extends Controller
     public function show(Request $request){
 
         try {
-            $product = Product::where('slug', $request->slug)->with(['products.variants', 'category', 'brand', 'details.attributes' => function ($query) use ($request){
-                $query->with(['values' => function($query) use ($request) {
-                    $query->whereHas('products', function ($query) use ($request) {
-                        $query->where('slug', $request->slug);
-                    });
-                }]);
-            }])->firstOrFail();
+            $product = Product::where('slug', $request->slug)
+                ->with(
+                    [
+                        'products' => function ($query){
+                            $query->with(['variants' => function ($query) {
+                                $query->orderBy('product_configurations.id', 'asc');
+                            }]);
+                        },
+                        'category',
+                        'brand',
+                        'details.attributes' => function ($query) use ($request){
+                            $query->with(['values' => function($query) use ($request) {
+                                $query->whereHas('products', function ($query) use ($request) {
+                                    $query->where('slug', $request->slug);
+                                });
+                            }]);
+                        }
+                    ]
+                )->firstOrFail();
 
             if(!$product){
                 return response()->json([
@@ -214,8 +226,8 @@ class ProductController extends Controller
                     ]);
 
                     foreach ($item->variants as $variantModel) {
-                        $variant = \App\Helpers\Validator::validatorName($variantModel->variant);
-                        $attribute = \App\Helpers\Validator::validatorName($variantModel->attribute);
+                        $variant = \App\Helpers\ValidatorHelpers::validatorName($variantModel->variant);
+                        $attribute = \App\Helpers\ValidatorHelpers::validatorName($variantModel->attribute);
 
                         $variantModel = Variant::firstOrCreate(
                             [

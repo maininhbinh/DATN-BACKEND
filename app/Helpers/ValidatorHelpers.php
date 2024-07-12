@@ -3,7 +3,7 @@ namespace App\Helpers;
 
 use Illuminate\Support\Facades\Validator as UseValidator;
 
-class Validator
+class ValidatorHelpers
 {
     static function validatorName($value){
         return trim(strip_tags(
