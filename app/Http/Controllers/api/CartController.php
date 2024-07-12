@@ -142,24 +142,20 @@ class CartController extends Controller
         }
     }
 
-    public function updateQuantity(Request $request)
+    public function updateQuantity(Request $request, $id)
     {
         try {
             $request->validate(
                 [
-                    'product_item_id' => 'required|exists:product_items,id',
                     'quantity' => 'required|integer|min:1',
                 ],
                 [
-                    'product_item_id.required' => 'Product item is required',
-                    'product_item_id.exists' => 'Product item does not exist',
                     'quantity.required' => 'Quantity is required',
                     'quantity.integer' => 'Quantity must be an integer',
                     'quantity.min' => 'Quantity must be at least 1',
                 ]
             );
 
-            $productItemId = $request->input('product_item_id');
             $quantity = $request->input('quantity');
 
             $token = $request->bearerToken();
@@ -168,14 +164,14 @@ class CartController extends Controller
 
             if($user && $user->id){
 
-                $cart = Cart::where('user_id', $user->id)->where('product_item_id', $productItemId)->first();
+                $cart = Cart::where('user_id', $user->id)->where('product_item_id', $id)->first();
                 $cart->quantity = $quantity;
                 $cart->save();
 
             }else{
 
                 $cart = collect(session('cart', []));
-                $product = $cart->firstWhere('product_item_id', $productItemId);
+                $product = $cart->firstWhere('product_item_id', $id);
 
                 if($product) {
                     $product['quantity'] = $quantity;
@@ -207,20 +203,9 @@ class CartController extends Controller
         }
     }
 
-    public function destroy(Request $request)
+    public function destroy(Request $request, $id)
     {
         try {
-            $request->validate(
-                [
-                    'product_item_id' => 'required|exists:product_items,id',
-                ],
-                [
-                    'product_item_id.required' => 'Product item is required',
-                    'product_item_id.exists' => 'Product item does not exist',
-                ]
-            );
-
-            $productItemId = $request->input('product_item_id');
 
             $token = $request->bearerToken();
 
@@ -228,14 +213,14 @@ class CartController extends Controller
 
             if($user && $user->id){
 
-                Cart::where('user_id', $user->id)->where('product_item_id', $productItemId)->delete();
+                Cart::where('user_id', $user->id)->where('product_item_id', $id)->delete();
 
             }else{
 
                 $cart = collect(session('cart', []));
 
-                $cart = $cart->reject(function ($item) use ($productItemId) {
-                    $item['product_item_id'] = $productItemId;
+                $cart = $cart->reject(function ($item) use ($id) {
+                    $item['product_item_id'] = $id;
                 });
 
                 session(['cart' => $cart->toArray()]);
