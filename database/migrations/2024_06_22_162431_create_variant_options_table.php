@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('variant_id')->constrained('variants');
             $table->string('name');
+            $table->string('value');
             $table->timestamps();
         });
     }

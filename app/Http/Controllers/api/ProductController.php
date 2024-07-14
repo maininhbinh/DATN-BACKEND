@@ -24,7 +24,7 @@ class ProductController extends Controller
 
     public function index(){
         try {
-            $products = Product::with(['products.variants'])->get();
+            $products = Product::with(['products.variants','products.variants.variant'])->get();
             return response()->json([
                 'success' => true,
                 'data' => $products
@@ -39,7 +39,7 @@ class ProductController extends Controller
 
     public function featProducts(Request $request){
         try{
-            $products = Product::where($request->feat, true)->with(['products.variants', 'category', 'brand', 'details.attributes','values'])->get();
+            $products = Product::where($request->feat, true)->with(['products.variants','products.variants.variant', 'category', 'brand', 'details.attributes','values'])->get();
             return response()->json([
                 'success' => true,
                 'data' => $products
@@ -55,7 +55,7 @@ class ProductController extends Controller
     public function show(Request $request){
 
         try {
-            $product = Product::where('slug', $request->slug)->with(['products.variants', 'category', 'brand', 'details.attributes' => function ($query) use ($request){
+            $product = Product::where('slug', $request->slug)->with(['products.variants','products.variants.variant', 'category', 'brand', 'details.attributes' => function ($query) use ($request){
                 $query->with(['values' => function($query) use ($request) {
                     $query->whereHas('products', function ($query) use ($request) {
                         $query->where('slug', $request->slug);

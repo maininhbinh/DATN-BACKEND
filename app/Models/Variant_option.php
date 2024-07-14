@@ -13,7 +13,8 @@ class Variant_option extends Model
 
     protected $fillable = [
         'variant_id',
-        'name'
+        'name',
+        'value'
     ];
 
     public function variant(){
