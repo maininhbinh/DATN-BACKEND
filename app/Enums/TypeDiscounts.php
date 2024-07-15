@@ -1,8 +1,14 @@
 <?php
 namespace App\Enums;
 
-enum TypeDiscounts: int
+enum TypeDiscounts: string
 {
-    case Percent = 0;
-    case fixed = 1;
+    case None = 'none';
+    case Percent = 'Percent';
+    case Fixed = 'Fixed';
+
+    public static function getValues(): array
+    {
+        return array_column(TypeDiscounts::cases(), 'value');
+    }
 }
