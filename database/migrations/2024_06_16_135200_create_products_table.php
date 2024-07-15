@@ -23,7 +23,7 @@ return new class extends Migration
             $table->boolean('is_good_deal')->default(false);
             $table->boolean('is_new')->default(true);
             $table->boolean('is_show_home')->default(false);
-            $table->string('type_discount')->nullable();
+            $table->integer('type_discount')->nullable();
             $table->decimal('discount')->nullable();
             $table->unsignedBigInteger('total_review')->nullable();
             $table->unsignedBigInteger('avg_stars')->nullable();

@@ -40,7 +40,7 @@ Route::prefix('auth')->group(function () {
 
 Route::prefix('user')->group(function () {
     Route::get('list', [UserController::class, 'index']);
-    Route::get('', [UserController::class, 'profile']);
+    Route::get('profile', [UserController::class, 'profile']);
     Route::post('', [UserController::class, 'store']);
     Route::get('{id}', [UserController::class, 'edit']);
     Route::post('/{id}', [UserController::class, 'update']);
@@ -50,8 +50,8 @@ Route::prefix('user')->group(function () {
 Route::prefix('cart')->group(function () {
     Route::get('', [CartController::class, 'index']);
     Route::post('add', [CartController::class, 'store']);
-    Route::put('', [CartController::class, 'updateQuantity']);
-    Route::delete('', [CartController::class, 'destroy']);
+    Route::put('/{id}', [CartController::class, 'updateQuantity']);
+    Route::delete('/{id}', [CartController::class, 'destroy']);
     Route::delete('delete/all', [CartController::class, 'destroyAll']);
 });
 
