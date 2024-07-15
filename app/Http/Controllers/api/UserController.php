@@ -32,7 +32,7 @@ use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
-    
+
     public function index(){
         try {
             $items = User::orderBy('created_at', 'desc')->get();
@@ -57,6 +57,7 @@ class UserController extends Controller
                 'success' => true,
                 'data' => $user,
             ], 200);
+
         } catch (\Exception $e) {
 
             return response()->json([
@@ -69,7 +70,7 @@ class UserController extends Controller
     public function edit($id)
     {
         try {
-            
+
             $user = User::findOrFail($id);
 
             return response()->json([
