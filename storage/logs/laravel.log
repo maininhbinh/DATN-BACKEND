@@ -1787,3 +1787,4 @@ Did you mean this?
 [2024-07-18 02:18:06] local.ERROR: Debugbar exception: Attempt to read property "cookies" on null  
 [2024-07-18 02:30:06] local.ERROR: Debugbar exception: Attempt to read property "cookies" on null  
 [2024-07-18 02:45:09] local.ERROR: Debugbar exception: Attempt to read property "cookies" on null  
+[2024-07-18 06:02:13] local.ERROR: Debugbar exception: Attempt to read property "cookies" on null  
