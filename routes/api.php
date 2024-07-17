@@ -7,6 +7,7 @@ use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\CartController;
 use App\Http\Controllers\api\DetailController;
 use App\Http\Controllers\api\OrderController;
+use App\Http\Controllers\api\PaymentMomoController;
 use App\Http\Controllers\api\RoleController;
 use App\Http\Controllers\api\UserController;
 use App\Http\Controllers\api\ValueController;
@@ -155,3 +156,4 @@ Route::prefix('variant_option')->group(function () {
     Route::post('/{id}/restore', [VariantOptionController::class, 'restore']);
 });
 
+Route::get('momo_payment/{order_id}',  [PaymentMomoController::class, 'momo_payment']);

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
@@ -19,6 +20,12 @@ class OrderController extends Controller
     public function index()
     {
         $user = Auth::user();
+
+        if ($user) {
+            $user_id = $user->id;
+        } else {
+            $user_id = 0;
+        }
         try {
             $item = Order::orderBy('created_at', 'desc')->get();
             if ($user->role_id == 1 || $user->role_id == 2) {
