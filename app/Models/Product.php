@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TypeDiscounts;
 use Cviebrock\EloquentSluggable\Sluggable;
 use Cviebrock\EloquentSluggable\SluggableScopeHelpers;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,9 +13,10 @@ class Product extends Model
 {
     use HasFactory, SoftDeletes, Sluggable, SluggableScopeHelpers;
 
-    const TYPE_DISCOUNT = [
-        'percentage',
-        'fixed'
+    protected $table = 'products';
+
+    protected $casts = [
+        'type_discount' => TypeDiscounts::class
     ];
 
     protected $fillable = [

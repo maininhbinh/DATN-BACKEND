@@ -1,8 +1,10 @@
 <?php
 
+use App\Models\PaymentStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Enums\PaymentStatuses;
 
 return new class extends Migration
 {
@@ -11,13 +13,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('carts', function (Blueprint $table) {
+        Schema::create('payment_statuses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained('users');
-            $table->foreignId('product_item_id')->constrained('product_items');
-            $table->integer('quantity')->default(0);
+            $table->string('name');
             $table->timestamps();
         });
+
+        foreach (PaymentStatuses::getValues() as $paymentStatus) {
+            PaymentStatus::create([
+                'name' => $paymentStatus,
+            ]);
+        }
     }
 
     /**
@@ -25,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('carts');
+        Schema::dropIfExists('payment_statuses');
     }
 };

@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Enums\Roles;
 
 return new class extends Migration
 {
@@ -18,14 +19,12 @@ return new class extends Migration
             $table->string('password');
             $table->string('image')->nullable();
             $table->string('phone')->nullable();
-            $table->string('address_line1')->nullable();
-            $table->string('address_line2')->nullable();
+            $table->string('address')->nullable();
             $table->string('county')->nullable();
             $table->string('district')->nullable();
             $table->string('city')->nullable();
-            $table->foreignId('role_id')->default(\App\Enums\Roles::USER)->constrained('roles');
+            $table->foreignId('role_id')->default(Roles::getOrder(Roles::USER))->constrained('roles');
             $table->boolean('is_active')->default(true);
-            $table->boolean('is_vitual')->default(false);
             $table->rememberToken();
             $table->timestamps();
         });

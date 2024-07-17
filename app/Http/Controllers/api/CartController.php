@@ -45,13 +45,13 @@ class CartController extends Controller
                 });
             } else {
 
-//                $cart = collect(session('cart', []));
-//                $productItem = ProductItem::whereIn('id', $cart->pluck('product_item_id'));
-//
-//                return response()->json([
-//                    'success' => true,
-//                    'data' => $productItem
-//                ], 200);
+                $cart = collect(session('cart', []));
+                $productItem = ProductItem::whereIn('id', $cart->pluck('product_item_id'));
+
+                return response()->json([
+                    'success' => true,
+                    'data' => []
+                ], 200);
 
             }
 

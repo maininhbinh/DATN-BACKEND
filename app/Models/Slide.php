@@ -8,5 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class Slide extends Model
 {
     use HasFactory;
-    protected $fillable=['image_url', 'public_id', 'image_title', 'is_active'];
+
+    protected $fillable = [
+        'image_url',
+        'public_id',
+        'image_title',
+        'is_active'
+    ];
 }

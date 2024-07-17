@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Events\OrderCreated;
 use App\Events\OtpRequested;
+use App\Listeners\SendOrderConfirmation;
 use App\Listeners\SendOtpEmail;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -22,6 +24,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         OtpRequested::class => [
             SendOtpEmail::class
+        ],
+        OrderCreated::class => [
+            SendOrderConfirmation::class
         ]
     ];
 

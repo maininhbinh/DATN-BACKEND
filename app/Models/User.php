@@ -23,14 +23,12 @@ class User extends Authenticatable
         'password',
         'image',
         'phone',
-        'address_line1',
-        'address_line2',
+        'address',
         'county',
         'district',
         'city',
         'role_id',
         'in_active',
-        'is_vitual'
     ];
 
     public function role()

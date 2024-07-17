@@ -278,7 +278,7 @@ class AuthController extends Controller
                 'username' => $userRegistration->username,
                 'email' => $userRegistration->email,
                 'password' => bcrypt($userRegistration->password),
-                'role_id' => Roles::USER
+                'role_id' => Roles::getOrder(Roles::USER)
             ];
 
             $user = User::create($addUser)->first();

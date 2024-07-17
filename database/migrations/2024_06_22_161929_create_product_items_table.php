@@ -17,7 +17,7 @@ return new class extends Migration
             $table->decimal('price', 15, 0);
             $table->decimal('price_sale', 15, 0);
             $table->integer('quantity')->default(0);
-            $table->string('sku')->nullable();
+            $table->string('sku')->unique();
             $table->text('image')->nullable();
             $table->text('public_id')->nullable();
             $table->softDeletes()->nullable();

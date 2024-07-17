@@ -10,4 +10,12 @@ enum PaymentMethods: string
     {
         return array_column(PaymentMethods::cases(), 'value');
     }
+
+    public static function getOrder(PaymentMethods $type): int
+    {
+        return match($type) {
+            self::COD => 1,
+            self::MOMO => 2,
+        };
+    }
 }

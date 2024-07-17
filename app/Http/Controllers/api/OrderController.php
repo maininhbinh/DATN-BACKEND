@@ -1,14 +1,17 @@
 <?php
 namespace App\Http\Controllers\api;
 
+use App\Enums\OrderStatus;
+use App\Enums\PaymentMethods;
+use App\Enums\PaymentStatuses;
+use App\Enums\TypeDiscounts;
+use App\Helpers\AuthHelpers;
 use App\Http\Controllers\Controller;
+use App\Models\Cart;
 use App\Models\Order;
-use App\Models\OrderStatus;
-use App\Models\OrderStatusHistory;
-use Carbon\Carbon;
+use App\Models\OrderDetail;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -16,194 +19,176 @@ class OrderController extends Controller
     /**í
      * Display a listing of the resource.
      */
-    public function index()
+    public function findOrderUser(Request $request)
     {
-        $user = Auth::user();
         try {
-            $item = Order::orderBy('created_at', 'desc')->get();
-            if ($user->role_id == 1 || $user->role_id == 2) {
-                $item = Order::orderBy('created_at', 'desc')->get();
-            } else {
+
+            $token = $request->bearerToken();
+            $user = AuthHelpers::CheckAuth($token);
+
+            if($user && $user->id){
+
                 $item = Order::where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
+
+                return response()->json([
+                    'sucess' => true,
+                    'data' => $item
+                ], 200);
+
             }
-            return response()->json($item, 200);
+            // xử lý order chưa đăng nhập
+
+            return response()->json([]);
+
         } catch (\Exception $e) {
+
             return response()->json([
                 'success' => false,
                 'message' => $e
             ], 500);
+
         }
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function placeOrder(Request $request)
     {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    // public function store(Request $request)
-    // {
-    //     $validator = Validator::make($request->all(), [
-    //         'total_price' => 'required|numeric',
-    //         'order_type' => 'required|string',
-    //         'receiver_name' => 'required|string',
-    //         'receiver_email' => 'required|string|email',
-    //         'receiver_phone' => 'required|string',
-    //         'receiver_address' => 'required|string',
-    //         'shipping_status' => 'string',
-    //         'payment_status' => 'required|string',
-    //     ]);
-
-    //     if ($validator->fails()) {
-    //         return response()->json(['message' => $validator->errors()], 400);
-    //     }
-
-    //     try {
-    //         $orderData = $request->all();
-    //         if (Auth::check()) {
-    //             $orderData['user_id'] = Auth::id();
-    //         } else {
-    //             $orderData['user_id'] = null;
-    //         }
-
-    //         $item = Order::create($orderData);
-    //         return response()->json($item, 201);
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => $e
-    //         ], 500);
-    //     }
-    // }
-    public function store(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'total_price' => 'required|numeric',
-            'order_type' => 'required|string',
-            'receiver_name' => 'required|string',
-            'receiver_email' => 'required|string|email',
-            'receiver_phone' => 'required|string',
-            'receiver_address' => 'required|string',
-            'shipping_status' => 'string',
-            'payment_status' => 'required|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['message' => $validator->errors()], 400);
-        }
-
         try {
-            $orderData = $request->all();
-            if (Auth::check()) {
-                $orderData['user_id'] = Auth::id();
-            } else {
-                $orderData['user_id'] = null;
-            }
+            DB::beginTransaction();
 
-            // Nếu order_status_id không tồn tại trong request, sử dụng giá trị mặc định là 1
-            $orderStatusId = $request->order_status_id ?? 1;
-            $orderStatus = OrderStatus::findOrFail($orderStatusId);
-            $orderData['order_status_id'] = $orderStatusId;
-            $orderData['order_status_name'] = $orderStatus->name;
-
-            $item = Order::create($orderData);
-            OrderStatusHistory::create(
+            $request->validate(
                 [
-                    'order_id' => $item->id,
-                    'status' => $item->order_status_name,
-                    'timestamp' => Carbon::now()
+                    'receiver_name' => 'required|string',
+                    'receiver_email' => 'required|string|email',
+                    'receiver_phone' => 'required|string',
+                    'receiver_pronvinces' => 'required|string',
+                    'receiver_district' => 'required|string',
+                    'receiver_ward' => 'required|string',
+                    'receiver_address' => 'required|string',
+                    'pick_up_required' => 'required',
+//                'payment_method_id' => 'required',
+                ],
+                [
+                    'receiver_name' => 'Trường name là bắt buộc',
+                    'receiver_name.string' => 'Trường name phải là một chuỗi',
+                    'receiver_email' => 'Trường email là bắt buộc',
+                    'receiver_email.email' => 'Trường email phải là một chuỗi',
+                    'receiver_phone' => 'Trường phone là bắt buộc',
+                    'receiver_phone.string' => 'Trường phone là một chuỗi',
+                    'receiver_pronvinces' => 'Băt buộc chọn một tỉnh thành',
+                    'receiver_district' => 'Chọn một thành phố',
+                    'receiver_ward' => 'Chọn một quận | huyện',
+                    'receiver_address' => 'Trường address là bắt buộc',
+                    'pick_up_required' => 'Chọn hình thức nhận hàng',
+//                'payment_method_id' => 'Chọn một hình thức thanh toán COD|shipment'
                 ]
             );
-            return response()->json($item, 201);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Đã xảy ra lỗi khi tạo đơn hàng: ' . $e->getMessage()
-            ], 500);
-        }
-    }
 
+            $receiverName = $request->get('receiver_name');
+            $receiverEmail = $request->get('receiver_email');
+            $receiverPhone = $request->get('receiver_phone');
+            $receiverPronvices = $request->get('receiver_pronvinces');
+            $receiverDistrict = $request->get('receiver_district');
+            $receiverWard = $request->get('receiver_ward');
+            $receiverAddress = $request->get('receiver_address');
+            $pickUpRequired = filter_var($request->get('pick_up_required'), FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
+            $note = $request->get('note');
+            $discountCode = $request->get('discount_code');
+            $paymentMethod = 1;
 
-    /**
-     * Display the specified resource.
-     */
-    public function update(Request $request, string $id)
-    {
-        $validator = Validator::make($request->all(), [
-            'total_price' => 'required|numeric',
-            'order_type' => 'required|string',
-            'receiver_name' => 'required|string',
-            'receiver_email' => 'required|string|email',
-            'receiver_phone' => 'required|string',
-            'receiver_address' => 'required|string',
-            'shipping_status' => 'string',
-            'payment_status' => 'required|string',
-        ]);
+            $paymentStatusId = PaymentStatuses::getOrder(PaymentStatuses::PENDING);
+            $orderStatusId = OrderStatus::getOrder(OrderStatus::PENDING);
 
-        if ($validator->fails()) {
-            return response()->json(['message' => $validator->errors()], 400);
-        }
+            $token = $request->bearerToken();
+            $user = AuthHelpers::CheckAuth($token);
 
-        try {
-            $item = Order::findOrFail($id);
+            if($user && $user->id){
 
-            $statuses = OrderStatus::pluck('id')->toArray();
-            $cancelledStatusId = OrderStatus::where('name', 'Cancelled')->first()->id;
-            $currentStatusId = $item->order_status_id;
-            $newStatusId = $request->order_status_id;
+                $carts = Cart::where('user_id', $user->id)
+                    ->join('product_items', 'carts.product_item_id', '=', 'product_items.id')
+                    ->join('products', 'product_items.product_id', '=', 'products.id')
+                    ->select(
+                        'carts.*',
+                        DB::raw("
+                        CASE
+                            WHEN products.type_discount = '" . TypeDiscounts::Percent->value . "' THEN product_items.price * (1 - products.discount / 100)
+                            WHEN products.type_discount = '" . TypeDiscounts::Fixed->value . "' THEN product_items.price - products.discount
+                            ELSE product_items.price
+                        END AS price
+                    ")
+                    )
+                    ->get();
 
-            if (!in_array($newStatusId, $statuses)) {
-                return response()->json(['message' => 'Trạng thái không hợp lệ'], 400);
-            }
+                if(!$carts || count($carts) <= 0){
+                    return response()->json([
+                        'sucess' => false,
+                        'message' => 'Giỏ hàng ít nhất phải có 1 sản phẩm'
+                    ], 404);
+                }
 
-            $currentIndex = array_search($currentStatusId, $statuses);
-            $newIndex = array_search($newStatusId, $statuses);
+                $totalPrice = DB::table('carts')
+                    ->join('product_items', 'carts.product_item_id', '=', 'product_items.id')
+                    ->join('products', 'product_items.product_id', '=', 'products.id')
+                    ->where('carts.user_id', $user->id)
+                    ->sum(DB::raw("
+                    carts.quantity * (
+                        CASE
+                            WHEN products.type_discount = '".TypeDiscounts::Percent->value."' THEN product_items.price * (1 - products.discount / 100)
+                            WHEN products.type_discount = '".TypeDiscounts::Fixed->value."' THEN product_items.price - products.discount
+                            ELSE product_items.price
+                        END
+                    )
+                "));
 
-            if ($newStatusId != $currentStatusId && $newStatusId != $cancelledStatusId && $newIndex !== $currentIndex + 1) {
-                return response()->json(['message' => 'Trạng thái không hợp lệ. Vui lòng cập nhật theo thứ tự.'], 400);
-            }
+                //xử lý discount code
 
-            $item->update($request->all());
+//            $discountPrice = $totalPrice - $discountCode;
+                $discountPrice = $totalPrice;
 
-            if ($newStatusId != $currentStatusId) {
-                $item->order_status_id = $newStatusId;
-                $item->save();
-
-                OrderStatusHistory::create([
-                    'order_id' => $item->id,
-                    'status' => OrderStatus::find($newStatusId)->name, // lấy tên trạng thái mới
-                    'timestamp' => Carbon::now()
+                $order = Order::create([
+                    'user_id' => $user->id,
+                    'total_price' => $totalPrice,
+                    'note' => $note,
+                    'order_status_id' => $orderStatusId,
+                    'receiver_name' => $receiverName,
+                    'receiver_email' => $receiverEmail,
+                    'receiver_phone' => $receiverPhone,
+                    'receiver_pronvinces' => $receiverPronvices,
+                    'receiver_district' => $receiverDistrict,
+                    'receiver_ward' => $receiverWard,
+                    'receiver_address' => $receiverAddress,
+                    'payment_method_id' => $paymentMethod,
+                    'payment_status_id' => $paymentStatusId,
+                    'pick_up_required' => $pickUpRequired,
+                    'discount_code' => $discountCode,
+                    'discount_price' => $discountPrice,
                 ]);
-            }
 
-            return response()->json($item);
-        } catch (\Exception $e) {
+                // xử lý lưu vào history
+
+                foreach ($carts as $cart) {
+                    $orderDetail = OrderDetail::create([
+                        'product_item_id' => $cart->product_item_id,
+                        'order_id' => $order->id,
+                        'quantity' => $cart->quantity,
+                        'price' => $cart->price,
+                    ]);
+                }
+
+//                Cart::where('user_id', $user->id)->delete();
+
+                DB::commit();
+                return redirect()->action([PaymentController::class, 'momo_payment'], ['orderId' => $order->id]);
+            }
+        }catch(\Exception $exception){
+
+            DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Đã xảy ra lỗi khi cập nhật hoá đơn.'
-            ], 500);
-        }
-    }
-    public function getOrderStatusHistory($orderId)
-    {
-        try {
-            $orderStatusHistory = OrderStatusHistory::where('order_id', $orderId)->get();
+                'message' => $exception->getMessage()
+            ]);
 
-            if ($orderStatusHistory->isEmpty()) {
-                return response()->json(['message' => 'Không có lịch sử trạng thái cho đơn hàng này.'], 404);
-            }
-
-            return response()->json($orderStatusHistory);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Đã xảy ra lỗi khi lấy lịch sử trạng thái đơn hàng.'
-            ], 500);
         }
+
     }
 }

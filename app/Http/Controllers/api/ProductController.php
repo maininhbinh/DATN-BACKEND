@@ -14,6 +14,7 @@ use App\Models\VariantOption;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use App\Helpers\ValidatorHelpers as IValidator;
 
@@ -215,21 +216,27 @@ class ProductController extends Controller
 
                     }
 
+                    $sku = $item->sku. implode('-', array_reduce($item->variants, function($array, $item){
+                            $array[] = $item->attribute;
+                            return $array;
+                        }, []))."-". now() . "-" . rand(1, 1000000);
+
                     $product_item = ProductItem::create([
                         'product_id' => $product->id,
                         'price' => $item->price,
                         'price_sale' => $item->price_sale,
                         'image' => $hasFile ? $url_item : null,
                         'quantity' => $item->quantity,
-                        'sku' => $item->sku,
+                        'sku' => $sku,
                         'public_id' => $hasFile ? $public_id : null,
                     ]);
 
                     foreach ($item->variants as $variantModel) {
+
                         $variant = \App\Helpers\ValidatorHelpers::validatorName($variantModel->variant);
                         $attribute = \App\Helpers\ValidatorHelpers::validatorName($variantModel->attribute);
 
-                        $variantModel = Variant::firstOrCreate(
+                        $variants = Variant::firstOrCreate(
                             [
                                 'name' => $variant
                             ],
@@ -245,7 +252,7 @@ class ProductController extends Controller
                                 'name' => $attribute
                             ],
                             [
-                                'variant_id' => $variantModel->id,
+                                'variant_id' => $variants->id,
                                 'name' => $attribute,
                             ]
                         );
@@ -323,7 +330,7 @@ class ProductController extends Controller
             DB::rollBack();
             return response()->json([
                 "success" => false,
-                "message" => $exception->getMessage()
+                "message" => $exception->getLine()
             ], 500);
         }
     }

@@ -7,6 +7,7 @@ use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\CartController;
 use App\Http\Controllers\api\DetailController;
 use App\Http\Controllers\api\OrderController;
+use App\Http\Controllers\api\PaymentController;
 use App\Http\Controllers\api\RoleController;
 use App\Http\Controllers\api\UserController;
 use App\Http\Controllers\api\ValueController;
@@ -107,7 +108,6 @@ Route::prefix('role')->group(function () {
     Route::post('/{id}/restore', [RoleController::class, 'restore']);
 });
 
-
 Route::prefix('product')->group(function () {
     Route::get('', [ProductController::class, 'index']);
     Route::post('', [ProductController::class, 'store']);
@@ -126,14 +126,9 @@ Route::prefix('slider')->group(function () {
 
 });
 
-
-
 Route::prefix('order')->group(function () {
     Route::get('', [OrderController::class, 'index']);
-    Route::post('', [OrderController::class, 'store']);
-    Route::get('/{id}', [OrderController::class, 'edit']);
-    Route::post('/{id}', [OrderController::class, 'update']);
-    Route::get('/status/history/{id}', [OrderController::class, 'getOrderStatusHistory']);
+    Route::post('', [OrderController::class, 'placeOrder']);
 });
 
 Route::prefix('variant')->group(function () {
@@ -153,5 +148,9 @@ Route::prefix('variant_option')->group(function () {
     Route::post('/{id}', [VariantOptionController::class, 'update']);
     Route::delete('/{id}', [VariantOptionController::class, 'destroy']);
     Route::post('/{id}/restore', [VariantOptionController::class, 'restore']);
+});
+
+Route::prefix('payment')->group(function () {
+    Route::get('momo/{orderId}', [PaymentController::class, 'momo_payment']);
 });
 
