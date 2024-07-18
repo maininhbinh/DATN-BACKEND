@@ -281,7 +281,7 @@ class AuthController extends Controller
                 'role_id' => Roles::getOrder(Roles::USER)
             ];
 
-            $user = User::create($addUser)->first();
+            $user = User::create($addUser);
 
             if (!$token = $user->createToken('authToken')->plainTextToken) {
                 return response()->json(['error' => 'Unauthorized'], 401);
@@ -289,10 +289,12 @@ class AuthController extends Controller
 
             UserRegistration::where('email', $userRegistration->email)->delete();
 
+            $user = User::find($user->id);
+
             return response()->json([
                 'success' => true,
-                'result' => [
-                    'data' => $user,
+                'data' => [
+                    'user' => $user,
                     'access_token' => $token,
                     'token_type' => 'Bearer',
                 ]
@@ -302,9 +304,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'success' => false,
-                'result' => [
-                    'message' => $e->getMessage()
-                ],
+                'message' => $e->getMessage()
             ], 422);
 
         }
@@ -312,9 +312,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'success' => false,
-                'result' => [
-                    'message' => $e->getMessage(),
-                ],
+                'message' => $e->getMessage(),
             ], 500);
 
         }
@@ -332,13 +330,9 @@ class AuthController extends Controller
         if (!$user) {
             return response()->json([
                 'success' => false,
-                'result' => [
-                    'message' => 'Khng tìm thấy người dùng'
-                ]
+                'message' => 'Khng tìm thấy người dùng'
             ]);
         }
-
-
     }
 
     public function login(Request $request)
