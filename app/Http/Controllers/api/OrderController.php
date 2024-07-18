@@ -12,6 +12,7 @@ use App\Models\Order;
 use App\Models\OrderDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
@@ -19,7 +20,7 @@ class OrderController extends Controller
     /**í
      * Display a listing of the resource.
      */
-    public function findOrderUser(Request $request)
+    public function show(Request $request)
     {
         try {
 
@@ -36,7 +37,6 @@ class OrderController extends Controller
                 ], 200);
 
             }
-            // xử lý order chưa đăng nhập
 
             return response()->json([]);
 
@@ -71,7 +71,7 @@ class OrderController extends Controller
                     'receiver_name' => 'Trường name là bắt buộc',
                     'receiver_name.string' => 'Trường name phải là một chuỗi',
                     'receiver_email' => 'Trường email là bắt buộc',
-                    'receiver_email.email' => 'Trường email phải là một chuỗi',
+                    'receiver_email.email' => 'Trường email phải định dạng là email',
                     'receiver_phone' => 'Trường phone là bắt buộc',
                     'receiver_phone.string' => 'Trường phone là một chuỗi',
                     'receiver_pronvinces' => 'Băt buộc chọn một tỉnh thành',
@@ -141,7 +141,7 @@ class OrderController extends Controller
 
                 //xử lý discount code
 
-//            $discountPrice = $totalPrice - $discountCode;
+                //$discountPrice = $totalPrice - $discountCode;
                 $discountPrice = $totalPrice;
 
                 $order = Order::create([
@@ -166,7 +166,7 @@ class OrderController extends Controller
                 // xử lý lưu vào history
 
                 foreach ($carts as $cart) {
-                    $orderDetail = OrderDetail::create([
+                    OrderDetail::create([
                         'product_item_id' => $cart->product_item_id,
                         'order_id' => $order->id,
                         'quantity' => $cart->quantity,
@@ -179,7 +179,14 @@ class OrderController extends Controller
                 DB::commit();
                 return redirect()->action([PaymentController::class, 'momo_payment'], ['orderId' => $order->id]);
             }
-        }catch(\Exception $exception){
+        }
+        catch (ValidationException $validationException){
+            return response()->json([
+                'success' => false,
+                'massage' => $validationException->getMessage()
+            ]);
+        }
+        catch(\Exception $exception){
 
             DB::rollBack();
 

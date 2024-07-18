@@ -15,16 +15,13 @@ class CartController extends Controller
     public function index(Request $request)
     {
         try {
-
-            $token = $request->bearerToken();
-
-            $user = AuthHelpers::CheckAuth($token);
+            $user = $request->user();
 
             if ($user && $user->id) {
                 $items = Cart::where('user_id', Auth::id())
                     ->join('product_items', 'carts.product_item_id', '=', 'product_items.id')
                     ->join('products', 'product_items.product_id', '=', 'products.id')
-                    ->select('carts.id','products.name', 'products.thumbnail', 'products.slug', 'carts.quantity', 'carts.user_id', 'carts.product_item_id')
+                    ->select('carts.id','products.name', 'products.thumbnail', 'products.slug', 'carts.quantity', 'carts.user_id', 'carts.product_item_id', 'product_items.quantity as quantity_product')
                     ->with('productItem.variants')
                     ->get();
 
@@ -43,22 +40,13 @@ class CartController extends Controller
                         'variants' => $item->productItem->variants,
                     ];
                 });
-            } else {
-
-                $cart = collect(session('cart', []));
-                $productItem = ProductItem::whereIn('id', $cart->pluck('product_item_id'));
 
                 return response()->json([
                     'success' => true,
-                    'data' => []
+                    'data' => $items
                 ], 200);
 
             }
-
-            return response()->json([
-                'success' => true,
-                'data' => $items
-            ], 200);
 
         } catch (\Exception $e) {
             return response()->json([
@@ -75,30 +63,36 @@ class CartController extends Controller
             $request->validate(
                 [
                     'product_item_id' => 'required|exists:product_items,id',
-                    'quantity' => 'required|integer|min:1',
                 ],
                 [
                     'product_item_id.required' => 'Product item is required',
                     'product_item_id.exists' => 'Product item does not exist',
-                    'quantity.required' => 'Quantity is required',
-                    'quantity.integer' => 'Quantity must be an integer',
-                    'quantity.min' => 'Quantity must be at least 1',
                 ]
             );
 
             $productItemId = $request->input('product_item_id');
             $quantity = $request->input('quantity');
 
-            $token = $request->bearerToken();
-
-            $user = AuthHelpers::CheckAuth($token);
+            $user = $request->user();
 
             if($user && $user->id){
-                $cart = Cart::where('user_id', $user->id)->where('product_item_id', $productItemId)->first();
+                $cart = Cart::where('user_id', $user->id)
+                    ->where('product_item_id', $productItemId)
+                    ->join('product_items', 'carts.product_item_id', '=', 'product_items.id')
+                    ->select('carts.*', 'product_items.quantity as quantity_product')
+                    ->first();
 
                 if($cart){
 
                     $cart->quantity += $quantity;
+
+                    if($cart->quantity > $cart->quantity_product){
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Số lương đơn hàng vượt quá số lượng sản phâm'
+                        ], 422);
+                    }
+
                     $cart->save();
 
                 }else{
@@ -106,7 +100,7 @@ class CartController extends Controller
                     Cart::create([
                         'user_id' => $user->id,
                         'product_item_id' => $productItemId,
-                        'quantity' => $quantity
+                        'quantity' => 1
                     ]);
 
                 }
@@ -114,31 +108,8 @@ class CartController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Thêm vào giỏ hàng thành công'
-                ]);
+                ], 200);
             }
-
-            $cart = collect(session('cart', []));
-            $product = $cart->firstWhere('product_item_id', $productItemId);
-
-            if($product) {
-
-                $product['quantity'] += $quantity;
-
-            } else {
-
-                $cart->push([
-                    'product_item_id' => $productItemId,
-                    'quantity' => $quantity,
-                ]);
-
-            }
-
-            session(['cart' => $cart->toArray()]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Thêm vào giỏ hàng thành công'
-            ]);
 
         }catch (ValidationException $e){
 
@@ -171,14 +142,20 @@ class CartController extends Controller
 
             $quantity = $request->input('quantity');
 
-            $token = $request->bearerToken();
-
-            $user = AuthHelpers::CheckAuth($token);
+            $user = $request->user();
 
             if($user && $user->id){
 
                 $cart = Cart::where('user_id', $user->id)->where('product_item_id', $id)->first();
                 $cart->quantity = $quantity;
+
+                if($cart->quantity > $cart->quantity_product){
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Số lương đơn hàng vượt quá số lượng sản phâm'
+                    ], 422);
+                }
+
                 $cart->save();
 
             }else{

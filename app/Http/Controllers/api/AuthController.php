@@ -362,29 +362,23 @@ class AuthController extends Controller
             if (!$user || !Hash::check($request->password, $user->password)) {
                 return response()->json([
                     'success' => false,
-                    'result' => [
-                        'message' => 'email or password is incorrect'
-                    ]
+                    'message' => 'email or password is incorrect'
                 ], 422);
             };
 
             if (!$token = $user->createToken('authToken')->plainTextToken) {
                 return response()->json([
                     'success' => false,
-                    'result' => [
-                        'message' => 'Invalid OTP'
-                    ]
+                    'message' => 'Invalid OTP'
                 ], 422);
             }
 
             return response()->json([
                 'success' => true,
-                'result' => [
-                    'message' => 'login success',
-                    'data' => $user,
-                    'access_token' => $token,
-                    'token_type' => 'Bearer',
-                ]
+                'message' => 'login success',
+                'data' => $user,
+                'access_token' => $token,
+                'token_type' => 'Bearer',
             ]);
 
         } catch (ValidationException $e) {
@@ -397,9 +391,7 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'result' => [
-                    'message' => $e->getMessage()
-                ]
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -411,17 +403,13 @@ class AuthController extends Controller
 
             return response()->json([
                 'success' => true,
-                'result' => [
-                    'message' => 'logout success'
-                ]
+                'message' => 'logout success'
             ], 200);
 
         }catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'result' => [
-                    'message' => $e->getMessage()
-                ]
+                'message' => $e->getMessage()
             ], 500);
         }
     }

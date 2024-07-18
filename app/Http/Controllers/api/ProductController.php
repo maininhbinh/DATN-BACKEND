@@ -49,7 +49,13 @@ class ProductController extends Controller
 
     public function featProducts(Request $request){
         try{
-            $products = Product::where($request->feat, true)->with(['products.variants'])->get();
+
+            $products = Product::where($request->feat, true)->with(['products' => function ($query){
+                $query->with(['variants' => function ($query) {
+                    $query->orderBy('product_configurations.id', 'asc');
+                }]);
+            }])->get();
+
             return response()->json([
                 'success' => true,
                 'data' => $products
@@ -65,6 +71,7 @@ class ProductController extends Controller
     public function show(Request $request){
 
         try {
+
             $product = Product::where('slug', $request->slug)
                 ->with(
                     [

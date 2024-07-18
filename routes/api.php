@@ -41,19 +41,18 @@ Route::prefix('auth')->group(function () {
 
 Route::prefix('user')->group(function () {
     Route::get('list', [UserController::class, 'index']);
-    Route::get('profile', [UserController::class, 'profile']);
+    Route::get('profile', [UserController::class, 'profile'])->middleware('auth:sanctum');
     Route::post('', [UserController::class, 'store']);
     Route::get('{id}', [UserController::class, 'edit']);
     Route::post('/{id}', [UserController::class, 'update']);
     Route::delete('/{id}', [UserController::class, 'delete']);
 });
 
-Route::prefix('cart')->group(function () {
+Route::middleware('auth:sanctum')->prefix('cart')->group(function () {
     Route::get('', [CartController::class, 'index']);
     Route::post('add', [CartController::class, 'store']);
     Route::put('/{id}', [CartController::class, 'updateQuantity']);
     Route::delete('/{id}', [CartController::class, 'destroy']);
-    Route::delete('delete/all', [CartController::class, 'destroyAll']);
 });
 
 Route::prefix('brand')->group(function () {
@@ -129,6 +128,7 @@ Route::prefix('slider')->group(function () {
 Route::prefix('order')->group(function () {
     Route::get('', [OrderController::class, 'index']);
     Route::post('', [OrderController::class, 'placeOrder']);
+    Route::get('detail/{id}', [OrderController::class, 'show']);
 });
 
 Route::prefix('variant')->group(function () {

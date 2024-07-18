@@ -50,7 +50,7 @@ class PaymentController extends Controller
             $accessKey = "klm05TvNBzhg7h7j";
             $secretKey = "at67qH6mk8w5Y1nAyMoYKMWACiEi2bsa";
             $orderInfo = "Thanh toán qua MoMo";
-            $amount = strval(10000);
+            $amount = $order->total_price;
             $returnUrl = "http://127.0.0.1:8000/momo-response";
             $notifyurl = "http://localhost:8000/atm/ipn_momo.php";
             $bankCode = "SML";
@@ -127,7 +127,7 @@ class PaymentController extends Controller
 
                     $orderDetail = Order::where('order_id', $order->id)->get();
                     $trangThai = PaymentStatuses::COMPLETED->value;
-                    event(new OrderCreated($order, $trangThai));
+                    event(new OrderCreated($order, $trangThai, $order->receiver_email));
 
                     return response()->json(['message' => 'Payment success'], 200);
                 } else {
