@@ -11,11 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('status_histories', function (Blueprint $table) {
+        Schema::create('order_histories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users');
             $table->foreignId('order_id')->constrained('orders');
-            $table->foreignId('order_status_id')->constrained('order_statuses');
+            $table->foreignId('order_status_id')->default(1)->constrained('order_statuses');
             $table->timestamps();
         });
     }
@@ -25,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('status_histories');
+        Schema::dropIfExists('order_histories');
     }
 };

@@ -10,6 +10,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderDetail;
+use App\Models\OrderHistory;
+use App\Models\StatusHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -125,19 +127,11 @@ class OrderController extends Controller
                     ], 404);
                 }
 
-                $totalPrice = DB::table('carts')
-                    ->join('product_items', 'carts.product_item_id', '=', 'product_items.id')
-                    ->join('products', 'product_items.product_id', '=', 'products.id')
-                    ->where('carts.user_id', $user->id)
-                    ->sum(DB::raw("
-                    carts.quantity * (
-                        CASE
-                            WHEN products.type_discount = '".TypeDiscounts::Percent->value."' THEN product_items.price * (1 - products.discount / 100)
-                            WHEN products.type_discount = '".TypeDiscounts::Fixed->value."' THEN product_items.price - products.discount
-                            ELSE product_items.price
-                        END
-                    )
-                "));
+                $totalPrice = 0;
+
+                foreach ($carts as $cart){
+                    $totalPrice += $cart->price;
+                }
 
                 //xử lý discount code
 
@@ -163,7 +157,10 @@ class OrderController extends Controller
                     'discount_price' => $discountPrice,
                 ]);
 
-                // xử lý lưu vào history
+                OrderHistory::create([
+                   'order_id' => $order->id,
+                   'order_status_id' => OrderStatus::getOrder(OrderStatus::PENDING)
+                ]);
 
                 foreach ($carts as $cart) {
                     OrderDetail::create([
@@ -174,7 +171,7 @@ class OrderController extends Controller
                     ]);
                 }
 
-//                Cart::where('user_id', $user->id)->delete();
+                Cart::where('user_id', $user->id)->delete();
 
                 DB::commit();
                 return redirect()->action([PaymentController::class, 'momo_payment'], ['orderId' => $order->id]);
