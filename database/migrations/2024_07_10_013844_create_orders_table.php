@@ -30,7 +30,6 @@ return new class extends Migration
             $table->decimal('discount_price')->nullable();
             $table->string('discount_code')->nullable();
             $table->text('note')->nullable();
-            $table->string('payment_url')->nullable();
             $table->string('sku')->unique();
             $table->softDeletes()->nullable();
             $table->timestamps();

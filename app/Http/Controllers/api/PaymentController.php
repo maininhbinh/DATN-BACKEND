@@ -51,10 +51,10 @@ class PaymentController extends Controller
             $secretKey = "at67qH6mk8w5Y1nAyMoYKMWACiEi2bsa";
             $orderInfo = "Thanh toán qua MoMo";
             $amount = $order->total_price;
-            $returnUrl = "http://127.0.0.1:8000/momo-response";
+            $returnUrl = "http://127.0.0.1:8000/api/payment/callback";
             $notifyurl = "http://localhost:8000/atm/ipn_momo.php";
             $bankCode = "SML";
-            $orderid = strval(time());
+            $orderid = strval($order->sku);
             $requestId = time() . "";
             $requestType = "payWithMoMoATM";
             $extraData = "";
@@ -79,8 +79,7 @@ class PaymentController extends Controller
             $jsonResult = json_decode($result, true);
 
             if (isset($jsonResult['payUrl'])) {
-//                $order->payment_url = $jsonResult['payUrl'];
-//                $order->save();
+
                 return response()->json(['url' => $jsonResult['payUrl']], 200);
 
             } else {
@@ -101,7 +100,6 @@ class PaymentController extends Controller
             $partnerCode = $request->query('partnerCode');
             $accessKey = $request->query('accessKey');
             $orderId = $request->query('orderId');
-            $order = Order::find($orderId);
             $localMessage = $request->query('localMessage');
             $message = $request->query('message');
             $transId = $request->query('transId');
@@ -120,14 +118,22 @@ class PaymentController extends Controller
 
             if ($m2signature == $partnerSignature) {
                 if ($errorCode == '0') {
-                    $order->update([
-                        'payment' => 'Paid',
-                        'payment_url' => '',
+                    $order = Order::where('sku', $orderId)->first();
+
+                    if (!$order) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Order not found'
+                        ], 404);
+                    }
+
+                    Order::where('sku', $orderId)->update([
+                        'payment_status_id' => PaymentStatuses::getOrder(PaymentStatuses::COMPLETED)
                     ]);
 
-                    $orderDetail = Order::where('order_id', $order->id)->get();
-                    $trangThai = PaymentStatuses::COMPLETED->value;
-                    event(new OrderCreated($order, $trangThai, $order->receiver_email));
+                    $status = PaymentStatuses::COMPLETED->value;
+
+                    event(new OrderCreated($order, $status, $order->receiver_email));
 
                     return response()->json(['message' => 'Payment success'], 200);
                 } else {

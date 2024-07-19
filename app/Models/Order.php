@@ -30,7 +30,6 @@ class Order extends Model
         'discount_price',
         'discount_code',
         'note',
-        'payment_url',
         'sku',
     ];
 
@@ -54,7 +53,7 @@ class Order extends Model
     {
         static::creating(function ($order) {
             do{
-                $sku = 'ORDER-' . now() . strtoupper(Str::random(8));
+                $sku = 'ORDER-' . strtoupper(Str::random(8));
             }while(Order::where('sku', $sku)->exists());
 
             $order->sku = $sku;

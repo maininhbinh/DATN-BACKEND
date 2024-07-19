@@ -152,5 +152,6 @@ Route::prefix('variant_option')->group(function () {
 
 Route::prefix('payment')->group(function () {
     Route::get('momo/{orderId}', [PaymentController::class, 'momo_payment']);
+    Route::get('callback', [PaymentController::class, 'fallBack']);
 });
 
