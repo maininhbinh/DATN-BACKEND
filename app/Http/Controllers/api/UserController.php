@@ -55,7 +55,7 @@ class UserController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $user,
+                'user' => $user,
             ], 200);
 
         } catch (\Exception $e) {

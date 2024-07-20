@@ -337,7 +337,7 @@ class ProductController extends Controller
             DB::rollBack();
             return response()->json([
                 "success" => false,
-                "message" => $exception->getLine()
+                "message" => $exception->getMessage()
             ], 500);
         }
     }

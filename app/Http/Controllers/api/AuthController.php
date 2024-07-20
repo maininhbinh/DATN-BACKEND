@@ -293,11 +293,9 @@ class AuthController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => [
-                    'user' => $user,
-                    'access_token' => $token,
-                    'token_type' => 'Bearer',
-                ]
+                'user' => $user,
+                'access_token' => $token,
+                'token_type' => 'Bearer',
             ], 200);
 
         }catch (ValidationException $e) {
@@ -369,8 +367,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'login success',
-                'data' => $user,
+                'user' => $user,
                 'access_token' => $token,
                 'token_type' => 'Bearer',
             ]);
@@ -378,9 +375,7 @@ class AuthController extends Controller
         } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'result' => [
-                    'message' => $e->getMessage()
-                ]
+                'message' => $e->getMessage()
             ], 422);
         } catch (\Exception $e) {
             return response()->json([

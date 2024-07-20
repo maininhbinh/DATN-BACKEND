@@ -27,7 +27,7 @@ return new class extends Migration
             $table->foreignId('payment_status_id')->default(PaymentStatuses::getOrder(PaymentStatuses::PENDING))->constrained('payment_statuses');
             $table->foreignId('payment_method_id')->constrained('payment_methods');
             $table->boolean('pick_up_required')->default(false);
-            $table->decimal('discount_price')->nullable();
+            $table->decimal('discount_price', 15, 0)->nullable();
             $table->string('discount_code')->nullable();
             $table->text('note')->nullable();
             $table->string('sku')->unique();

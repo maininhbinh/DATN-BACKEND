@@ -79,7 +79,7 @@ class CartController extends Controller
                     ->select('carts.*', 'product_items.quantity as quantity_product')
                     ->first();
 
-                if($cart){
+                if($cart && $cart->id){
 
                     $cart->quantity += $quantity;
 
@@ -102,16 +102,9 @@ class CartController extends Controller
 
                 }
 
-                $cart = Cart::find($cart->id)
-                    ->join('product_items', 'carts.product_item_id', '=', 'product_items.id')
-                    ->join('products', 'product_items.product_id', '=', 'products.id')
-                    ->select('carts.id','products.name', 'products.thumbnail', 'products.slug', 'carts.quantity', 'carts.user_id', 'carts.product_item_id', 'product_items.quantity as quantity_product')
-                    ->with('productItem.variants')
-                    ->get();
-
                 return response()->json([
                     'success' => true,
-                    'cart' => $cart
+                    'message' => 'Update success'
                 ], 200);
             }
 
@@ -119,7 +112,7 @@ class CartController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => $e->getLine(),
             ], 422);
 
         }catch (\Exception $e){
@@ -153,7 +146,7 @@ class CartController extends Controller
                 $cart = Cart::where('user_id', $user->id)->where('product_item_id', $id)->first();
                 $cart->quantity = $quantity;
 
-                if($cart->quantity > $cart->quantity_product){
+                if($cart->quantity < $cart->quantity_product){
                     return response()->json([
                         'success' => false,
                         'message' => 'Số lương đơn hàng vượt quá số lượng sản phâm'
@@ -183,7 +176,7 @@ class CartController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $e->errors()
+                'errors' => $e->getLine()
             ], 422);
 
         } catch (\Exception $e) {
@@ -191,7 +184,7 @@ class CartController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating cart.',
-                'error' => $e->getMessage()
+                'error' => $e->getLine()
             ], 500);
 
         }
