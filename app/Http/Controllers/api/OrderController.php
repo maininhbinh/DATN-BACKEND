@@ -19,6 +19,27 @@ use Illuminate\Validation\ValidationException;
 class OrderController extends Controller
 {
 
+    public function index()
+    {
+        try {
+
+            $item = Order::where()->orderBy('created_at', 'desc')->get();
+
+            return response()->json([
+                'sucess' => true,
+                'data' => $item
+            ], 200);
+
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'success' => false,
+                'message' => $e
+            ], 500);
+
+        }
+    }
+
     /**í
      * Display a listing of the resource.
      */

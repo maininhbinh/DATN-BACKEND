@@ -77,7 +77,10 @@ class ProductController extends Controller
                     [
                         'products' => function ($query){
                             $query->with(['variants' => function ($query) {
-                                $query->orderBy('product_configurations.id', 'asc');
+                                $query->orderBy('product_configurations.id', 'asc')
+                                    ->join('variants', 'variant_options.variant_id', '=', 'variants.id')
+                                    ->select('variant_options.*', 'variants.name as variant_name')
+                                    ->get();
                             }]);
                         },
                         'category',
