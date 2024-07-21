@@ -23,7 +23,7 @@ class OrderController extends Controller
     {
         try {
 
-            $item = Order::where()->orderBy('created_at', 'desc')->get();
+            $item = Order::orderBy('created_at', 'desc')->get();
 
             return response()->json([
                 'sucess' => true,
