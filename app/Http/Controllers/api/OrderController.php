@@ -11,7 +11,6 @@ use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\OrderHistory;
-use App\Models\StatusHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -43,12 +42,10 @@ class OrderController extends Controller
     /**í
      * Display a listing of the resource.
      */
-    public function show(Request $request)
+    public function getAllOrder(Request $request)
     {
         try {
-
-            $token = $request->bearerToken();
-            $user = AuthHelpers::CheckAuth($token);
+            $user = $request->user();
 
             if($user && $user->id){
 
@@ -70,6 +67,110 @@ class OrderController extends Controller
                 'message' => $e
             ], 500);
 
+        }
+    }
+
+    public function show($id){
+        try {
+            $orderDetail = Order::where('orders.id', $id)
+                ->with(['orderDetails' => function($query){
+                    $query
+                        ->with(['productItem' => function ($query){
+                            $query
+                                ->join('products', 'product_items.product_id', '=', 'products.id')
+                                ->select('product_items.*', 'products.name', 'products.thumbnail');
+                        }]);
+                }])
+                ->with(['histories' => function ($query){
+                    $query
+                        ->join('order_statuses', 'order_histories.order_status_id', '=', 'order_statuses.id')
+                        ->select('order_histories.*', 'order_statuses.name');
+                }])
+                ->with(['user'])
+                ->join('payment_statuses', 'orders.payment_status_id', '=', 'payment_statuses.id')
+                ->join('payment_methods', 'orders.payment_method_id', '=', 'payment_methods.id')
+                ->join('order_statuses', 'orders.order_status_id', '=', 'order_statuses.id')
+                ->select(
+                    'orders.id',
+                    'orders.user_id',
+                    'orders.total_price',
+                    'orders.receiver_name',
+                    'orders.receiver_email',
+                    'orders.receiver_phone',
+                    'orders.receiver_pronvinces',
+                    'orders.receiver_district',
+                    'orders.receiver_district',
+                    'orders.receiver_ward',
+                    'orders.receiver_address',
+                    'orders.discount_price',
+                    'orders.discount_code',
+                    'orders.discount_code',
+                    'orders.pick_up_required',
+                    'orders.note',
+                    'orders.sku as code',
+                    'orders.created_at',
+                    'payment_statuses.name as payment_status',
+                    'order_statuses.name as order_status',
+                    'payment_methods.description as payment_methods',
+                )
+                ->first();
+
+            if (!$orderDetail) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order not found'
+                ], 404);
+            }
+
+            $order = [
+                'id' => $orderDetail->id,
+                'total_price' => $orderDetail->total_price,
+                'receiver_name' => $orderDetail->receiver_name,
+                'receiver_email' => $orderDetail->receiver_email,
+                'receiver_phone' => $orderDetail->receiver_phone,
+                'receiver_pronvinces' => $orderDetail->receiver_pronvinces,
+                'receiver_district' => $orderDetail->receiver_district,
+                'receiver_ward' => $orderDetail->receiver_ward,
+                'receiver_address' => $orderDetail->receiver_address,
+                'pick_up_required' => $orderDetail->pick_up_required,
+                'discount_price' => $orderDetail->discount_price,
+                'note' => $orderDetail->note,
+                'code' => $orderDetail->code,
+                'created_at' => $orderDetail->created_at,
+                'order_status' => $orderDetail->order_status,
+                'payment_status' => $orderDetail->payment_status,
+                'payment_methods' => $orderDetail->payment_methods,
+                'order_details' => $orderDetail->orderDetails->map(function($item){
+                    return [
+                        'id' => $item->id,
+                        'quantity' => $item->quantity,
+                        'price' => $item->price,
+                        'name' => $item->productItem->product_name,
+                        'sku' => $item->productItem->sku,
+                        'image' => $item->productItem->image,
+                        'thumbnail' => $item->productItem->thumbnail,
+                    ];
+                })->toArray(),
+                'histories' => $orderDetail->histories->map(function($history) {
+                    return [
+                        'id' => $history->id,
+                        'status_name' => $history->status_name,
+                        'created_at' => $history->created_at,
+                        'updated_at' => $history->updated_at
+                    ];
+                })->toArray(),
+                'user' => $orderDetail->user,
+            ];
+
+            return response()->json([
+                'success' => true,
+                'order_detail' => $order
+            ]);
+        }catch (\Exception $exception){
+            return response()->json([
+                'success' => false,
+                'massage' => $exception->getMessage()
+            ]);
         }
     }
 
@@ -121,8 +222,7 @@ class OrderController extends Controller
             $paymentStatusId = PaymentStatuses::getOrder(PaymentStatuses::PENDING);
             $orderStatusId = OrderStatus::getOrder(OrderStatus::PENDING);
 
-            $token = $request->bearerToken();
-            $user = AuthHelpers::CheckAuth($token);
+            $user = $request->user();
 
             if($user && $user->id){
 

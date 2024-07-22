@@ -125,10 +125,11 @@ Route::prefix('slider')->group(function () {
 
 });
 
-Route::prefix('order')->group(function () {
+Route::prefix('order')->middleware('auth:sanctum')->group(function () {
     Route::get('', [OrderController::class, 'index']);
     Route::post('', [OrderController::class, 'placeOrder']);
-    Route::get('detail/{id}', [OrderController::class, 'show']);
+    Route::get('{id}', [OrderController::class, 'show']);
+    Route::get('user', [OrderController::class, 'getAllOrder']);
 });
 
 Route::prefix('variant')->group(function () {

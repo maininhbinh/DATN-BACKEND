@@ -49,6 +49,14 @@ class Order extends Model
         return $this->belongsTo(PaymentStatus::class);
     }
 
+    public function orderDetails(){
+        return $this->hasMany(OrderDetail::class);
+    }
+
+    public function histories(){
+        return $this->hasMany(OrderHistory::class);
+    }
+
     protected static function booted()
     {
         static::creating(function ($order) {
