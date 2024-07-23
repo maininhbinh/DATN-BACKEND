@@ -317,4 +317,24 @@ class OrderController extends Controller
         }
 
     }
+
+    public function updateStatus(Request $request, $id){
+        try {
+
+            $order = Order::findOrFail($id);
+            $order->order_status_id = $request->input('status');
+            $order->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cập nhật trạng thái thành công'
+            ]);
+
+        }catch(\Exception $exception){
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ]);
+        }
+    }
 }

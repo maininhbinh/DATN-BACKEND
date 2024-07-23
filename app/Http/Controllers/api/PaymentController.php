@@ -50,12 +50,12 @@ class PaymentController extends Controller
             $accessKey = env('MOMO_PAYMENT_ACCESS_KEY');
             $secretKey = env('MOMO_PAYMENT_SECRET_KEY');
             $orderInfo = "Thanh toán qua MoMo";
-            $amount = '10000';
+            $amount = $order->total_price;
             $returnUrl = env('MOMO_PAYMENT_RETURN_URL');
             $notifyurl = env('MOMO_PAYMENT_NOTIFY_URL');
 
             $bankCode = "SML";
-            $orderid = strval(time());
+            $orderid = strval($order->sku);
             $requestId = time() . "";
             $requestType = "payWithMoMoATM";
             $extraData = "";
