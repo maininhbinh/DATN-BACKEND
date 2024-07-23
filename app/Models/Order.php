@@ -18,7 +18,6 @@ class Order extends Model
         'total_price',
         'order_status_id',
         'receiver_name',
-        'receiver_email',
         'receiver_phone',
         'receiver_pronvinces',
         'receiver_district',

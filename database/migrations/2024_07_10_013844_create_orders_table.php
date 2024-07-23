@@ -18,7 +18,6 @@ return new class extends Migration
             $table->decimal('total_price', 15, 0);
             $table->foreignId('order_status_id')->constrained('order_statuses');
             $table->string('receiver_name');
-            $table->string('receiver_email');
             $table->string('receiver_phone');
             $table->string('receiver_pronvinces');
             $table->string('receiver_district');

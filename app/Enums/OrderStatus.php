@@ -4,10 +4,12 @@ namespace App\Enums;
 enum OrderStatus: string
 {
     case PENDING = 'Chờ xử lý';
-    case PREPARE = "Đang chuẩn bị";
+    case PREPARING = "Đang chuẩn bị";
+    case READY_FOR_PICKUP = "Đơn hàng sẵn sàng";
     case TRANSPORTING = "Đang vận chuyển";
     case DELIVERTING = "Đang giao hàng";
     case DELIVERED = "Đã giao hàng";
+    case COMPLETED = "Hoàn thành";
     case CANCELLED = "Đơn hàng bị hủy";
 
     public static function getValues(): array
@@ -19,11 +21,12 @@ enum OrderStatus: string
     {
         return match($type) {
             self::PENDING => 1,
-            self::PREPARE => 2,
+            self::PREPARING => 2,
             self::TRANSPORTING => 3,
             self::DELIVERTING => 4,
             self::DELIVERED => 5,
-            self::CANCELLED => 6,
+            self::COMPLETED => 6,
+            self::CANCELLED => 7,
         };
     }
 

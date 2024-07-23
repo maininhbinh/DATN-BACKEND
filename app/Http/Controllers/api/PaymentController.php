@@ -50,12 +50,12 @@ class PaymentController extends Controller
             $accessKey = env('MOMO_PAYMENT_ACCESS_KEY');
             $secretKey = env('MOMO_PAYMENT_SECRET_KEY');
             $orderInfo = "Thanh toán qua MoMo";
-            $amount = $order->total_price;
+            $amount = '10000';
             $returnUrl = env('MOMO_PAYMENT_RETURN_URL');
             $notifyurl = env('MOMO_PAYMENT_NOTIFY_URL');
 
             $bankCode = "SML";
-            $orderid = strval($order->sku);
+            $orderid = strval(time());
             $requestId = time() . "";
             $requestType = "payWithMoMoATM";
             $extraData = "";
@@ -119,7 +119,10 @@ class PaymentController extends Controller
 
             if ($m2signature == $partnerSignature) {
                 if ($errorCode == '0') {
-                    $order = Order::where('sku', $orderId)->first();
+                    $order = Order::where('sku', $orderId)
+                        ->join('users', 'orders.user_id', '=', 'users.id')
+                        ->select('orders.*', 'users.email')
+                        ->first();
 
                     if (!$order) {
                         return response()->json([
@@ -134,7 +137,7 @@ class PaymentController extends Controller
 
                     $status = PaymentStatuses::COMPLETED->value;
 
-                    event(new OrderCreated($order, $status, $order->receiver_email));
+                    event(new OrderCreated($order, $status, $order->email));
 
                     return redirect(env('FRONTEND_URL'));
                 } else {

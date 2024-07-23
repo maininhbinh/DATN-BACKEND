@@ -1,16 +1,15 @@
 <?php
 namespace App\Http\Controllers\api;
 
-use App\Enums\OrderStatus;
-use App\Enums\PaymentMethods;
+use App\Enums\OrderStatus as EnumOrderStatus;
 use App\Enums\PaymentStatuses;
 use App\Enums\TypeDiscounts;
-use App\Helpers\AuthHelpers;
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\OrderHistory;
+use App\Models\OrderStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -121,6 +120,8 @@ class OrderController extends Controller
                 )
                 ->first();
 
+            $orderStatuses = OrderStatus::all();
+
             if (!$orderDetail) {
                 return response()->json([
                     'success' => false,
@@ -171,7 +172,8 @@ class OrderController extends Controller
 
             return response()->json([
                 'success' => true,
-                'order_detail' => $order
+                'order_detail' => $order,
+                'order_status' => $orderStatuses
             ]);
         }catch (\Exception $exception){
             return response()->json([
@@ -189,7 +191,6 @@ class OrderController extends Controller
             $request->validate(
                 [
                     'receiver_name' => 'required|string',
-                    'receiver_email' => 'required|string|email',
                     'receiver_phone' => 'required|string',
                     'receiver_pronvinces' => 'required|string',
                     'receiver_district' => 'required|string',
@@ -201,8 +202,6 @@ class OrderController extends Controller
                 [
                     'receiver_name' => 'Trường name là bắt buộc',
                     'receiver_name.string' => 'Trường name phải là một chuỗi',
-                    'receiver_email' => 'Trường email là bắt buộc',
-                    'receiver_email.email' => 'Trường email phải định dạng là email',
                     'receiver_phone' => 'Trường phone là bắt buộc',
                     'receiver_phone.string' => 'Trường phone là một chuỗi',
                     'receiver_pronvinces' => 'Băt buộc chọn một tỉnh thành',
@@ -215,7 +214,6 @@ class OrderController extends Controller
             );
 
             $receiverName = $request->get('receiver_name');
-            $receiverEmail = $request->get('receiver_email');
             $receiverPhone = $request->get('receiver_phone');
             $receiverPronvices = $request->get('receiver_pronvinces');
             $receiverDistrict = $request->get('receiver_district');
@@ -227,83 +225,79 @@ class OrderController extends Controller
             $paymentMethod = 1;
 
             $paymentStatusId = PaymentStatuses::getOrder(PaymentStatuses::PENDING);
-            $orderStatusId = OrderStatus::getOrder(OrderStatus::PENDING);
+            $orderStatusId = EnumOrderStatus::getOrder(EnumOrderStatus::PENDING);
 
             $user = $request->user();
 
-            if($user && $user->id){
+            $carts = Cart::where('user_id', $user->id)
+                ->join('product_items', 'carts.product_item_id', '=', 'product_items.id')
+                ->join('products', 'product_items.product_id', '=', 'products.id')
+                ->select(
+                    'carts.*',
+                    DB::raw("
+                    CASE
+                        WHEN products.type_discount = '" . TypeDiscounts::Percent->value . "' THEN product_items.price * (1 - products.discount / 100)
+                        WHEN products.type_discount = '" . TypeDiscounts::Fixed->value . "' THEN product_items.price - products.discount
+                        ELSE product_items.price
+                    END AS price
+                ")
+                )
+                ->get();
 
-                $carts = Cart::where('user_id', $user->id)
-                    ->join('product_items', 'carts.product_item_id', '=', 'product_items.id')
-                    ->join('products', 'product_items.product_id', '=', 'products.id')
-                    ->select(
-                        'carts.*',
-                        DB::raw("
-                        CASE
-                            WHEN products.type_discount = '" . TypeDiscounts::Percent->value . "' THEN product_items.price * (1 - products.discount / 100)
-                            WHEN products.type_discount = '" . TypeDiscounts::Fixed->value . "' THEN product_items.price - products.discount
-                            ELSE product_items.price
-                        END AS price
-                    ")
-                    )
-                    ->get();
-
-                if(!$carts || count($carts) <= 0){
-                    return response()->json([
-                        'sucess' => false,
-                        'message' => 'Giỏ hàng ít nhất phải có 1 sản phẩm'
-                    ], 404);
-                }
-
-                $totalPrice = 0;
-
-                foreach ($carts as $cart){
-                    $totalPrice += $cart->price;
-                }
-
-                //xử lý discount code
-
-                //$discountPrice = $totalPrice - $discountCode;
-                $discountPrice = $totalPrice;
-
-                $order = Order::create([
-                    'user_id' => $user->id,
-                    'total_price' => $totalPrice,
-                    'note' => $note,
-                    'order_status_id' => $orderStatusId,
-                    'receiver_name' => $receiverName,
-                    'receiver_email' => $receiverEmail,
-                    'receiver_phone' => $receiverPhone,
-                    'receiver_pronvinces' => $receiverPronvices,
-                    'receiver_district' => $receiverDistrict,
-                    'receiver_ward' => $receiverWard,
-                    'receiver_address' => $receiverAddress,
-                    'payment_method_id' => $paymentMethod,
-                    'payment_status_id' => $paymentStatusId,
-                    'pick_up_required' => $pickUpRequired,
-                    'discount_code' => $discountCode,
-                    'discount_price' => $discountPrice,
-                ]);
-
-                OrderHistory::create([
-                   'order_id' => $order->id,
-                   'order_status_id' => OrderStatus::getOrder(OrderStatus::PENDING)
-                ]);
-
-                foreach ($carts as $cart) {
-                    OrderDetail::create([
-                        'product_item_id' => $cart->product_item_id,
-                        'order_id' => $order->id,
-                        'quantity' => $cart->quantity,
-                        'price' => $cart->price,
-                    ]);
-                }
-
-                Cart::where('user_id', $user->id)->delete();
-
-                DB::commit();
-                return redirect()->action([PaymentController::class, 'momo_payment'], ['orderId' => $order->id]);
+            if(!$carts || count($carts) <= 0){
+                return response()->json([
+                    'sucess' => false,
+                    'message' => 'Giỏ hàng ít nhất phải có 1 sản phẩm'
+                ], 404);
             }
+
+            $totalPrice = 0;
+
+            foreach ($carts as $cart){
+                $totalPrice += $cart->price;
+            }
+
+            //xử lý discount code
+
+            //$discountPrice = $totalPrice - $discountCode;
+            $discountPrice = $totalPrice;
+
+            $order = Order::create([
+                'user_id' => $user->id,
+                'total_price' => $totalPrice,
+                'note' => $note,
+                'order_status_id' => $orderStatusId,
+                'receiver_name' => $receiverName,
+                'receiver_phone' => $receiverPhone,
+                'receiver_pronvinces' => $receiverPronvices,
+                'receiver_district' => $receiverDistrict,
+                'receiver_ward' => $receiverWard,
+                'receiver_address' => $receiverAddress,
+                'payment_method_id' => $paymentMethod,
+                'payment_status_id' => $paymentStatusId,
+                'pick_up_required' => $pickUpRequired,
+                'discount_code' => $discountCode,
+                'discount_price' => $discountPrice,
+            ]);
+
+            OrderHistory::create([
+               'order_id' => $order->id,
+               'order_status_id' => EnumOrderStatus::getOrder(EnumOrderStatus::PENDING)
+            ]);
+
+            foreach ($carts as $cart) {
+                OrderDetail::create([
+                    'product_item_id' => $cart->product_item_id,
+                    'order_id' => $order->id,
+                    'quantity' => $cart->quantity,
+                    'price' => $cart->price,
+                ]);
+            }
+
+//            Cart::where('user_id', $user->id)->delete();
+
+            DB::commit();
+            return redirect()->action([PaymentController::class, 'momo_payment'], ['orderId' => $order->id]);
         }
         catch (ValidationException $validationException){
             return response()->json([
@@ -322,5 +316,25 @@ class OrderController extends Controller
 
         }
 
+    }
+
+    public function updateStatus(Request $request, $id){
+        try {
+
+            $order = Order::findOrFail($id);
+            $order->order_status_id = $request->input('status');
+            $order->save();
+
+            return response()->json([
+               'success' => true,
+               'message' => 'Cập nhật trạng thái thành công'
+            ]);
+
+        }catch(\Exception $exception){
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ]);
+        }
     }
 }
