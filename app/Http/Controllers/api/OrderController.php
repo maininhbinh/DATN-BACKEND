@@ -1,16 +1,15 @@
 <?php
 namespace App\Http\Controllers\api;
 
-use App\Enums\OrderStatus;
-use App\Enums\PaymentMethods;
+use App\Enums\OrderStatus as EnumOrderStatus;
 use App\Enums\PaymentStatuses;
 use App\Enums\TypeDiscounts;
-use App\Helpers\AuthHelpers;
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\OrderHistory;
+use App\Models\OrderStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -95,7 +94,6 @@ class OrderController extends Controller
                     'orders.user_id',
                     'orders.total_price',
                     'orders.receiver_name',
-                    'orders.receiver_email',
                     'orders.receiver_phone',
                     'orders.receiver_pronvinces',
                     'orders.receiver_district',
@@ -114,6 +112,8 @@ class OrderController extends Controller
                     'payment_methods.description as payment_methods',
                 )
                 ->first();
+
+            $orderStatuses = OrderStatus::all();
 
             if (!$orderDetail) {
                 return response()->json([
@@ -164,7 +164,8 @@ class OrderController extends Controller
 
             return response()->json([
                 'success' => true,
-                'order_detail' => $order
+                'order_detail' => $order,
+                'order_status' => $orderStatuses
             ]);
         }catch (\Exception $exception){
             return response()->json([
@@ -182,7 +183,6 @@ class OrderController extends Controller
             $request->validate(
                 [
                     'receiver_name' => 'required|string',
-                    'receiver_email' => 'required|string|email',
                     'receiver_phone' => 'required|string',
                     'receiver_pronvinces' => 'required|string',
                     'receiver_district' => 'required|string',
@@ -194,8 +194,6 @@ class OrderController extends Controller
                 [
                     'receiver_name' => 'Trường name là bắt buộc',
                     'receiver_name.string' => 'Trường name phải là một chuỗi',
-                    'receiver_email' => 'Trường email là bắt buộc',
-                    'receiver_email.email' => 'Trường email phải định dạng là email',
                     'receiver_phone' => 'Trường phone là bắt buộc',
                     'receiver_phone.string' => 'Trường phone là một chuỗi',
                     'receiver_pronvinces' => 'Băt buộc chọn một tỉnh thành',
@@ -208,7 +206,6 @@ class OrderController extends Controller
             );
 
             $receiverName = $request->get('receiver_name');
-            $receiverEmail = $request->get('receiver_email');
             $receiverPhone = $request->get('receiver_phone');
             $receiverPronvices = $request->get('receiver_pronvinces');
             $receiverDistrict = $request->get('receiver_district');
@@ -220,7 +217,7 @@ class OrderController extends Controller
             $paymentMethod = 1;
 
             $paymentStatusId = PaymentStatuses::getOrder(PaymentStatuses::PENDING);
-            $orderStatusId = OrderStatus::getOrder(OrderStatus::PENDING);
+            $orderStatusId = EnumOrderStatus::getOrder(EnumOrderStatus::PENDING);
 
             $user = $request->user();
 
@@ -264,7 +261,6 @@ class OrderController extends Controller
                 'note' => $note,
                 'order_status_id' => $orderStatusId,
                 'receiver_name' => $receiverName,
-                'receiver_email' => $receiverEmail,
                 'receiver_phone' => $receiverPhone,
                 'receiver_pronvinces' => $receiverPronvices,
                 'receiver_district' => $receiverDistrict,
@@ -279,7 +275,7 @@ class OrderController extends Controller
 
             OrderHistory::create([
                 'order_id' => $order->id,
-                'order_status_id' => OrderStatus::getOrder(OrderStatus::PENDING)
+                'order_status_id' => EnumOrderStatus::getOrder(EnumOrderStatus::PENDING)
             ]);
 
             foreach ($carts as $cart) {
