@@ -28,7 +28,7 @@ class User extends Authenticatable
         'district',
         'city',
         'role_id',
-        'in_active',
+        'is_active',
     ];
 
     public function role()

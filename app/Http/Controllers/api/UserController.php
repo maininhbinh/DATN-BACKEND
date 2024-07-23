@@ -98,7 +98,7 @@ class UserController extends Controller
             'district' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'role_id' => 'nullable|integer',
-            'in_active' => 'nullable|integer',
+            'is_active' => 'nullable|integer',
             'virtual' => 'nullable|integer',
         ], [
             'image.image' => 'Hình ảnh phải là file hình ảnh',
@@ -128,7 +128,7 @@ class UserController extends Controller
 
             $validatedData['image'] = $url;
             $validatedData['public_id'] = $public_id;
-            $validatedData['in_active'] = (int)$request->get("in_active");
+            $validatedData['is_active'] = (int)$request->get("is_active");
         }
 
         $user = User::create($validatedData);
@@ -155,7 +155,7 @@ class UserController extends Controller
                 'district' => 'nullable|string|max:255',
                 'city' => 'nullable|string|max:255',
                 'role_id' => 'nullable|integer',
-                'in_active' => 'nullable|integer',
+                'is_active' => 'nullable|integer',
                 'virtual' => 'nullable|integer',
             ], [
                 'image.image' => 'Hình ảnh phải là file hình ảnh',
