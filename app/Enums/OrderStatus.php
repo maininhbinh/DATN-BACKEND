@@ -8,7 +8,7 @@ enum OrderStatus: string
     case TRANSPORTING = "Đang vận chuyển";
     case DELIVERTING = "Đang giao hàng";
     case DELIVERED = "Đã giao hàng";
-    case CANCELLED = "Đơn hàng bị hủy (không xử lý gì thêm)";
+    case CANCELLED = "Đơn hàng bị hủy";
 
     public static function getValues(): array
     {
