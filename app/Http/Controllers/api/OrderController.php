@@ -161,7 +161,7 @@ class OrderController extends Controller
                 'histories' => $orderDetail->histories->map(function($history) {
                     return [
                         'id' => $history->id,
-                        'status_name' => $history->status_name,
+                        'status_name' => $history->name,
                         'created_at' => $history->created_at,
                         'updated_at' => $history->updated_at
                     ];
@@ -321,9 +321,16 @@ class OrderController extends Controller
     public function updateStatus(Request $request, $id){
         try {
 
+            $orderStatus = $request->input('status');
+
             $order = Order::findOrFail($id);
-            $order->order_status_id = $request->input('status');
+            $order->order_status_id = $orderStatus;
             $order->save();
+
+            OrderHistory::create([
+                'order_id' => $order->id,
+                'order_status_id' => $orderStatus
+            ]);
 
             return response()->json([
                 'success' => true,
