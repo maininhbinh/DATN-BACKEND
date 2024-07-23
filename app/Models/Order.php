@@ -32,19 +32,23 @@ class Order extends Model
         'sku',
     ];
 
-    public function user(){
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
 
-    public function orderStatus(){
+    public function orderStatus()
+    {
         return $this->belongsTo(OrderStatus::class);
     }
 
-    public function paymentMethod(){
+    public function paymentMethod()
+    {
         return $this->belongsTo(PaymentMethod::class);
     }
 
-    public function paymentStatus(){
+    public function paymentStatus()
+    {
         return $this->belongsTo(PaymentStatus::class);
     }
 
@@ -59,11 +63,15 @@ class Order extends Model
     protected static function booted()
     {
         static::creating(function ($order) {
-            do{
+            do {
                 $sku = 'ORDER-' . strtoupper(Str::random(8));
-            }while(Order::where('sku', $sku)->exists());
+            } while (Order::where('sku', $sku)->exists());
 
             $order->sku = $sku;
         });
+    }
+    public function coupon()
+    {
+        return $this->belongsTo(Coupon::class);
     }
 }

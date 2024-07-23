@@ -5,6 +5,7 @@ use App\Http\Controllers\api\BrandController;
 use App\Http\Controllers\api\CategoryController;
 use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\CartController;
+use App\Http\Controllers\api\CouponController;
 use App\Http\Controllers\api\DetailController;
 use App\Http\Controllers\api\OrderController;
 use App\Http\Controllers\api\PaymentController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\api\ValueController;
 use App\Http\Controllers\api\SlideController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\api\ProductController;
+use App\Http\Controllers\api\UserCouponController;
 use App\Http\Controllers\api\VariantController;
 use App\Http\Controllers\api\VariantOptionController;
 
@@ -122,7 +124,6 @@ Route::prefix('slider')->group(function () {
     Route::delete('/{id}', [SlideController::class, 'destroy']);
     Route::get('/{id}', [SlideController::class, 'edit']);
     Route::post('/{id}', [SlideController::class, 'update']);
-
 });
 
 Route::prefix('order')->middleware('auth:sanctum')->group(function () {
@@ -157,3 +158,12 @@ Route::prefix('payment')->group(function () {
     Route::get('callback', [PaymentController::class, 'fallBack']);
 });
 
+
+Route::prefix('coupon')->group(function () {
+    Route::get('', [CouponController::class, 'index']);
+    Route::post('', [CouponController::class, 'store'])->name('coupon.store');
+    Route::get('/{id}', [CouponController::class, 'edit']);
+    Route::post('/{id}', [CouponController::class, 'update']);
+    Route::delete('/{id}', [CouponController::class, 'destroy']);
+});
+Route::post('/apply', [CouponController::class, 'apply'])->name('coupon');
