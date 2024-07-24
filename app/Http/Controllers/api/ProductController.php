@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Helpers\ValidatorHelpers as IValidator;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
 
 class ProductController extends Controller
 {
@@ -389,6 +390,38 @@ class ProductController extends Controller
             return response()->json(['success' => true, 'data' => $products]);
         } catch (Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+    public function search(Request $request)
+    {
+        $name = $request->input('name');
+
+        if (empty($name)) {
+            return response()->json([
+                'error' => 'Query parameter is required'
+            ], 400);
+        }
+
+        try {
+            $products = Product::where('name', 'LIKE', '%' . $name . '%')->get();
+
+            if ($products->isEmpty()) {
+                return response()->json([
+                    'message' => 'Không tìm thấy sản phẩm ' . $name
+                ], 404);
+            }
+
+            return response()->json($products);
+        } catch (QueryException $e) {
+            return response()->json([
+                'error' => 'Database name error',
+                'message' => $e->getMessage()
+            ], 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'An unexpected error occurred',
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 }

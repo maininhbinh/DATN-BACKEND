@@ -115,6 +115,7 @@ Route::prefix('product')->group(function () {
     Route::get('/{slug}', [ProductController::class, 'show']);
     Route::get('/home/{feat}', [ProductController::class, 'featProducts']);
     Route::post('filter', [ProductController::class, 'filter']);
+    Route::post('search', [ProductController::class, 'search']);
 });
 
 
