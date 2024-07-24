@@ -114,6 +114,7 @@ Route::prefix('product')->group(function () {
     Route::post('', [ProductController::class, 'store']);
     Route::get('/{slug}', [ProductController::class, 'show']);
     Route::get('/home/{feat}', [ProductController::class, 'featProducts']);
+    Route::post('filter', [ProductController::class, 'filter']);
 });
 
 
@@ -161,9 +162,9 @@ Route::prefix('payment')->group(function () {
 
 Route::prefix('coupon')->group(function () {
     Route::get('', [CouponController::class, 'index']);
-    Route::post('', [CouponController::class, 'store'])->name('coupon.store');
+    Route::post('', [CouponController::class, 'store']);
     Route::get('/{id}', [CouponController::class, 'edit']);
     Route::post('/{id}', [CouponController::class, 'update']);
     Route::delete('/{id}', [CouponController::class, 'destroy']);
+    Route::post('apply', [CouponController::class, 'apply']);
 });
-Route::post('/apply', [CouponController::class, 'apply'])->name('coupon');

@@ -17,16 +17,19 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use App\Helpers\ValidatorHelpers as IValidator;
+use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ProductController extends Controller
 {
 
     const FOLDER = 'developer';
 
-    public function index(){
+    public function index()
+    {
         try {
 
-            $products = Product::with(['products' => function ($query){
+            $products = Product::with(['products' => function ($query) {
                 $query->with(['variants' => function ($query) {
                     $query->orderBy('product_configurations.id', 'asc');
                 }]);
@@ -36,21 +39,20 @@ class ProductController extends Controller
                 'success' => true,
                 'data' => $products
             ], 200);
-
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
 
             return response()->json([
                 'success' => false,
                 'message' => $exception->getMessage()
             ]);
-
         }
     }
 
-    public function featProducts(Request $request){
-        try{
+    public function featProducts(Request $request)
+    {
+        try {
 
-            $products = Product::where($request->feat, true)->with(['products' => function ($query){
+            $products = Product::where($request->feat, true)->with(['products' => function ($query) {
                 $query->with(['variants' => function ($query) {
                     $query->orderBy('product_configurations.id', 'asc');
                 }]);
@@ -60,7 +62,7 @@ class ProductController extends Controller
                 'success' => true,
                 'data' => $products
             ], 200);
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
             return response()->json([
                 'success' => false,
                 'message' => $exception->getMessage()
@@ -68,14 +70,15 @@ class ProductController extends Controller
         }
     }
 
-    public function show(Request $request){
+    public function show(Request $request)
+    {
 
         try {
 
             $product = Product::where('slug', $request->slug)
                 ->with(
                     [
-                        'products' => function ($query){
+                        'products' => function ($query) {
                             $query->with(['variants' => function ($query) {
                                 $query->orderBy('product_configurations.id', 'asc')
                                     ->join('variants', 'variant_options.variant_id', '=', 'variants.id')
@@ -85,8 +88,8 @@ class ProductController extends Controller
                         },
                         'category',
                         'brand',
-                        'details.attributes' => function ($query) use ($request){
-                            $query->with(['values' => function($query) use ($request) {
+                        'details.attributes' => function ($query) use ($request) {
+                            $query->with(['values' => function ($query) use ($request) {
                                 $query->whereHas('products', function ($query) use ($request) {
                                     $query->where('slug', $request->slug);
                                 });
@@ -95,7 +98,7 @@ class ProductController extends Controller
                     ]
                 )->firstOrFail();
 
-            if(!$product){
+            if (!$product) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Không thể tìm thấy sản phẩm'
@@ -105,25 +108,28 @@ class ProductController extends Controller
                 'success' => true,
                 'data' => $product
             ], 200);
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
             return response()->json([
                 'success' => false,
                 'message' => $exception->getMessage()
             ]);
         }
     }
-    public function store(Request $request){
+    public function store(Request $request)
+    {
 
-        $valid = Validator::make($request->all(),[
-            'thumbnail' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            "name" => "required|max:155|min:10",
-            "content" => "required",
-            "category_id" => "required",
-            'brand_id' => "required",
-            "is_active" => "required",
-            "product_details" => "required",
-            "product_items" => "required",
-        ],
+        $valid = Validator::make(
+            $request->all(),
+            [
+                'thumbnail' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+                "name" => "required|max:155|min:10",
+                "content" => "required",
+                "category_id" => "required",
+                'brand_id' => "required",
+                "is_active" => "required",
+                "product_details" => "required",
+                "product_items" => "required",
+            ],
             [
                 "thumbnail" => "Sản phẩm phải có ảnh đại diện",
                 "thumbnail.image" => 'thumbnail phải là ảnh',
@@ -140,7 +146,7 @@ class ProductController extends Controller
             ]
         );
 
-        if($valid->fails()){
+        if ($valid->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => $valid->errors()
@@ -162,14 +168,14 @@ class ProductController extends Controller
         $product_items = json_decode($request->get('product_items'));
         $gallery = json_decode($request->get('gallery'));
 
-        if(count($product_items)<1){
+        if (count($product_items) < 1) {
             return response()->json([
                 "success" => false,
                 "message" => 'Chưa có sản phẩm'
             ], 404);
         }
 
-        try{
+        try {
             DB::beginTransaction();
 
             $thumbnail = $request->file('thumbnail');
@@ -203,7 +209,7 @@ class ProductController extends Controller
 
                     $hasFile = isset($item->image);
 
-                    if($hasFile){
+                    if ($hasFile) {
 
                         $imageData = $item->image;
                         $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $imageData);
@@ -214,22 +220,21 @@ class ProductController extends Controller
 
                         $url_item = Cloudinary::upload($tempImagePath, [
                             'folder' => self::FOLDER,
-                            'public_id' => "variant-".implode('-', array_reduce($item->variants, function($array, $item){
-                                    $array[] = $item->attribute;
-                                    return $array;
-                                }, []))."-".rand(1, 1000000)
+                            'public_id' => "variant-" . implode('-', array_reduce($item->variants, function ($array, $item) {
+                                $array[] = $item->attribute;
+                                return $array;
+                            }, [])) . "-" . rand(1, 1000000)
                         ])->getSecurePath();
 
                         $public_id = Cloudinary::getPublicId();
 
                         unlink($tempImagePath);
-
                     }
 
-                    $sku = $item->sku. implode('-', array_reduce($item->variants, function($array, $item){
-                            $array[] = $item->attribute;
-                            return $array;
-                        }, []))."-". now() . "-" . rand(1, 1000000);
+                    $sku = $item->sku . implode('-', array_reduce($item->variants, function ($array, $item) {
+                        $array[] = $item->attribute;
+                        return $array;
+                    }, [])) . "-" . now() . "-" . rand(1, 1000000);
 
                     $product_item = ProductItem::create([
                         'product_id' => $product->id,
@@ -269,8 +274,7 @@ class ProductController extends Controller
 
                         $product_item->variants()->attach($variant_option->id);
                     }
-
-                }else{
+                } else {
                     return response()->json([
                         "success" => false,
                         "message" => 'Thêm sản phẩm không thành công'
@@ -314,7 +318,7 @@ class ProductController extends Controller
 
                 $url_gallery = Cloudinary::upload($tempImagePath, [
                     'folder' => self::FOLDER,
-                    'public_id' => "$name-$key".rand(1, 1000000)
+                    'public_id' => "$name-$key" . rand(1, 1000000)
                 ])->getSecurePath();
 
                 $public_id = Cloudinary::getPublicId();
@@ -335,13 +339,56 @@ class ProductController extends Controller
                 'message' => 'Product added successfully!',
                 'data' => $product->id,
             ], 200);
-
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
             DB::rollBack();
             return response()->json([
                 "success" => false,
                 "message" => $exception->getMessage()
             ], 500);
+        }
+    }
+    public function filter(Request $request)
+    {
+        try {
+            if ($request->filled('min_price') && $request->filled('max_price') && $request->min_price > $request->max_price) {
+                return response()->json(['success' => false, 'message' => 'Sai giá trị'], 400);
+            }
+
+            $query = Product::query();
+
+            $query->join('product_items', 'products.id', '=', 'product_items.product_id')
+                ->select('products.*', 'product_items.price_sale');
+
+            if ($request->filled('brand')) {
+                $query->whereHas('brand', function ($q) use ($request) {
+                    $q->where('name', $request->brand);
+                });
+            }
+
+            if ($request->filled('category')) {
+                $query->whereHas('category', function ($q) use ($request) {
+                    $q->where('name', $request->category);
+                });
+            }
+
+            if ($request->filled('min_price') && $request->filled('max_price')) {
+                $query->whereBetween('product_items.price_sale', [$request->min_price, $request->max_price]);
+            } elseif ($request->filled('min_price')) {
+                $query->where('product_items.price_sale', '>=', $request->min_price);
+            } elseif ($request->filled('max_price')) {
+                $query->where('product_items.price_sale', '<=', $request->max_price);
+            }
+
+            $products = $query->with(['brand', 'category'])->get();
+
+            // Check if products are found
+            if ($products->isEmpty()) {
+                return response()->json(['success' => false, 'message' => 'Không có sản phẩm như thế'], 404);
+            }
+
+            return response()->json(['success' => true, 'data' => $products]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 }
