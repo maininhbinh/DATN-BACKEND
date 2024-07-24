@@ -73,10 +73,12 @@ class ProductController extends Controller
         try {
 
             $product = Product::where('slug', $request->slug)
+                ->with(['galleries'])
                 ->with(
                     [
                         'products' => function ($query){
-                            $query->with(['variants' => function ($query) {
+                            $query
+                                ->with(['variants' => function ($query) {
                                 $query->orderBy('product_configurations.id', 'asc')
                                     ->join('variants', 'variant_options.variant_id', '=', 'variants.id')
                                     ->select('variant_options.*', 'variants.name as variant_name')
@@ -226,10 +228,10 @@ class ProductController extends Controller
 
                     }
 
-                    $sku = $item->sku. implode('-', array_reduce($item->variants, function($array, $item){
+                    $sku = $item->sku ?? ''. implode('-', array_reduce($item->variants, function($array, $item){
                             $array[] = $item->attribute;
                             return $array;
-                        }, []))."-". now() . "-" . rand(1, 1000000);
+                        }, []))."-". time() . "-" . rand(1, 1000000);
 
                     $product_item = ProductItem::create([
                         'product_id' => $product->id,

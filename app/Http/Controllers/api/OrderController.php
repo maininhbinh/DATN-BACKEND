@@ -114,6 +114,7 @@ class OrderController extends Controller
                     'orders.sku as code',
                     'orders.created_at',
                     'payment_statuses.name as payment_status',
+                    'order_status_id',
                     'order_statuses.name as order_status',
                     'payment_methods.description as payment_methods',
                 )
@@ -142,7 +143,10 @@ class OrderController extends Controller
                 'note' => $orderDetail->note,
                 'code' => $orderDetail->code,
                 'created_at' => $orderDetail->created_at,
-                'order_status' => $orderDetail->order_status,
+                'order_status' => [
+                    'id' => $orderDetail->order_status_id,
+                    'status' => $orderDetail->order_status
+                ],
                 'payment_status' => $orderDetail->payment_status,
                 'payment_methods' => $orderDetail->payment_methods,
                 'order_details' => $orderDetail->orderDetails->map(function($item){
