@@ -46,24 +46,59 @@ class OrderController extends Controller
         try {
             $user = $request->user();
 
-            if($user && $user->id){
+            $item = Order::where('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->with(['orderDetails' => function($query){
+                    $query
+                        ->with(['productItem' => function ($query){
+                            $query
+                                ->with(['variants' => function ($query) {
+                                    $query->orderBy('product_configurations.id', 'asc')
+                                        ->join('variants', 'variant_options.variant_id', '=', 'variants.id')
+                                        ->select('variant_options.*', 'variants.name as variant_name')
+                                        ->get();
+                                }])
+                                ->join('products', 'product_items.product_id', '=', 'products.id')
+                                ->select('product_items.*', 'products.name', 'products.thumbnail');
+                        }]);
+                }])
+                ->join('payment_statuses', 'orders.payment_status_id', '=', 'payment_statuses.id')
+                ->join('payment_methods', 'orders.payment_method_id', '=', 'payment_methods.id')
+                ->join('order_statuses', 'orders.order_status_id', '=', 'order_statuses.id')
+                ->select(
+                    'orders.id',
+                    'orders.user_id',
+                    'orders.total_price',
+                    'orders.receiver_name',
+                    'orders.receiver_phone',
+                    'orders.receiver_pronvinces',
+                    'orders.receiver_district',
+                    'orders.receiver_district',
+                    'orders.receiver_ward',
+                    'orders.receiver_address',
+                    'orders.discount_price',
+                    'orders.discount_code',
+                    'orders.discount_code',
+                    'orders.pick_up_required',
+                    'orders.note',
+                    'orders.sku as code',
+                    'orders.created_at',
+                    'payment_statuses.name as payment_status',
+                    'order_status_id',
+                    'order_statuses.name as order_status',
+                    'payment_methods.description as payment_methods',
+                )
+                ->get();
 
-                $item = Order::where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
-
-                return response()->json([
-                    'sucess' => true,
-                    'data' => $item
-                ], 200);
-
-            }
-
-            return response()->json([]);
+            return response()->json([
+                'sucess' => true,
+                'data' => $item
+            ], 200);
 
         } catch (\Exception $e) {
 
             return response()->json([
                 'success' => false,
-                'message' => $e
             ], 500);
 
         }

@@ -8,6 +8,7 @@ use App\Models\Cart;
 use App\Models\ProductItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class CartController extends Controller
@@ -59,9 +60,13 @@ class CartController extends Controller
         try {
             $request->validate(
                 [
+                    'quantity' => 'required|integer|min:1',
                     'product_item_id' => 'required|exists:product_items,id',
                 ],
                 [
+                    'quantity.required' => 'Bắt buộc phải có quantity',
+                    'quantity.integer' => 'Quantity phải là kiểu số',
+                    'quantity.min' => 'Quantity phải nhỏ hơn hoặc bằng 1',
                     'product_item_id.required' => 'Product item is required',
                     'product_item_id.exists' => 'Product item does not exist',
                 ]
@@ -81,6 +86,8 @@ class CartController extends Controller
 
                 if($cart && $cart->id){
 
+                    Log::channel('debug')->debug($quantity);
+
                     $cart->quantity += $quantity;
 
                     if($cart->quantity > $cart->quantity_product){
@@ -97,7 +104,7 @@ class CartController extends Controller
                     Cart::create([
                         'user_id' => $user->id,
                         'product_item_id' => $productItemId,
-                        'quantity' => 1
+                        'quantity' => $quantity
                     ]);
 
                 }

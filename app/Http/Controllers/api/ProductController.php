@@ -281,27 +281,30 @@ class ProductController extends Controller
             }
 
             foreach ($product_details as $detail) {
-                foreach ($detail->values as $value) {
-                    $name = IValidator::validatorName($value);
-                    $value = Value::firstOrCreate(
-                        [
-                            'name' => $name
-                        ],
-                        [
-                            'attribute_id' => $detail->id,
-                            'name' => $name,
-                        ]
-                    );
 
-                    ProductValue::create([
-                        'product_id' => $product->id,
-                        'value_id' => $value->id
-                    ]);
+                ProductDetail::create([
+                    'product_id' => $product->id,
+                    'detail_id' => $detail->id,
+                ]);
 
-                    ProductDetail::create([
-                        'product_id' => $product->id,
-                        'detail_id' => $detail->idDetail,
-                    ]);
+                foreach ($detail->attributes as $attribute) {
+                    foreach($attribute->values as $value){
+                        $name = IValidator::validatorName($value);
+                        $value = Value::firstOrCreate(
+                            [
+                                'name' => $name
+                            ],
+                            [
+                                'attribute_id' => $attribute->id,
+                                'name' => $name,
+                            ]
+                        );
+
+                        ProductValue::create([
+                            'product_id' => $product->id,
+                            'value_id' => $value->id
+                        ]);
+                    }
                 }
             }
 

@@ -127,10 +127,10 @@ Route::prefix('slider')->group(function () {
 });
 
 Route::prefix('order')->middleware('auth:sanctum')->group(function () {
+    Route::get('user', [OrderController::class, 'getAllOrder']);
     Route::get('', [OrderController::class, 'index']);
     Route::post('', [OrderController::class, 'placeOrder']);
     Route::get('{id}', [OrderController::class, 'show']);
-    Route::get('user', [OrderController::class, 'getAllOrder']);
     Route::put('update/status/{id}', [OrderController::class, 'updateStatus'])->middleware('check.status');
 });
 

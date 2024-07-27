@@ -45,14 +45,23 @@ class PaymentController extends Controller
                 return response()->json(['message' => 'Đơn hàng đã thanh toán'], 400);
             }
 
-            $endpoint = env('MOMO_PAYMENT_URL');
-            $partnerCode = env('MOMO_PAYMENT_PARTNER_CODE');
-            $accessKey = env('MOMO_PAYMENT_ACCESS_KEY');
-            $secretKey = env('MOMO_PAYMENT_SECRET_KEY');
+//            $endpoint = env('MOMO_PAYMENT_URL');
+//            $partnerCode = env('MOMO_PAYMENT_PARTNER_CODE');
+//            $accessKey = env('MOMO_PAYMENT_ACCESS_KEY');
+//            $secretKey = env('MOMO_PAYMENT_SECRET_KEY');
+//            $orderInfo = "Thanh toán qua MoMo";
+//            $amount = $order->total_price;
+//            $returnUrl = env('MOMO_PAYMENT_RETURN_URL');
+//            $notifyurl = env('MOMO_PAYMENT_NOTIFY_URL');
+
+            $endpoint = 'https://test-payment.momo.vn/gw_payment/transactionProcessor';
+            $partnerCode = 'MOMOBKUN20180529';
+            $accessKey = 'klm05TvNBzhg7h7j';
+            $secretKey = 'at67qH6mk8w5Y1nAyMoYKMWACiEi2bsa';
             $orderInfo = "Thanh toán qua MoMo";
             $amount = $order->total_price;
-            $returnUrl = env('MOMO_PAYMENT_RETURN_URL');
-            $notifyurl = env('MOMO_PAYMENT_NOTIFY_URL');
+            $returnUrl = 'http://127.0.0.1:8000/api/payment/callback';
+            $notifyurl = 'http://localhost:8000/atm/ipn_momo.php';
 
             $bankCode = "SML";
             $orderid = strval($order->sku);
