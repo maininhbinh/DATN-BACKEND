@@ -364,14 +364,13 @@ class ProductController extends Controller
 
             if ($request->query('brand')) {
                 $query->whereHas('brand', function ($q) use ($request) {
-                    $q->where('name', $request->query('brand'));
+                    $q->where('id', $request->query('brand'));
                 });
             }
 
             if ($request->query('category')) {
-                $categories = explode(',', $request->query('category'));
-                $query->whereHas('category', function ($q) use ($categories) {
-                    $q->whereIn('name', $categories);
+                $query->whereHas('category', function ($q) use ($request) {
+                    $q->where('id', $request->category);
                 });
             }
 

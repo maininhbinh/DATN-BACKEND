@@ -114,10 +114,7 @@ Route::prefix('product')->group(function () {
     Route::post('', [ProductController::class, 'store']);
     Route::get('/{slug}', [ProductController::class, 'show']);
     Route::get('/home/{feat}', [ProductController::class, 'featProducts']);
-    Route::get('filter', [ProductController::class, 'filter']);
-    Route::get('search', [ProductController::class, 'search']);
 });
-
 
 Route::prefix('slider')->group(function () {
 
@@ -160,7 +157,6 @@ Route::prefix('payment')->group(function () {
     Route::get('callback', [PaymentController::class, 'fallBack']);
 });
 
-
 Route::prefix('coupon')->group(function () {
     Route::get('', [CouponController::class, 'index']);
     Route::post('', [CouponController::class, 'store']);
@@ -168,4 +164,9 @@ Route::prefix('coupon')->group(function () {
     Route::post('/{id}', [CouponController::class, 'update']);
     Route::delete('/{id}', [CouponController::class, 'destroy']);
     Route::post('apply', [CouponController::class, 'apply']);
+});
+
+Route::prefix('filter')->group(function () {
+    Route::get('', [ProductController::class, 'filter']);
+    Route::get('/search', [ProductController::class, 'search']);
 });
