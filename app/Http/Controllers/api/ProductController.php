@@ -356,37 +356,43 @@ class ProductController extends Controller
     public function filter(Request $request)
     {
         try {
-            if ($request->query('min_price') && $request->query('max_price') && $request->query('min_price') > $request->query('max_price')) {
+            if ($request->filled('min_price') && $request->filled('max_price') && $request->min_price > $request->max_price) {
                 return response()->json(['success' => false, 'message' => 'Sai giá trị'], 400);
             }
 
             $query = Product::query();
 
-            if ($request->query('brand')) {
+            $query->join('product_items', 'products.id', '=', 'product_items.product_id')
+                ->select('products.*', 'product_items.price_sale');
+
+            if ($request->filled('brand')) {
                 $query->whereHas('brand', function ($q) use ($request) {
-                    $q->where('id', $request->query('brand'));
+                    $q->where('name', $request->brand);
                 });
             }
 
-            if ($request->query('category')) {
+            if ($request->filled('category')) {
                 $query->whereHas('category', function ($q) use ($request) {
-                    $q->where('id', $request->category);
+                    $q->where('name', $request->category);
                 });
             }
 
-            if ($request->query('min_price') && $request->query('max_price')) {
-                $query->whereBetween('product_items.price_sale', [$request->query('min_price'), $request->query('max_price')]);
-            } elseif ($request->query('min_price')) {
-                $query->where('product_items.price_sale', '>=', $request->query('min_price'));
-            } elseif ($request->query('max_price')) {
-                $query->where('product_items.price_sale', '<=', $request->query('max_price'));
+            if ($request->filled('min_price') && $request->filled('max_price')) {
+                $query->whereBetween('product_items.price_sale', [$request->min_price, $request->max_price]);
+            } elseif ($request->filled('min_price')) {
+                $query->where('product_items.price_sale', '>=', $request->min_price);
+            } elseif ($request->filled('max_price')) {
+                $query->where('product_items.price_sale', '<=', $request->max_price);
             }
 
             $products = $query->with(['products' => function ($query) {
                 $query->with(['variants' => function ($query) {
                     $query->orderBy('product_configurations.id', 'asc');
                 }]);
-            }, 'category'])->get();
+            }])->get();
+
+            // Check if products are found
+          
 
             return response()->json(['success' => true, 'data' => $products]);
         } catch (Exception $e) {
@@ -395,7 +401,7 @@ class ProductController extends Controller
     }
     public function search(Request $request)
     {
-        $name = $request->query('name');
+        $name = $request->input('name');
 
         if (empty($name)) {
             return response()->json([
@@ -404,18 +410,18 @@ class ProductController extends Controller
         }
 
         try {
-            $products = Product::where('name', 'LIKE', '%' . $name . '%')
-                ->with(['products' => function ($query) {
-                    $query->with(['variants' => function ($query) {
-                        $query->orderBy('product_configurations.id', 'asc');
-                    }]);
-                }, 'category'])
-                ->get();
+            $products = Product::where('name', 'LIKE', '%' . $name . '%')->get();
+
+            if ($products->isEmpty()) {
+                return response()->json([
+                    'message' => 'Không tìm thấy sản phẩm ' . $name
+                ], 404);
+            }
 
             return response()->json($products);
         } catch (QueryException $e) {
             return response()->json([
-                'error' => 'Database query error',
+                'error' => 'Database name error',
                 'message' => $e->getMessage()
             ], 500);
         } catch (\Exception $e) {

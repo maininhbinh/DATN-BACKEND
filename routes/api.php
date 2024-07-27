@@ -159,6 +159,7 @@ Route::prefix('payment')->group(function () {
 });
 
 Route::prefix('coupon')->group(function () {
+    Route::post('apply', [CouponController::class, 'apply']);
     Route::get('', [CouponController::class, 'index']);
     Route::post('', [CouponController::class, 'store']);
     Route::get('/{id}', [CouponController::class, 'edit']);
@@ -168,6 +169,6 @@ Route::prefix('coupon')->group(function () {
 });
 
 Route::prefix('filter')->group(function () {
-    Route::get('', [ProductController::class, 'filter']);
+    Route::post('', [ProductController::class, 'filter']);
     Route::get('/search', [ProductController::class, 'search']);
 });
