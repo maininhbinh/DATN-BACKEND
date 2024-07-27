@@ -355,6 +355,7 @@ class ProductController extends Controller
     }
     public function filter(Request $request)
     {
+       
         try {
             if ($request->query('min_price') && $request->query('max_price') && $request->query('min_price') > $request->query('max_price')) {
                 return response()->json(['success' => false, 'message' => 'Sai giá trị'], 400);
