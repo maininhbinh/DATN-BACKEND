@@ -356,30 +356,31 @@ class ProductController extends Controller
     public function filter(Request $request)
     {
         try {
-            if ($request->filled('min_price') && $request->filled('max_price') && $request->min_price > $request->max_price) {
+            if ($request->query('min_price') && $request->query('max_price') && $request->query('min_price') > $request->query('max_price')) {
                 return response()->json(['success' => false, 'message' => 'Sai giá trị'], 400);
             }
 
             $query = Product::query();
 
-            if ($request->filled('brand')) {
+            if ($request->query('brand')) {
                 $query->whereHas('brand', function ($q) use ($request) {
-                    $q->where('name', $request->brand);
+                    $q->where('name', $request->query('brand'));
                 });
             }
 
-            if ($request->filled('category')) {
-                $query->whereHas('category', function ($q) use ($request) {
-                    $q->where('name', $request->category);
+            if ($request->query('category')) {
+                $categories = explode(',', $request->query('category'));
+                $query->whereHas('category', function ($q) use ($categories) {
+                    $q->whereIn('name', $categories);
                 });
             }
 
-            if ($request->filled('min_price') && $request->filled('max_price')) {
-                $query->whereBetween('product_items.price_sale', [$request->min_price, $request->max_price]);
-            } elseif ($request->filled('min_price')) {
-                $query->where('product_items.price_sale', '>=', $request->min_price);
-            } elseif ($request->filled('max_price')) {
-                $query->where('product_items.price_sale', '<=', $request->max_price);
+            if ($request->query('min_price') && $request->query('max_price')) {
+                $query->whereBetween('product_items.price_sale', [$request->query('min_price'), $request->query('max_price')]);
+            } elseif ($request->query('min_price')) {
+                $query->where('product_items.price_sale', '>=', $request->query('min_price'));
+            } elseif ($request->query('max_price')) {
+                $query->where('product_items.price_sale', '<=', $request->query('max_price'));
             }
 
             $products = $query->with(['products' => function ($query) {
@@ -395,7 +396,7 @@ class ProductController extends Controller
     }
     public function search(Request $request)
     {
-        $name = $request->input('name');
+        $name = $request->query('name');
 
         if (empty($name)) {
             return response()->json([
@@ -404,16 +405,18 @@ class ProductController extends Controller
         }
 
         try {
-            $products = Product::where('name', 'LIKE', '%' . $name . '%')->with(['products' => function ($query) {
-                $query->with(['variants' => function ($query) {
-                    $query->orderBy('product_configurations.id', 'asc');
-                }]);
-            }, 'category'])->get();
+            $products = Product::where('name', 'LIKE', '%' . $name . '%')
+                ->with(['products' => function ($query) {
+                    $query->with(['variants' => function ($query) {
+                        $query->orderBy('product_configurations.id', 'asc');
+                    }]);
+                }, 'category'])
+                ->get();
 
             return response()->json($products);
         } catch (QueryException $e) {
             return response()->json([
-                'error' => 'Database name error',
+                'error' => 'Database query error',
                 'message' => $e->getMessage()
             ], 500);
         } catch (\Exception $e) {
