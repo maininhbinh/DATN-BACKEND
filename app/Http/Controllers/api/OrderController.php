@@ -2,6 +2,7 @@
 namespace App\Http\Controllers\api;
 
 use App\Enums\OrderStatus as EnumOrderStatus;
+use App\Enums\PaymentMethods;
 use App\Enums\PaymentStatuses;
 use App\Enums\TypeDiscounts;
 use App\Http\Controllers\Controller;
@@ -46,7 +47,7 @@ class OrderController extends Controller
         try {
             $user = $request->user();
 
-            $item = Order::where('user_id', $user->id)
+            $orderDetail = Order::where('user_id', $user->id)
                 ->orderBy('created_at', 'desc')
                 ->with(['orderDetails' => function($query){
                     $query
@@ -69,13 +70,6 @@ class OrderController extends Controller
                     'orders.id',
                     'orders.user_id',
                     'orders.total_price',
-                    'orders.receiver_name',
-                    'orders.receiver_phone',
-                    'orders.receiver_pronvinces',
-                    'orders.receiver_district',
-                    'orders.receiver_district',
-                    'orders.receiver_ward',
-                    'orders.receiver_address',
                     'orders.discount_price',
                     'orders.discount_code',
                     'orders.discount_code',
@@ -90,9 +84,35 @@ class OrderController extends Controller
                 )
                 ->get();
 
+            $order = $orderDetail->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'total_price' => $item->total_price,
+                    'discount_price' => $item->discount_price,
+                    'note' => $item->note,
+                    'code' => $item->code,
+                    'created_at' => $item->created_at,
+                    'order_status' => $item->order_status,
+                    'payment_status' => $item->payment_status,
+                    'payment_methods' => $item->payment_methods,
+                    'order_details' => $item->orderDetails->map(function($item){
+                        return [
+                            'id' => $item->id,
+                            'quantity' => $item->quantity,
+                            'price' => $item->price,
+                            'name' => $item->productItem->name,
+                            'sku' => $item->productItem->sku,
+                            'image' => $item->productItem->image,
+                            'thumbnail' => $item->productItem->thumbnail,
+                            'varians' => $item->productItem->variants
+                        ];
+                    })->toArray(),
+                ];
+            });
+
             return response()->json([
                 'sucess' => true,
-                'data' => $item
+                'data' => $order
             ], 200);
 
         } catch (\Exception $e) {
@@ -259,13 +279,12 @@ class OrderController extends Controller
             $pickUpRequired = filter_var($request->get('pick_up_required'), FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
             $note = $request->get('note');
             $discountCode = $request->get('discount_code');
-            $paymentMethod = 1;
+            $paymentMethod = PaymentMethods::getOrder(PaymentMethods::MOMO);
 
             $paymentStatusId = PaymentStatuses::getOrder(PaymentStatuses::PENDING);
             $orderStatusId = EnumOrderStatus::getOrder(EnumOrderStatus::PENDING);
 
             $user = $request->user();
-
 
             $carts = Cart::where('user_id', $user->id)
                 ->join('product_items', 'carts.product_item_id', '=', 'product_items.id')

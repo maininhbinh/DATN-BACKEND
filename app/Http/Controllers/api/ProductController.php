@@ -362,9 +362,6 @@ class ProductController extends Controller
 
             $query = Product::query();
 
-            $query->join('product_items', 'products.id', '=', 'product_items.product_id')
-                ->select('products.*', 'product_items.price_sale');
-
             if ($request->filled('brand')) {
                 $query->whereHas('brand', function ($q) use ($request) {
                     $q->where('name', $request->brand);
@@ -385,12 +382,11 @@ class ProductController extends Controller
                 $query->where('product_items.price_sale', '<=', $request->max_price);
             }
 
-            $products = $query->with(['brand', 'category'])->get();
-
-            // Check if products are found
-            if ($products->isEmpty()) {
-                return response()->json(['success' => false, 'message' => 'Không có sản phẩm như thế'], 404);
-            }
+            $products = $query->with(['products' => function ($query) {
+                $query->with(['variants' => function ($query) {
+                    $query->orderBy('product_configurations.id', 'asc');
+                }]);
+            }, 'category'])->get();
 
             return response()->json(['success' => true, 'data' => $products]);
         } catch (Exception $e) {
@@ -408,13 +404,11 @@ class ProductController extends Controller
         }
 
         try {
-            $products = Product::where('name', 'LIKE', '%' . $name . '%')->get();
-
-            if ($products->isEmpty()) {
-                return response()->json([
-                    'message' => 'Không tìm thấy sản phẩm ' . $name
-                ], 404);
-            }
+            $products = Product::where('name', 'LIKE', '%' . $name . '%')->with(['products' => function ($query) {
+                $query->with(['variants' => function ($query) {
+                    $query->orderBy('product_configurations.id', 'asc');
+                }]);
+            }, 'category'])->get();
 
             return response()->json($products);
         } catch (QueryException $e) {
