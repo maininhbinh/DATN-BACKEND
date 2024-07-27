@@ -160,10 +160,11 @@ Route::prefix('payment')->group(function () {
 
 
 Route::prefix('coupon')->group(function () {
+    Route::post('apply', [CouponController::class, 'apply']);
     Route::get('', [CouponController::class, 'index']);
-    Route::post('', [CouponController::class, 'store'])->name('coupon.store');
+    Route::post('', [CouponController::class, 'store']);
     Route::get('/{id}', [CouponController::class, 'edit']);
     Route::post('/{id}', [CouponController::class, 'update']);
     Route::delete('/{id}', [CouponController::class, 'destroy']);
 });
-Route::post('/apply', [CouponController::class, 'apply'])->name('coupon');
+

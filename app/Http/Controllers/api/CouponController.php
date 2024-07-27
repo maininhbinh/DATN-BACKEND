@@ -16,15 +16,7 @@ class CouponController extends Controller
     public function index()
     {
         try {
-            $coupons = Coupon::where('end_date', '>', Carbon::now())
-                ->where('status', 'public')
-                ->where('is_activate', 1)
-                ->get();
-
-            if ($coupons->isEmpty()) {
-                return response()->json(['success' => true, 'message' => 'Không có Coupon'], 200);
-            }
-
+            $coupons = Coupon::orderBy('created_at', 'desc')->get();
             return response()->json(['success' => true, 'data' => $coupons], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -156,19 +148,19 @@ class CouponController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Coupon không hợp lệ hoặc đã hết hạn.'
-                ], 400);
+                ], 200);
             }
 
             if ($coupon->used_count >= $coupon->quantity) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Coupon đã hết số lượng sử dụng.'
-                ], 400);
+                ], 200);
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Giá trị của Voucher.',
+                'name' => $coupon->name,
                 'value' => $coupon->value,
                 'type' => $coupon->type,
                 'discount_max' => $coupon->discount_max
