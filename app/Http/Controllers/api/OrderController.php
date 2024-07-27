@@ -124,6 +124,126 @@ class OrderController extends Controller
         }
     }
 
+    public function getOrderDetail(Request $request, $id){
+        try {
+            $request->user();
+
+            $orderDetail = Order::where('orders.id', $id)
+                ->where('orders.user_id', $request->user()->id)
+                ->with(['orderDetails' => function($query){
+                    $query
+                        ->with(['productItem' => function ($query){
+                            $query
+                                ->with(['variants' => function ($query) {
+                                    $query->orderBy('product_configurations.id', 'asc')
+                                        ->join('variants', 'variant_options.variant_id', '=', 'variants.id')
+                                        ->select('variant_options.*', 'variants.name as variant_name')
+                                        ->get();
+                                }])
+                                ->join('products', 'product_items.product_id', '=', 'products.id')
+                                ->select('product_items.*', 'products.name', 'products.thumbnail');
+                        }]);
+                }])
+                ->with(['histories' => function ($query){
+                    $query
+                        ->join('order_statuses', 'order_histories.order_status_id', '=', 'order_statuses.id')
+                        ->select('order_histories.*', 'order_statuses.name');
+                }])
+                ->with(['user'])
+                ->join('payment_statuses', 'orders.payment_status_id', '=', 'payment_statuses.id')
+                ->join('payment_methods', 'orders.payment_method_id', '=', 'payment_methods.id')
+                ->join('order_statuses', 'orders.order_status_id', '=', 'order_statuses.id')
+                ->select(
+                    'orders.id',
+                    'orders.user_id',
+                    'orders.total_price',
+                    'orders.receiver_name',
+                    'orders.receiver_phone',
+                    'orders.receiver_pronvinces',
+                    'orders.receiver_district',
+                    'orders.receiver_district',
+                    'orders.receiver_ward',
+                    'orders.receiver_address',
+                    'orders.discount_price',
+                    'orders.discount_code',
+                    'orders.discount_code',
+                    'orders.pick_up_required',
+                    'orders.note',
+                    'orders.sku as code',
+                    'orders.created_at',
+                    'payment_statuses.name as payment_status',
+                    'order_status_id',
+                    'order_statuses.name as order_status',
+                    'payment_methods.description as payment_methods',
+                )
+                ->first();
+
+            $orderStatuses = OrderStatus::all();
+
+            if (!$orderDetail) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order not found'
+                ], 404);
+            }
+
+            $order = [
+                'id' => $orderDetail->id,
+                'total_price' => $orderDetail->total_price,
+                'receiver_name' => $orderDetail->receiver_name,
+                'receiver_phone' => $orderDetail->receiver_phone,
+                'receiver_pronvinces' => $orderDetail->receiver_pronvinces,
+                'receiver_district' => $orderDetail->receiver_district,
+                'receiver_ward' => $orderDetail->receiver_ward,
+                'receiver_address' => $orderDetail->receiver_address,
+                'pick_up_required' => $orderDetail->pick_up_required,
+                'discount_price' => $orderDetail->discount_price,
+                'note' => $orderDetail->note,
+                'code' => $orderDetail->code,
+                'created_at' => $orderDetail->created_at,
+                'order_status' => [
+                    'id' => $orderDetail->order_status_id,
+                    'status' => $orderDetail->order_status
+                ],
+                'payment_status' => $orderDetail->payment_status,
+                'payment_methods' => $orderDetail->payment_methods,
+                'order_details' => $orderDetail->orderDetails->map(function($item){
+                    return [
+                        'id' => $item->id,
+                        'quantity' => $item->quantity,
+                        'price' => $item->price,
+                        'name' => $item->productItem->name,
+                        'sku' => $item->productItem->sku,
+                        'image' => $item->productItem->image,
+                        'thumbnail' => $item->productItem->thumbnail,
+                        'varians' => $item->productItem->variants
+                    ];
+                })->toArray(),
+                'histories' => $orderDetail->histories->map(function($history) {
+                    return [
+                        'id' => $history->id,
+                        'status_name' => $history->name,
+                        'status_id' => $history->order_status_id,
+                        'created_at' => $history->created_at,
+                        'updated_at' => $history->updated_at
+                    ];
+                })->toArray(),
+                'user' => $orderDetail->user,
+            ];
+
+            return response()->json([
+                'success' => true,
+                'order_detail' => $order,
+                'order_status' => $orderStatuses
+            ]);
+        }catch (\Exception $exception){
+            return response()->json([
+                'success' => false,
+                'massage' => $exception->getMessage()
+            ]);
+        }
+    }
+
     public function show($id){
         try {
             $orderDetail = Order::where('orders.id', $id)
@@ -220,6 +340,7 @@ class OrderController extends Controller
                     return [
                         'id' => $history->id,
                         'status_name' => $history->name,
+                        'status_id' => $history->order_status_id,
                         'created_at' => $history->created_at,
                         'updated_at' => $history->updated_at
                     ];
@@ -311,7 +432,7 @@ class OrderController extends Controller
             $totalPrice = 0;
 
             foreach ($carts as $cart){
-                $totalPrice += $cart->price;
+                $totalPrice += $cart->price * $cart->quantity;
             }
 
             //xử lý discount code

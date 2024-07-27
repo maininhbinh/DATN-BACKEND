@@ -50,7 +50,7 @@ class CategoryController extends Controller
     public function edit($id){
         try {
 
-            $category = Category::with('details.attributes')->find($id);
+            $category = Category::with('details.attributes', 'variants')->find($id);
 
             if(!$category){
                 return response()->json([

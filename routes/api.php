@@ -127,6 +127,7 @@ Route::prefix('slider')->group(function () {
 
 Route::prefix('order')->middleware('auth:sanctum')->group(function () {
     Route::get('user', [OrderController::class, 'getAllOrder']);
+    Route::get('detail/{id}', [OrderController::class, 'getOrderDetail']);
     Route::get('', [OrderController::class, 'index']);
     Route::post('', [OrderController::class, 'placeOrder']);
     Route::get('{id}', [OrderController::class, 'show']);
