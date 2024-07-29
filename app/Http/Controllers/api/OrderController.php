@@ -481,7 +481,8 @@ class OrderController extends Controller
                 case PaymentMethods::STRIPE:
                     return redirect()->action([StripeController::class, 'stripePayment'], ['orderId' => $order->id]);
                 case PaymentMethods::VNPAY:
-                    return redirect()->action([PaymentController::class, 'vnpay_payment'], ['orderId' => $order->id]);
+                    return redirect()->action([VNPayController::class, 'vnpay_payment'], ['orderId' => $order->id]);
+
                 default:
                     return response()->json([
                         'success' => false,

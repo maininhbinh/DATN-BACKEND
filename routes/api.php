@@ -156,7 +156,7 @@ Route::prefix('variant_option')->group(function () {
 });
 
 Route::prefix('payment')->group(function () {
-    Route::get('momo/{orderId}', [PaymentController::class, 'momo_payment']);
+    Route::post('momo/{orderId}', [PaymentController::class, 'momo_payment']);
     Route::get('callback', [PaymentController::class, 'fallBack']);
     Route::post('stripe/{order_id}', [StripeController::class, 'stripePayment']);
     Route::post('/vnpay/{order_id}', [VNPayController::class, 'vnpay_payment']);
