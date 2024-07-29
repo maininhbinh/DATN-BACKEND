@@ -1,10 +1,12 @@
 <?php
+
 namespace App\Enums;
 
 enum PaymentMethods: string
 {
-    case COD = 'Thanh toán khi nhận hàng';
+    case STRIPE = 'Thanh toán qua Stripe GateWay';
     case MOMO = 'Thanh toán bằng MOMO';
+    case VNPAY = 'Thanh toán bằng VNPay';
 
     public static function getValues(): array
     {
@@ -13,9 +15,10 @@ enum PaymentMethods: string
 
     public static function getOrder(PaymentMethods $type): int
     {
-        return match($type) {
-            self::COD => 1,
+        return match ($type) {
+            self::STRIPE => 1,
             self::MOMO => 2,
+            self::VNPAY => 3,
         };
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\api;
 
 use App\Enums\OrderStatus as EnumOrderStatus;
@@ -14,6 +15,7 @@ use App\Models\OrderStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Stripe\Stripe;
 
 class OrderController extends Controller
 {
@@ -28,14 +30,12 @@ class OrderController extends Controller
                 'sucess' => true,
                 'data' => $item
             ], 200);
-
         } catch (\Exception $e) {
 
             return response()->json([
                 'success' => false,
                 'message' => $e
             ], 500);
-
         }
     }
 
@@ -49,9 +49,9 @@ class OrderController extends Controller
 
             $orderDetail = Order::where('user_id', $user->id)
                 ->orderBy('created_at', 'desc')
-                ->with(['orderDetails' => function($query){
+                ->with(['orderDetails' => function ($query) {
                     $query
-                        ->with(['productItem' => function ($query){
+                        ->with(['productItem' => function ($query) {
                             $query
                                 ->with(['variants' => function ($query) {
                                     $query->orderBy('product_configurations.id', 'asc')
@@ -95,7 +95,7 @@ class OrderController extends Controller
                     'order_status' => $item->order_status,
                     'payment_status' => $item->payment_status,
                     'payment_methods' => $item->payment_methods,
-                    'order_details' => $item->orderDetails->map(function($item){
+                    'order_details' => $item->orderDetails->map(function ($item) {
                         return [
                             'id' => $item->id,
                             'quantity' => $item->quantity,
@@ -114,25 +114,24 @@ class OrderController extends Controller
                 'sucess' => true,
                 'data' => $order
             ], 200);
-
         } catch (\Exception $e) {
 
             return response()->json([
                 'success' => false,
             ], 500);
-
         }
     }
 
-    public function getOrderDetail(Request $request, $id){
+    public function getOrderDetail(Request $request, $id)
+    {
         try {
             $request->user();
 
             $orderDetail = Order::where('orders.id', $id)
                 ->where('orders.user_id', $request->user()->id)
-                ->with(['orderDetails' => function($query){
+                ->with(['orderDetails' => function ($query) {
                     $query
-                        ->with(['productItem' => function ($query){
+                        ->with(['productItem' => function ($query) {
                             $query
                                 ->with(['variants' => function ($query) {
                                     $query->orderBy('product_configurations.id', 'asc')
@@ -144,7 +143,7 @@ class OrderController extends Controller
                                 ->select('product_items.*', 'products.name', 'products.thumbnail');
                         }]);
                 }])
-                ->with(['histories' => function ($query){
+                ->with(['histories' => function ($query) {
                     $query
                         ->join('order_statuses', 'order_histories.order_status_id', '=', 'order_statuses.id')
                         ->select('order_histories.*', 'order_statuses.name');
@@ -207,7 +206,7 @@ class OrderController extends Controller
                 ],
                 'payment_status' => $orderDetail->payment_status,
                 'payment_methods' => $orderDetail->payment_methods,
-                'order_details' => $orderDetail->orderDetails->map(function($item){
+                'order_details' => $orderDetail->orderDetails->map(function ($item) {
                     return [
                         'id' => $item->id,
                         'quantity' => $item->quantity,
@@ -219,7 +218,7 @@ class OrderController extends Controller
                         'varians' => $item->productItem->variants
                     ];
                 })->toArray(),
-                'histories' => $orderDetail->histories->map(function($history) {
+                'histories' => $orderDetail->histories->map(function ($history) {
                     return [
                         'id' => $history->id,
                         'status_name' => $history->name,
@@ -236,7 +235,7 @@ class OrderController extends Controller
                 'order_detail' => $order,
                 'order_status' => $orderStatuses
             ]);
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
             return response()->json([
                 'success' => false,
                 'massage' => $exception->getMessage()
@@ -244,12 +243,13 @@ class OrderController extends Controller
         }
     }
 
-    public function show($id){
+    public function show($id)
+    {
         try {
             $orderDetail = Order::where('orders.id', $id)
-                ->with(['orderDetails' => function($query){
+                ->with(['orderDetails' => function ($query) {
                     $query
-                        ->with(['productItem' => function ($query){
+                        ->with(['productItem' => function ($query) {
                             $query
                                 ->with(['variants' => function ($query) {
                                     $query->orderBy('product_configurations.id', 'asc')
@@ -261,7 +261,7 @@ class OrderController extends Controller
                                 ->select('product_items.*', 'products.name', 'products.thumbnail');
                         }]);
                 }])
-                ->with(['histories' => function ($query){
+                ->with(['histories' => function ($query) {
                     $query
                         ->join('order_statuses', 'order_histories.order_status_id', '=', 'order_statuses.id')
                         ->select('order_histories.*', 'order_statuses.name');
@@ -324,7 +324,7 @@ class OrderController extends Controller
                 ],
                 'payment_status' => $orderDetail->payment_status,
                 'payment_methods' => $orderDetail->payment_methods,
-                'order_details' => $orderDetail->orderDetails->map(function($item){
+                'order_details' => $orderDetail->orderDetails->map(function ($item) {
                     return [
                         'id' => $item->id,
                         'quantity' => $item->quantity,
@@ -336,7 +336,7 @@ class OrderController extends Controller
                         'varians' => $item->productItem->variants
                     ];
                 })->toArray(),
-                'histories' => $orderDetail->histories->map(function($history) {
+                'histories' => $orderDetail->histories->map(function ($history) {
                     return [
                         'id' => $history->id,
                         'status_name' => $history->name,
@@ -353,7 +353,7 @@ class OrderController extends Controller
                 'order_detail' => $order,
                 'order_status' => $orderStatuses
             ]);
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
             return response()->json([
                 'success' => false,
                 'massage' => $exception->getMessage()
@@ -374,8 +374,8 @@ class OrderController extends Controller
                     'receiver_district' => 'required|string',
                     'receiver_ward' => 'required|string',
                     'receiver_address' => 'required|string',
-                    'pick_up_required' => 'required',
-//                'payment_method_id' => 'required',
+                    'pick_up_required' => 'required|boolean',
+                    //                'payment_method_id' => 'required',
                 ],
                 [
                     'receiver_name' => 'Trường name là bắt buộc',
@@ -387,7 +387,7 @@ class OrderController extends Controller
                     'receiver_ward' => 'Chọn một quận | huyện',
                     'receiver_address' => 'Trường address là bắt buộc',
                     'pick_up_required' => 'Chọn hình thức nhận hàng',
-//                'payment_method_id' => 'Chọn một hình thức thanh toán COD|shipment'
+                    //                'payment_method_id' => 'Chọn một hình thức thanh toán COD|shipment'
                 ]
             );
 
@@ -422,7 +422,7 @@ class OrderController extends Controller
                 )
                 ->get();
 
-            if(!$carts || count($carts) <= 0){
+            if (!$carts || count($carts) <= 0) {
                 return response()->json([
                     'sucess' => false,
                     'message' => 'Giỏ hàng ít nhất phải có 1 sản phẩm'
@@ -431,7 +431,7 @@ class OrderController extends Controller
 
             $totalPrice = 0;
 
-            foreach ($carts as $cart){
+            foreach ($carts as $cart) {
                 $totalPrice += $cart->price * $cart->quantity;
             }
 
@@ -475,15 +475,25 @@ class OrderController extends Controller
             Cart::where('user_id', $user->id)->delete();
 
             DB::commit();
-            return redirect()->action([PaymentController::class, 'momo_payment'], ['orderId' => $order->id]);
-        }
-        catch (ValidationException $validationException){
+            switch ($paymentMethod) {
+                case PaymentMethods::MOMO:
+                    return redirect()->action([PaymentController::class, 'momo_payment'], ['orderId' => $order->id]);
+                case PaymentMethods::STRIPE:
+                    return redirect()->action([StripeController::class, 'stripePayment'], ['orderId' => $order->id]);
+                case PaymentMethods::VNPAY:
+                    return redirect()->action([PaymentController::class, 'vnpay_payment'], ['orderId' => $order->id]);
+                default:
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Phương thức thanh toán không hợp lệ'
+                    ], 400);
+            }
+        } catch (ValidationException $validationException) {
             return response()->json([
                 'success' => false,
                 'massage' => $validationException->getMessage()
             ]);
-        }
-        catch(\Exception $exception){
+        } catch (\Exception $exception) {
 
             DB::rollBack();
 
@@ -491,12 +501,11 @@ class OrderController extends Controller
                 'success' => false,
                 'message' => $exception->getMessage()
             ]);
-
         }
-
     }
 
-    public function updateStatus(Request $request, $id){
+    public function updateStatus(Request $request, $id)
+    {
         try {
 
             $orderStatus = $request->input('status');
@@ -514,8 +523,7 @@ class OrderController extends Controller
                 'success' => true,
                 'message' => 'Cập nhật trạng thái thành công'
             ]);
-
-        }catch(\Exception $exception){
+        } catch (\Exception $exception) {
             return response()->json([
                 'success' => false,
                 'message' => $exception->getMessage()

@@ -19,6 +19,7 @@ use App\Http\Controllers\api\StripeController;
 use App\Http\Controllers\api\UserCouponController;
 use App\Http\Controllers\api\VariantController;
 use App\Http\Controllers\api\VariantOptionController;
+use App\Http\Controllers\api\VNPayController;
 
 /*
 |--------------------------------------------------------------------------
@@ -157,8 +158,10 @@ Route::prefix('variant_option')->group(function () {
 Route::prefix('payment')->group(function () {
     Route::get('momo/{orderId}', [PaymentController::class, 'momo_payment']);
     Route::get('callback', [PaymentController::class, 'fallBack']);
+    Route::post('stripe/{order_id}', [StripeController::class, 'stripePayment']);
+    Route::post('/vnpay/{order_id}', [VNPayController::class, 'vnpay_payment']);
+    Route::get('/vnpay-return', [VNPayController::class, 'returnCallBack']);
 });
-Route::post('payment/stripe/{order_id}', [StripeController::class, 'stripePayment']);
 Route::prefix('coupon')->group(function () {
     Route::get('', [CouponController::class, 'index']);
     Route::post('', [CouponController::class, 'store']);
