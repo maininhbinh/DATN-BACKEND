@@ -5,6 +5,7 @@ use App\Http\Controllers\api\BrandController;
 use App\Http\Controllers\api\CategoryController;
 use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\CartController;
+use App\Http\Controllers\api\CommentController;
 use App\Http\Controllers\api\CouponController;
 use App\Http\Controllers\api\DetailController;
 use App\Http\Controllers\api\OrderController;
@@ -134,6 +135,7 @@ Route::prefix('order')->middleware('auth:sanctum')->group(function () {
     Route::post('', [OrderController::class, 'placeOrder']);
     Route::get('{id}', [OrderController::class, 'show']);
     Route::put('update/status/{id}', [OrderController::class, 'updateStatus'])->middleware('check.status');
+    Route::post('process-payment/{order_id}', [OrderController::class, 'processPayment']);
 });
 
 Route::prefix('variant')->group(function () {
@@ -174,4 +176,10 @@ Route::prefix('coupon')->group(function () {
 Route::prefix('filter')->group(function () {
     Route::get('', [ProductController::class, 'filter']);
     Route::get('/search', [ProductController::class, 'search']);
+});
+
+Route::middleware('auth:sanctum')->prefix('comment')->group(function () {
+    Route::get('/products/{productId}/comments', [CommentController::class, 'index']);
+    Route::post('', [CommentController::class, 'store']);
+    Route::delete('/{id}', [CommentController::class, 'destroy']);
 });

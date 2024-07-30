@@ -370,30 +370,28 @@ class OrderController extends Controller
                 [
                     'receiver_name' => 'required|string',
                     'receiver_phone' => 'required|string',
-                    'receiver_pronvinces' => 'required|string',
+                    'receiver_provinces' => 'required|string',
                     'receiver_district' => 'required|string',
                     'receiver_ward' => 'required|string',
                     'receiver_address' => 'required|string',
                     'pick_up_required' => 'required|boolean',
-                    //                'payment_method_id' => 'required',
                 ],
                 [
-                    'receiver_name' => 'Trường name là bắt buộc',
+                    'receiver_name.required' => 'Trường name là bắt buộc',
                     'receiver_name.string' => 'Trường name phải là một chuỗi',
-                    'receiver_phone' => 'Trường phone là bắt buộc',
-                    'receiver_phone.string' => 'Trường phone là một chuỗi',
-                    'receiver_pronvinces' => 'Băt buộc chọn một tỉnh thành',
-                    'receiver_district' => 'Chọn một thành phố',
-                    'receiver_ward' => 'Chọn một quận | huyện',
-                    'receiver_address' => 'Trường address là bắt buộc',
-                    'pick_up_required' => 'Chọn hình thức nhận hàng',
-                    //                'payment_method_id' => 'Chọn một hình thức thanh toán COD|shipment'
+                    'receiver_phone.required' => 'Trường phone là bắt buộc',
+                    'receiver_phone.string' => 'Trường phone phải là một chuỗi',
+                    'receiver_provinces.required' => 'Bắt buộc chọn một tỉnh thành',
+                    'receiver_district.required' => 'Chọn một thành phố',
+                    'receiver_ward.required' => 'Chọn một quận | huyện',
+                    'receiver_address.required' => 'Trường address là bắt buộc',
+                    'pick_up_required.required' => 'Chọn hình thức nhận hàng',
                 ]
             );
 
             $receiverName = $request->get('receiver_name');
             $receiverPhone = $request->get('receiver_phone');
-            $receiverPronvices = $request->get('receiver_pronvinces');
+            $receiverProvinces = $request->get('receiver_provinces');
             $receiverDistrict = $request->get('receiver_district');
             $receiverWard = $request->get('receiver_ward');
             $receiverAddress = $request->get('receiver_address');
@@ -422,9 +420,9 @@ class OrderController extends Controller
                 )
                 ->get();
 
-            if (!$carts || count($carts) <= 0) {
+            if (count($carts) <= 0) {
                 return response()->json([
-                    'sucess' => false,
+                    'success' => false,
                     'message' => 'Giỏ hàng ít nhất phải có 1 sản phẩm'
                 ], 404);
             }
@@ -435,10 +433,8 @@ class OrderController extends Controller
                 $totalPrice += $cart->price * $cart->quantity;
             }
 
-            //xử lý discount code
-
-            //$discountPrice = $totalPrice - $discountCode;
-            $discountPrice = $totalPrice;
+            // Xử lý discount code (nếu có logic xử lý)
+            $discountPrice = $totalPrice; // Thay đổi nếu có logic xử lý discount code
 
             $order = Order::create([
                 'user_id' => $user->id,
@@ -447,7 +443,7 @@ class OrderController extends Controller
                 'order_status_id' => $orderStatusId,
                 'receiver_name' => $receiverName,
                 'receiver_phone' => $receiverPhone,
-                'receiver_pronvinces' => $receiverPronvices,
+                'receiver_provinces' => $receiverProvinces,
                 'receiver_district' => $receiverDistrict,
                 'receiver_ward' => $receiverWard,
                 'receiver_address' => $receiverAddress,
@@ -475,35 +471,25 @@ class OrderController extends Controller
             Cart::where('user_id', $user->id)->delete();
 
             DB::commit();
-            switch ($paymentMethod) {
-                case PaymentMethods::MOMO:
-                    return redirect()->action([PaymentController::class, 'momo_payment'], ['orderId' => $order->id]);
-                case PaymentMethods::STRIPE:
-                    return redirect()->action([StripeController::class, 'stripePayment'], ['orderId' => $order->id]);
-                case PaymentMethods::VNPAY:
-                    return redirect()->action([VNPayController::class, 'vnpay_payment'], ['orderId' => $order->id]);
 
-                default:
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Phương thức thanh toán không hợp lệ'
-                    ], 400);
-            }
+            return response()->json([
+                'success' => true,
+                'order_id' => $order->id
+            ]);
         } catch (ValidationException $validationException) {
             return response()->json([
                 'success' => false,
-                'massage' => $validationException->getMessage()
+                'message' => $validationException->getMessage()
             ]);
         } catch (\Exception $exception) {
-
             DB::rollBack();
-
             return response()->json([
                 'success' => false,
                 'message' => $exception->getMessage()
             ]);
         }
     }
+
 
     public function updateStatus(Request $request, $id)
     {
@@ -529,6 +515,37 @@ class OrderController extends Controller
                 'success' => false,
                 'message' => $exception->getMessage()
             ]);
+        }
+    }
+    public function processPayment(Request $request, $order_id)
+    {
+        $request->validate([
+            'payment_method' => 'required|string|in:momo,stripe,vnpay',
+        ]);
+
+        $paymentMethod = $request->get('payment_method');
+
+        switch ($paymentMethod) {
+            case 'momo':
+                return response()->json([
+                    'success' => true,
+                    'redirect_url' => url("/payment/momo/{$order_id}")
+                ]);
+            case 'stripe':
+                return response()->json([
+                    'success' => true,
+                    'redirect_url' => url("/payment/stripe/{$order_id}")
+                ]);
+            case 'vnpay':
+                return response()->json([
+                    'success' => true,
+                    'redirect_url' => url("/payment/vnpay/{$order_id}")
+                ]);
+            default:
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Hình thức thanh toán không hợp lệ.'
+                ]);
         }
     }
 }
