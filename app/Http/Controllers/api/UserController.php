@@ -144,11 +144,12 @@ class UserController extends Controller
         try {
             // Validate request data
             $validatedData = $request->validate([
-                'name' => 'sometimes|required|string|max:255',
+                'username' => 'sometimes|required|string|max:255',
                 'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $id,
                 'password' => 'sometimes|required|string|min:8',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
                 'phone' => 'nullable|string|max:20',
+                'address' => 'nullable|string|max:255',
                 'address_line1' => 'nullable|string|max:255',
                 'address_line2' => 'nullable|string|max:255',
                 'county' => 'nullable|string|max:255',
