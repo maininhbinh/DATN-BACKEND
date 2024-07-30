@@ -70,7 +70,9 @@ class VNPayController extends Controller
             $returnData = array(
                 'code' => '00', 'message' => 'success', 'data' => $vnp_Url,
             );
-
+            $order->payment_status_id = 2; //status: Đã thanh toán
+            $order->payment_method_id = 3; // Payment Method: VNPay
+            $order->save();
             return response()->json(["data" => $returnData, "order" => $order]);
         }
     }

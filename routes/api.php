@@ -135,7 +135,7 @@ Route::prefix('order')->middleware('auth:sanctum')->group(function () {
     Route::post('', [OrderController::class, 'placeOrder']);
     Route::get('{id}', [OrderController::class, 'show']);
     Route::put('update/status/{id}', [OrderController::class, 'updateStatus'])->middleware('check.status');
-    Route::post('process-payment/{order_id}', [OrderController::class, 'processPayment']);
+    Route::post('process-payment/{order_id}', [OrderController::class, 'processPayment']); //đã lấy vào id và qua 1 hàm mới để chọn method thanh toán
 });
 
 Route::prefix('variant')->group(function () {
