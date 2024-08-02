@@ -161,7 +161,7 @@ Route::prefix('payment')->group(function () {
     Route::post('momo/{orderId}', [PaymentController::class, 'momo_payment']);
     Route::get('callback', [PaymentController::class, 'fallBack']);
     Route::post('stripe/{order_id}', [StripeController::class, 'stripePayment']);
-    Route::post('/vnpay/{order_id}', [VNPayController::class, 'vnpay_payment']);
+    Route::post('vnpay/{order_id}', [VNPayController::class, 'vnpay_payment']);
     Route::get('/vnpay-return', [VNPayController::class, 'returnCallBack']);
 });
 Route::prefix('coupon')->group(function () {

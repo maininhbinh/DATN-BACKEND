@@ -136,7 +136,8 @@ class PaymentController extends Controller
 
                     event(new OrderCreated($order, $status, $order->email));
 
-                    return redirect('http://localhost:5173/');
+                    return redirect('http://localhost:5173/account/my-order/detail/'. $order->id);
+                   
                 } else {
                     return response()->json(['message' => $message . '/' . $localMessage], 400);
                 }

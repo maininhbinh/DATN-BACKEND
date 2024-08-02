@@ -32,7 +32,7 @@ class StripeController extends Controller
                 $token = $stripe->tokens->create(['card' => $cardInfo]);
 
                 $charge = $stripe->charges->create([
-                    'amount' => $order->total_price * 100, // Convert to cents
+                    'amount' => $order->discount_price , // Convert to cents
                     'currency' => 'vnd',
                     'source' => $token->id,
                     'description' => 'Order payment for order ID: ' . $order->id,

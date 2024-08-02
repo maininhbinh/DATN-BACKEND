@@ -370,7 +370,7 @@ class OrderController extends Controller
                 [
                     'receiver_name' => 'required|string',
                     'receiver_phone' => 'required|string',
-                    'receiver_provinces' => 'required|string',
+                    'receiver_pronvinces' => 'required|string',
                     'receiver_district' => 'required|string',
                     'receiver_ward' => 'required|string',
                     'receiver_address' => 'required|string',
@@ -381,7 +381,7 @@ class OrderController extends Controller
                     'receiver_name.string' => 'Trường name phải là một chuỗi',
                     'receiver_phone.required' => 'Trường phone là bắt buộc',
                     'receiver_phone.string' => 'Trường phone phải là một chuỗi',
-                    'receiver_provinces.required' => 'Bắt buộc chọn một tỉnh thành',
+                    'receiver_pronvinces.required' => 'Bắt buộc chọn một tỉnh thành',
                     'receiver_district.required' => 'Chọn một thành phố',
                     'receiver_ward.required' => 'Chọn một quận | huyện',
                     'receiver_address.required' => 'Trường address là bắt buộc',
@@ -391,14 +391,18 @@ class OrderController extends Controller
 
             $receiverName = $request->get('receiver_name');
             $receiverPhone = $request->get('receiver_phone');
-            $receiverProvinces = $request->get('receiver_provinces');
+            $receiverProvinces = $request->get('receiver_pronvinces');
             $receiverDistrict = $request->get('receiver_district');
             $receiverWard = $request->get('receiver_ward');
             $receiverAddress = $request->get('receiver_address');
             $pickUpRequired = filter_var($request->get('pick_up_required'), FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
             $note = $request->get('note');
             $discountCode = $request->get('discount_code');
+
+
             $paymentMethod = PaymentMethods::getOrder(PaymentMethods::MOMO);
+            //$paymentMethod = $request->get('payment_method_id'); // 1 : 
+
 
             $paymentStatusId = PaymentStatuses::getOrder(PaymentStatuses::PENDING);
             $orderStatusId = EnumOrderStatus::getOrder(EnumOrderStatus::PENDING);
@@ -443,7 +447,7 @@ class OrderController extends Controller
                 'order_status_id' => $orderStatusId,
                 'receiver_name' => $receiverName,
                 'receiver_phone' => $receiverPhone,
-                'receiver_provinces' => $receiverProvinces,
+                'receiver_pronvinces' => $receiverProvinces,
                 'receiver_district' => $receiverDistrict,
                 'receiver_ward' => $receiverWard,
                 'receiver_address' => $receiverAddress,

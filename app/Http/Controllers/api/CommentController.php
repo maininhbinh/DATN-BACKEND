@@ -16,15 +16,16 @@ class CommentController extends Controller
             // Lấy tất cả comments cho sản phẩm cụ thể
             $comments = Comment::where('product_id', $productId)
                 ->with('user')
-                ->get(['product_id', 'user_id', 'content', 'rating']);
+                ->get(['product_id', 'user_id', 'content', 'rating', 'created_at']);
 
             // Định dạng lại comments để bao gồm user_name
             $formattedComments = $comments->map(function ($comment) {
                 return [
                     'product_id' => $comment->product_id,
-                    'user_name' => $comment->user->name, // Giả sử trường 'name' là tên người dùng
+                    'user_name' => $comment->user->username, // Giả sử trường 'name' là tên người dùng
                     'content' => $comment->content,
                     'rating' => $comment->rating,
+                    'created_at' => $comment->created_at,
                 ];
             });
 
