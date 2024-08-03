@@ -45,6 +45,23 @@ class VariantController extends Controller
         }
     }
 
+    public function show(Request $request){
+        try {
+            $name = $request->input('name');
+
+            $item = Variant::where('name', $name)->with(['variants'])->firstOrFail();
+            return response()->json([
+                'success' => true,
+                'data' => $item
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'không tìm thấy thuộc tính'
+            ], 404);
+        }
+    }
 
     public function update(Request $request, string $id)
     {

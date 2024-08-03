@@ -38,7 +38,19 @@ class CategoryController extends Controller
 
     public function show(Request $request, $id){
         try {
+            $category = Category::with('details.attributes', 'variants')->find($id);
 
+            if(!$category){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không tìm thấy danh mục'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $category
+            ], 200);
         }catch (\Exception $exception){
             return response()->json([
                 'success' => false,
@@ -50,7 +62,7 @@ class CategoryController extends Controller
     public function edit($id){
         try {
 
-            $category = Category::with('details.attributes', 'variants')->find($id);
+            $category = Category::with('details.attributes')->find($id);
 
             if(!$category){
                 return response()->json([

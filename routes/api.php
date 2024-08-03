@@ -69,6 +69,7 @@ Route::prefix('category')->group(function () {
     Route::get('', [CategoryController::class, 'index']);
     Route::post('', [CategoryController::class, 'store']);
     Route::get('{id}', [CategoryController::class, 'edit']);
+    Route::get('show/{id}', [CategoryController::class, 'show']);
     Route::post('{id}', [CategoryController::class, 'update']);
     Route::delete('{id}', [CategoryController::class, 'destroy']);
 });
@@ -143,6 +144,7 @@ Route::prefix('variant')->group(function () {
     Route::post('/{id}/restore', [VariantController::class, 'restore']);
 });
 
+Route::post('option', [VariantController::class, 'show']);
 
 Route::prefix('variant_option')->group(function () {
     Route::get('', [VariantOptionController::class, 'index']);

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->text('thumbnail');
             $table->string('name');
-            $table->text('content');
+            $table->longText('content')->change();
             $table->foreignId('category_id')->constrained('categories');
             $table->foreignId('brand_id')->constrained('brands');
             $table->boolean('is_active')->default(true);
