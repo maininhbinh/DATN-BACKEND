@@ -44,16 +44,6 @@ class PaymentController extends Controller
             if ($order->payment_status_id === PaymentStatuses::getOrder(PaymentStatuses::COMPLETED)) {
                 return response()->json(['message' => 'Đơn hàng đã thanh toán'], 400);
             }
-
-//            $endpoint = env('MOMO_PAYMENT_URL');
-//            $partnerCode = env('MOMO_PAYMENT_PARTNER_CODE');
-//            $accessKey = env('MOMO_PAYMENT_ACCESS_KEY');
-//            $secretKey = env('MOMO_PAYMENT_SECRET_KEY');
-//            $orderInfo = "Thanh toán qua MoMo";
-//            $amount = $order->total_price;
-//            $returnUrl = env('MOMO_PAYMENT_RETURN_URL');
-//            $notifyurl = env('MOMO_PAYMENT_NOTIFY_URL');
-
             $endpoint = 'https://test-payment.momo.vn/gw_payment/transactionProcessor';
             $partnerCode = 'MOMOBKUN20180529';
             $accessKey = 'klm05TvNBzhg7h7j';
@@ -91,11 +81,9 @@ class PaymentController extends Controller
             if (isset($jsonResult['payUrl'])) {
 
                 return response()->json(['url' => $jsonResult['payUrl']], 200);
-
             } else {
 
                 return response()->json(['message' => 'Error generating payment URL'], 500);
-
             }
         } catch (\Exception $e) {
             Log::error('PaymentMomoController::momo_payment - Error: ' . $e->getMessage());
@@ -148,7 +136,8 @@ class PaymentController extends Controller
 
                     event(new OrderCreated($order, $status, $order->email));
 
-                    return redirect('http://localhost:5173/');
+                    return redirect('http://localhost:5173/account/my-order/detail/'. $order->id);
+                   
                 } else {
                     return response()->json(['message' => $message . '/' . $localMessage], 400);
                 }

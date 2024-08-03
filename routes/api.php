@@ -5,6 +5,7 @@ use App\Http\Controllers\api\BrandController;
 use App\Http\Controllers\api\CategoryController;
 use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\CartController;
+use App\Http\Controllers\api\CommentController;
 use App\Http\Controllers\api\CouponController;
 use App\Http\Controllers\api\DetailController;
 use App\Http\Controllers\api\OrderController;
@@ -15,9 +16,11 @@ use App\Http\Controllers\api\ValueController;
 use App\Http\Controllers\api\SlideController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\api\ProductController;
+use App\Http\Controllers\api\StripeController;
 use App\Http\Controllers\api\UserCouponController;
 use App\Http\Controllers\api\VariantController;
 use App\Http\Controllers\api\VariantOptionController;
+use App\Http\Controllers\api\VNPayController;
 
 /*
 |--------------------------------------------------------------------------
@@ -133,6 +136,7 @@ Route::prefix('order')->middleware('auth:sanctum')->group(function () {
     Route::post('', [OrderController::class, 'placeOrder']);
     Route::get('{id}', [OrderController::class, 'show']);
     Route::put('update/status/{id}', [OrderController::class, 'updateStatus'])->middleware('check.status');
+    Route::post('process-payment/{order_id}', [OrderController::class, 'processPayment']); //đã lấy vào id và qua 1 hàm mới để chọn method thanh toán
 });
 
 Route::prefix('variant')->group(function () {
@@ -156,10 +160,12 @@ Route::prefix('variant_option')->group(function () {
 });
 
 Route::prefix('payment')->group(function () {
-    Route::get('momo/{orderId}', [PaymentController::class, 'momo_payment']);
+    Route::post('momo/{orderId}', [PaymentController::class, 'momo_payment']);
     Route::get('callback', [PaymentController::class, 'fallBack']);
+    Route::post('stripe/{order_id}', [StripeController::class, 'stripePayment']);
+    Route::post('vnpay/{order_id}', [VNPayController::class, 'vnpay_payment']);
+    Route::get('/vnpay-return', [VNPayController::class, 'returnCallBack']);
 });
-
 Route::prefix('coupon')->group(function () {
     Route::post('apply', [CouponController::class, 'apply']);
     Route::get('', [CouponController::class, 'index']);
@@ -173,4 +179,10 @@ Route::prefix('coupon')->group(function () {
 Route::prefix('filter')->group(function () {
     Route::post('', [ProductController::class, 'filter']);
     Route::get('/search', [ProductController::class, 'search']);
+});
+
+Route::middleware('auth:sanctum')->prefix('comment')->group(function () {
+    Route::get('/products/{productId}/comments', [CommentController::class, 'index']);
+    Route::post('', [CommentController::class, 'store']);
+    Route::delete('/{id}', [CommentController::class, 'destroy']);
 });

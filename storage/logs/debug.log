@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 [2024-07-17 20:54:12] local.DEBUG: titan xanh  
 [2024-07-17 20:54:12] local.DEBUG: 256GB  
 [2024-07-17 20:54:12] local.DEBUG: titan xanh  
@@ -45,3 +46,9 @@
 [2024-07-25 16:28:49] local.DEBUG: 4  
 [2024-07-27 05:25:39] local.DEBUG: 1  
 [2024-07-27 19:30:11] local.DEBUG: 3  
+=======
+[2024-07-31 20:16:15] local.DEBUG: 1  
+[2024-07-31 22:30:16] local.DEBUG: 2  
+[2024-08-02 21:13:20] local.DEBUG: 1  
+[2024-08-02 21:53:32] local.DEBUG: 1  
+>>>>>>> e8ee75787e5a74726a9881eba9eaabf77c919f8b
