@@ -15,7 +15,7 @@ class Detail extends Model
 
 
     public function category(){
-        return $this->belongsToMany(Category::class, 'detail_category');
+        return $this->belongsToMany(Category::class, 'detail_categories');
     }
 
     public function attributes(){

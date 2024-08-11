@@ -4,6 +4,7 @@ namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Detail;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -50,6 +51,13 @@ class DetailController extends Controller
 
         try {
             $item = Detail::create($request->all());
+            if($request->category_id){
+                $cats = Category::whereIn('id', explode(',', $request->category_id))->pluck('id');
+            }else{
+                $cats = [];
+            }
+            $item->category()->sync($cats);
+            $item->update($request->all());
             return response()->json($item, 201);
         } catch (\Exception $e) {
             return response()->json([
@@ -65,7 +73,7 @@ class DetailController extends Controller
     public function edit(string $id)
     {
         try {
-            $item = Detail::findOrFail($id);
+            $item = Detail::with('category')->findOrFail($id);
             return response()->json($item, 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -91,7 +99,13 @@ class DetailController extends Controller
         }
 
         try {
+            if($request->category_id){
+                $cats = Category::whereIn('id', explode(',', $request->category_id))->pluck('id');
+            }else{
+                $cats = [];
+            }
             $item = Detail::findOrFail($id);
+            $item->category()->sync($cats);
             $item->update($request->all());
             return response()->json($item, 200);
         } catch (\Exception $e) {
@@ -109,6 +123,7 @@ class DetailController extends Controller
     {
         try {
             $item = Detail::findOrFail($id);
+            $item->category()->detach();
             $item->delete();
             return response()->json(null, 204);
         } catch (\Exception $e) {
