@@ -2,20 +2,20 @@
 
 namespace App\Models;
 
+use Cviebrock\EloquentSluggable\Sluggable;
+use Cviebrock\EloquentSluggable\SluggableScopeHelpers;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Category extends Model
 {
-    use HasFactory;
-    use SoftDeletes;
+    use HasFactory, SoftDeletes, Sluggable, SluggableScopeHelpers;
 
     protected $fillable = [
         'name',
         'image',
-        'parent_id',
-        'public_id',
+        'slug',
         'active',
     ];
 
@@ -23,11 +23,20 @@ class Category extends Model
         return $this->belongsToMany(Detail::class, 'detail_categories');
     }
 
-    public function parent(){
-        return $this->belongsTo(Category::class);
-    }
-
     public function variants(){
         return $this->hasMany(Variant::class);
+    }
+
+    public function products(){
+        return $this->hasMany(Product::class);
+    }
+
+    public function sluggable(): array
+    {
+        return [
+            'slug' => [
+                'source' => 'name'
+            ]
+        ];
     }
 }

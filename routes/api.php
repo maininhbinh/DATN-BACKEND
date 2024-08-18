@@ -9,8 +9,9 @@ use App\Http\Controllers\api\CommentController;
 use App\Http\Controllers\api\CouponController;
 use App\Http\Controllers\api\DetailController;
 use App\Http\Controllers\api\OrderController;
-use App\Http\Controllers\api\PaymentController;
+use App\Http\Controllers\api\MomoController;
 use App\Http\Controllers\api\RoleController;
+use App\Http\Controllers\api\StatisticalController;
 use App\Http\Controllers\api\UserController;
 use App\Http\Controllers\api\ValueController;
 use App\Http\Controllers\api\SlideController;
@@ -20,7 +21,7 @@ use App\Http\Controllers\api\StripeController;
 use App\Http\Controllers\api\UserCouponController;
 use App\Http\Controllers\api\VariantController;
 use App\Http\Controllers\api\VariantOptionController;
-use App\Http\Controllers\api\VNPayController;
+use App\Http\Controllers\api\VnPayController;
 
 /*
 |--------------------------------------------------------------------------
@@ -117,7 +118,9 @@ Route::prefix('product')->group(function () {
     Route::get('', [ProductController::class, 'index']);
     Route::post('', [ProductController::class, 'store']);
     Route::get('/{slug}', [ProductController::class, 'show']);
+    Route::get('edit/{id}', [ProductController::class, 'update']);
     Route::get('/home/{feat}', [ProductController::class, 'featProducts']);
+    Route::get('{slug}/category', [ProductController::class, 'category']);
 });
 
 Route::prefix('slider')->group(function () {
@@ -131,6 +134,7 @@ Route::prefix('slider')->group(function () {
 
 Route::prefix('order')->middleware('auth:sanctum')->group(function () {
     Route::get('user', [OrderController::class, 'getAllOrder']);
+    Route::get('today', [OrderController::class, 'getOrderToday']);
     Route::get('detail/{id}', [OrderController::class, 'getOrderDetail']);
     Route::get('', [OrderController::class, 'index']);
     Route::post('', [OrderController::class, 'placeOrder']);
@@ -160,12 +164,13 @@ Route::prefix('variant_option')->group(function () {
 });
 
 Route::prefix('payment')->group(function () {
-    Route::post('momo/{orderId}', [PaymentController::class, 'momo_payment']);
-    Route::get('callback', [PaymentController::class, 'fallBack']);
+    Route::get('momo/{orderId}', [MomoController::class, 'momoPayment']);
+    Route::get('momo_fallback', [MomoController::class, 'fallBack']);
     Route::post('stripe/{order_id}', [StripeController::class, 'stripePayment']);
-    Route::post('vnpay/{order_id}', [VNPayController::class, 'vnpay_payment']);
-    Route::get('/vnpay-return', [VNPayController::class, 'returnCallBack']);
+    Route::get('vnpay/{orderId}', [VnPayController::class, 'vnpayPayment']);
+    Route::get('vnpay/callback', [VnPayController::class, 'returnCallBack']);
 });
+
 Route::prefix('coupon')->group(function () {
     Route::post('apply', [CouponController::class, 'apply']);
     Route::get('', [CouponController::class, 'index']);
@@ -173,7 +178,7 @@ Route::prefix('coupon')->group(function () {
     Route::get('/{id}', [CouponController::class, 'edit']);
     Route::post('/{id}', [CouponController::class, 'update']);
     Route::delete('/{id}', [CouponController::class, 'destroy']);
-    Route::post('apply', [CouponController::class, 'apply']);
+    Route::post('apply', [CouponController::class, 'apply'])->middleware('auth:sanctum');
 });
 
 Route::prefix('filter')->group(function () {
@@ -185,4 +190,9 @@ Route::middleware('auth:sanctum')->prefix('comment')->group(function () {
     Route::get('/products/{productId}/comments', [CommentController::class, 'index']);
     Route::post('', [CommentController::class, 'store']);
     Route::delete('/{id}', [CommentController::class, 'destroy']);
+});
+
+Route::prefix('statistical')->group(function () {
+    Route::get('today', [StatisticalController::class, 'today']);
+    Route::get('today_order', []);
 });

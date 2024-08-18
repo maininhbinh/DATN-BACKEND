@@ -15,13 +15,13 @@ return new class extends Migration
     {
         Schema::create('payment_methods', function (Blueprint $table) {
             $table->id();
-            $table->string('description');
+            $table->string('code');
             $table->timestamps();
         });
 
         foreach (PaymentMethods::getValues() as $value) {
             PaymentMethod::create([
-                'description' => $value,
+                'code' => $value,
             ]);
         }
     }

@@ -150,7 +150,6 @@ class CategoryController extends Controller
                 'name' => $request->get('name'),
                 'image' => $url,
                 'is_active' => $is_active,
-                'parent_id' => $request->get('parent_id'),
                 'public_id' => $public_id
             ];
 
@@ -198,7 +197,6 @@ class CategoryController extends Controller
             DB::beginTransaction();
 
             $detail = json_decode($request->get('detail'));
-            $parent_id = $request->get('parent_id') ?? null;
 
             if (count($detail) < 1) {
                 return response()->json([
@@ -229,7 +227,6 @@ class CategoryController extends Controller
                 'name' => $request->name,
                 'image' => $url,
                 'public_id' => $public_id,
-                'parent_id' => $parent_id,
                 'is_active' => $is_active
             ]);
 

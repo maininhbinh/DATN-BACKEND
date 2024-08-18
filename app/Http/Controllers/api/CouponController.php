@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cart;
 use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\UserCoupon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 
@@ -138,32 +140,67 @@ class CouponController extends Controller
             ], 400);
         }
 
+        $user = $request->user();
+
         try {
+            $carts = Cart::where('user_id', $user->id)
+                ->join('product_items', 'carts.product_item_id', '=', 'product_items.id')
+                ->join('products', 'product_items.product_id', '=', 'products.id')
+                ->select(
+                    'carts.*',
+                    DB::raw('IFNULL(price_sale, price) as price')
+                )
+                ->get();
+
+            if (count($carts) <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Giỏ hàng ít nhất phải có 1 sản phẩm'
+                ], 404);
+            }
+
+            $totalPrice = 0;
+
+            foreach ($carts as $cart) {
+                $totalPrice += ($cart->price_sale ?? $cart->price) * $cart->quantity;
+            }
+
             $coupon = Coupon::where('code', $request->code)
                 ->where('end_date', '>', Carbon::now())
                 ->where('is_activate', 1)
                 ->first();
 
+            if($coupon->discount_max > $totalPrice){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Vouncher không thể áp dụng tại giá trị của đơn hàng vượt quá giá trị cho phép'
+                ], 422);
+            }
+
             if (!$coupon) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Coupon không hợp lệ hoặc đã hết hạn.'
-                ], 200);
+                ], 422);
             }
 
             if ($coupon->used_count >= $coupon->quantity) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Coupon đã hết số lượng sử dụng.'
-                ], 200);
+                ], 422);
+            }
+
+            $discount = $coupon->value;
+
+            if($coupon->type == 'percent'){
+                $discount = ($coupon->value / 100) * $totalPrice;
             }
 
             return response()->json([
                 'success' => true,
-                'name' => $coupon->name,
-                'value' => $coupon->value,
-                'type' => $coupon->type,
-                'discount_max' => $coupon->discount_max
+                'code' => $coupon->code,
+                'discount' => $discount,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([

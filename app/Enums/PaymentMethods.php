@@ -4,9 +4,10 @@ namespace App\Enums;
 
 enum PaymentMethods: string
 {
-    case STRIPE = 'Thanh toán qua Stripe GateWay';
-    case MOMO = 'Thanh toán bằng MOMO';
-    case VNPAY = 'Thanh toán bằng VNPay';
+    case STRIPE = 'stripe-payment';
+    case MOMO = 'momo';
+    case VNPAY = 'vnpay';
+    case COD = 'COD';
 
     public static function getValues(): array
     {
@@ -19,6 +20,7 @@ enum PaymentMethods: string
             self::STRIPE => 1,
             self::MOMO => 2,
             self::VNPAY => 3,
+            self::COD => 4,
         };
     }
 }

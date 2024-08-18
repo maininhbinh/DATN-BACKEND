@@ -5,20 +5,45 @@ namespace App\Http\Controllers\api;
 use App\Enums\OrderStatus as EnumOrderStatus;
 use App\Enums\PaymentMethods;
 use App\Enums\PaymentStatuses;
-use App\Enums\TypeDiscounts;
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
+use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\OrderHistory;
 use App\Models\OrderStatus;
+use App\Models\PaymentMethod;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use Stripe\Stripe;
+use libphonenumber\PhoneNumber;
+use Propaganistas\LaravelPhone\Rules\Phone;
 
 class OrderController extends Controller
 {
+
+    public function getOrderToday(Request $request){
+        try {
+            $item = Order::whereDate('orders.created_at', Carbon::today())
+                ->join('order_statuses', 'orders.order_status_id', '=', 'order_statuses.id')
+                ->join('payment_statuses', 'orders.payment_status_id', '=', 'payment_statuses.id')
+                ->select('orders.*', 'order_statuses.name as order_status_name', 'payment_statuses.name as payment_status_name')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'sucess' => true,
+                'data' => $item
+            ], 200);
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'success' => false,
+                'message' => $e
+            ], 500);
+        }
+    }
 
     public function index()
     {
@@ -73,14 +98,13 @@ class OrderController extends Controller
                     'orders.discount_price',
                     'orders.discount_code',
                     'orders.discount_code',
-                    'orders.pick_up_required',
                     'orders.note',
                     'orders.sku as code',
                     'orders.created_at',
                     'payment_statuses.name as payment_status',
                     'order_status_id',
                     'order_statuses.name as order_status',
-                    'payment_methods.description as payment_methods',
+                    'payment_methods.code as payment_methods',
                 )
                 ->get();
 
@@ -158,22 +182,20 @@ class OrderController extends Controller
                     'orders.total_price',
                     'orders.receiver_name',
                     'orders.receiver_phone',
-                    'orders.receiver_pronvinces',
-                    'orders.receiver_district',
+                    'orders.receiver_city',
                     'orders.receiver_district',
                     'orders.receiver_ward',
                     'orders.receiver_address',
                     'orders.discount_price',
                     'orders.discount_code',
                     'orders.discount_code',
-                    'orders.pick_up_required',
                     'orders.note',
                     'orders.sku as code',
                     'orders.created_at',
                     'payment_statuses.name as payment_status',
                     'order_status_id',
                     'order_statuses.name as order_status',
-                    'payment_methods.description as payment_methods',
+                    'payment_methods.code as payment_methods',
                 )
                 ->first();
 
@@ -191,11 +213,10 @@ class OrderController extends Controller
                 'total_price' => $orderDetail->total_price,
                 'receiver_name' => $orderDetail->receiver_name,
                 'receiver_phone' => $orderDetail->receiver_phone,
-                'receiver_pronvinces' => $orderDetail->receiver_pronvinces,
+                'receiver_city' => $orderDetail->receiver_city,
                 'receiver_district' => $orderDetail->receiver_district,
                 'receiver_ward' => $orderDetail->receiver_ward,
                 'receiver_address' => $orderDetail->receiver_address,
-                'pick_up_required' => $orderDetail->pick_up_required,
                 'discount_price' => $orderDetail->discount_price,
                 'note' => $orderDetail->note,
                 'code' => $orderDetail->code,
@@ -276,22 +297,20 @@ class OrderController extends Controller
                     'orders.total_price',
                     'orders.receiver_name',
                     'orders.receiver_phone',
-                    'orders.receiver_pronvinces',
-                    'orders.receiver_district',
+                    'orders.receiver_city',
                     'orders.receiver_district',
                     'orders.receiver_ward',
                     'orders.receiver_address',
                     'orders.discount_price',
                     'orders.discount_code',
                     'orders.discount_code',
-                    'orders.pick_up_required',
                     'orders.note',
                     'orders.sku as code',
                     'orders.created_at',
                     'payment_statuses.name as payment_status',
                     'order_status_id',
                     'order_statuses.name as order_status',
-                    'payment_methods.description as payment_methods',
+                    'payment_methods.code as payment_methods',
                 )
                 ->first();
 
@@ -309,11 +328,10 @@ class OrderController extends Controller
                 'total_price' => $orderDetail->total_price,
                 'receiver_name' => $orderDetail->receiver_name,
                 'receiver_phone' => $orderDetail->receiver_phone,
-                'receiver_pronvinces' => $orderDetail->receiver_pronvinces,
+                'receiver_city' => $orderDetail->receiver_pronvinces,
                 'receiver_district' => $orderDetail->receiver_district,
                 'receiver_ward' => $orderDetail->receiver_ward,
                 'receiver_address' => $orderDetail->receiver_address,
-                'pick_up_required' => $orderDetail->pick_up_required,
                 'discount_price' => $orderDetail->discount_price,
                 'note' => $orderDetail->note,
                 'code' => $orderDetail->code,
@@ -369,40 +387,40 @@ class OrderController extends Controller
             $request->validate(
                 [
                     'receiver_name' => 'required|string',
-                    'receiver_phone' => 'required|string',
-                    'receiver_pronvinces' => 'required|string',
+                    'receiver_phone' => ['required', 'regex:/^(\+84|84|0)(3|5|7|8|9)[0-9]{8}$/'],
+                    'receiver_email' => 'required|string|email',
+                    'receiver_city' => 'required|string',
                     'receiver_district' => 'required|string',
                     'receiver_ward' => 'required|string',
                     'receiver_address' => 'required|string',
-                    'pick_up_required' => 'required|boolean',
+                    'payment_method' => 'required|string'
                 ],
                 [
+                    'receiver_phone.regex' => 'Số điện thoại phải đúng định dạng và bắt đầu bằng +84.',
                     'receiver_name.required' => 'Trường name là bắt buộc',
                     'receiver_name.string' => 'Trường name phải là một chuỗi',
                     'receiver_phone.required' => 'Trường phone là bắt buộc',
                     'receiver_phone.string' => 'Trường phone phải là một chuỗi',
-                    'receiver_pronvinces.required' => 'Bắt buộc chọn một tỉnh thành',
-                    'receiver_district.required' => 'Chọn một thành phố',
-                    'receiver_ward.required' => 'Chọn một quận | huyện',
-                    'receiver_address.required' => 'Trường address là bắt buộc',
-                    'pick_up_required.required' => 'Chọn hình thức nhận hàng',
+                    'receiver_city.required' => 'Bắt buộc chọn thánh phố',
+                    'receiver_district.required' => 'Chọn một quận huyện',
+                    'receiver_ward.required' => 'Chọn một xã phường',
+                    'receiver_address.required' => 'Trường địa chỉ là bắt buộc',
+                    'payment_method.required' => 'Thiếu hình thức thanh toán'
                 ]
             );
+            $paymentMethod = $request->get('payment_method');
+
+            $payment_method_model = PaymentMethod::where('code', $paymentMethod)->first();
 
             $receiverName = $request->get('receiver_name');
             $receiverPhone = $request->get('receiver_phone');
-            $receiverProvinces = $request->get('receiver_pronvinces');
+            $receiverEmail = $request->get('receiver_email');
+            $receiverProvinces = $request->get('receiver_city');
             $receiverDistrict = $request->get('receiver_district');
             $receiverWard = $request->get('receiver_ward');
             $receiverAddress = $request->get('receiver_address');
-            $pickUpRequired = filter_var($request->get('pick_up_required'), FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
             $note = $request->get('note');
             $discountCode = $request->get('discount_code');
-
-
-            $paymentMethod = PaymentMethods::getOrder(PaymentMethods::MOMO);
-            //$paymentMethod = $request->get('payment_method_id'); // 1 : 
-
 
             $paymentStatusId = PaymentStatuses::getOrder(PaymentStatuses::PENDING);
             $orderStatusId = EnumOrderStatus::getOrder(EnumOrderStatus::PENDING);
@@ -414,13 +432,7 @@ class OrderController extends Controller
                 ->join('products', 'product_items.product_id', '=', 'products.id')
                 ->select(
                     'carts.*',
-                    DB::raw("
-                    CASE
-                        WHEN products.type_discount = '" . TypeDiscounts::Percent->value . "' THEN product_items.price * (1 - products.discount / 100)
-                        WHEN products.type_discount = '" . TypeDiscounts::Fixed->value . "' THEN product_items.price - products.discount
-                        ELSE product_items.price
-                    END AS price
-                ")
+                    DB::raw('IFNULL(price_sale, price) as price')
                 )
                 ->get();
 
@@ -434,11 +446,30 @@ class OrderController extends Controller
             $totalPrice = 0;
 
             foreach ($carts as $cart) {
-                $totalPrice += $cart->price * $cart->quantity;
+                $totalPrice += ($cart->price_sale ?? $cart->price) * $cart->quantity;
             }
 
             // Xử lý discount code (nếu có logic xử lý)
-            $discountPrice = $totalPrice; // Thay đổi nếu có logic xử lý discount code
+            $discountPrice = 0; // Thay đổi nếu có logic xử lý discount code
+
+            if($discountCode){
+                $coupon = Coupon::where('code', $discountCode)
+                    ->where('end_date', '>', Carbon::now())
+                    ->where('is_activate', 1)
+                    ->first();
+
+                if($coupon && $coupon->discount_max < $totalPrice && $coupon->used_count < $coupon->quantity){
+                    $discountCode = $coupon->code;
+                    $discountPrice = $coupon->value;
+
+                    if($coupon->type == 'percent'){
+                        $discountPrice = ($coupon->value / 100) * $totalPrice;
+                    }
+                }
+
+            }
+
+            $totalPrice = $totalPrice - $discountPrice;
 
             $order = Order::create([
                 'user_id' => $user->id,
@@ -447,13 +478,13 @@ class OrderController extends Controller
                 'order_status_id' => $orderStatusId,
                 'receiver_name' => $receiverName,
                 'receiver_phone' => $receiverPhone,
-                'receiver_pronvinces' => $receiverProvinces,
+                'receiver_email' => $receiverEmail,
+                'receiver_city' => $receiverProvinces,
                 'receiver_district' => $receiverDistrict,
                 'receiver_ward' => $receiverWard,
                 'receiver_address' => $receiverAddress,
-                'payment_method_id' => $paymentMethod,
+                'payment_method_id' => $payment_method_model->id,
                 'payment_status_id' => $paymentStatusId,
-                'pick_up_required' => $pickUpRequired,
                 'discount_code' => $discountCode,
                 'discount_price' => $discountPrice,
             ]);
@@ -476,21 +507,35 @@ class OrderController extends Controller
 
             DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'order_id' => $order->id
-            ]);
+            switch ($paymentMethod) {
+                case PaymentMethods::VNPAY->value:
+                    return redirect()->action([VnPayController::class, 'vnpayPayment'], ['orderId' => $order->id]);
+
+                case PaymentMethods::MOMO->value:
+                    return redirect()->action([MomoController::class, 'momoPayment'], ['orderId' => $order->id]);
+
+                case PaymentMethods::COD->value:
+                    return response()->json([
+                        'success' => true,
+                        'url' => 'http://localhost:5173/account/my-order/detail/'. $order->id
+                    ]);
+                default:
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Phương thức thanh toán không hợp lệ hoặc không hoạt động. Vui lòng chọn phương thức khác',
+                    ]);
+            }
         } catch (ValidationException $validationException) {
             return response()->json([
                 'success' => false,
                 'message' => $validationException->getMessage()
-            ]);
+            ], 422);
         } catch (\Exception $exception) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => $exception->getMessage()
-            ]);
+                'message' => $exception->getLine()
+            ], 500);
         }
     }
 

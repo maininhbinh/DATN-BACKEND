@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->text('thumbnail');
             $table->string('name');
-            $table->longText('content')->change();
+            $table->longText('content');
             $table->foreignId('category_id')->constrained('categories');
             $table->foreignId('brand_id')->constrained('brands');
             $table->boolean('is_active')->default(true);
@@ -23,8 +23,6 @@ return new class extends Migration
             $table->boolean('is_good_deal')->default(false);
             $table->boolean('is_new')->default(true);
             $table->boolean('is_show_home')->default(false);
-            $table->string('type_discount')->nullable();
-            $table->decimal('discount')->nullable();
             $table->unsignedBigInteger('total_review')->nullable();
             $table->unsignedBigInteger('avg_stars')->nullable();
             $table->text('public_id');

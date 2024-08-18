@@ -2,22 +2,18 @@
 
 namespace App\Models;
 
-use App\Enums\TypeDiscounts;
 use Cviebrock\EloquentSluggable\Sluggable;
 use Cviebrock\EloquentSluggable\SluggableScopeHelpers;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Product extends Model
 {
     use HasFactory, SoftDeletes, Sluggable, SluggableScopeHelpers;
 
     protected $table = 'products';
-
-    protected $casts = [
-        'type_discount' => TypeDiscounts::class
-    ];
 
     protected $fillable = [
         'thumbnail',
@@ -30,8 +26,6 @@ class Product extends Model
         'is_good_deal',
         'is_new',
         'is_show_home',
-        'type_discount',
-        'discount',
         'total_review',
         'avg_stars',
         'public_id',

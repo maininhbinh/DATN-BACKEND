@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\api;
 
+use App\Helpers\ValidatorHelpers;
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Gallery;
 use App\Models\Product;
 use App\Models\ProductDetail;
@@ -42,6 +44,22 @@ class ProductController extends Controller
             ], 200);
         } catch (\Exception $exception) {
 
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ]);
+        }
+    }
+
+    public function update(Request $request, $id){
+        try {
+            $product = Product::findOrFail($id);
+
+            return  response()->json([
+                'success' => true,
+                'data' => $product
+            ]);
+        }catch (Exception $exception){
             return response()->json([
                 'success' => false,
                 'message' => $exception->getMessage()
@@ -125,7 +143,7 @@ class ProductController extends Controller
             $request->all(),
             [
                 'thumbnail' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-                "name" => "required|max:155|min:10",
+                "name" => "required|max:70|min:10",
                 "content" => "required",
                 "category_id" => "required",
                 'brand_id' => "required",
@@ -139,7 +157,7 @@ class ProductController extends Controller
                 "thumbnail.mimes" => 'định dạng cu thumbnail là jpeg, png, jpg, gif',
                 "name" => "Trường name phải bắt buộc",
                 "name.min" => "Tên sản phẩm phải hơn 10 ký tự",
-                "name.max" => "Tên sản phẩm không được vượt quá 155 ký tự",
+                "name.max" => "Tên sản phẩm không được vượt quá 70 ký tự",
                 "content" => "Chưa có nội dung giới thiệu sản phẩm",
                 "category_id" => "Chưa có danh mục",
                 "brand_id" => 'chưa có thương hiệu',
@@ -165,17 +183,17 @@ class ProductController extends Controller
         $is_good_deal = $request->get("is_good_deal") == 1 ? 1 : 0;
         $is_new = $request->get("is_new") == 1 ? 1 : 0;
         $is_show_home = $request->get("is_show_home") == 1 ? 1 : 0;
-        $type_discount = $request->get("type_discount") ? $request->get("type_discount") : null;
-        $discount = $request->get("discount") ? $request->get("discount") : null;
         $product_details = json_decode($request->get('product_details'));
         $product_items = json_decode($request->get('product_items'));
         $gallery = json_decode($request->get('gallery'));
 
-        if (count($product_items) < 1) {
+        $product_check = ValidatorHelpers::validatorProductItem($product_items);
+
+        if(!$product_check){
             return response()->json([
-                "success" => false,
-                "message" => 'Chưa có sản phẩm'
-            ], 404);
+                'success' => false,
+                'message' => 'Dữ liệu gửi lên không đúng'
+            ], 422);
         }
 
         try {
@@ -202,8 +220,6 @@ class ProductController extends Controller
                 'is_good_deal' => $is_good_deal,
                 'is_new' => $is_new,
                 'is_show_home' => $is_show_home,
-                'type_discount' => $type_discount,
-                'discount' => $discount,
                 'public_id' => $public_id,
             ]);
 
@@ -234,18 +250,13 @@ class ProductController extends Controller
                         unlink($tempImagePath);
                     }
 
-                    $sku = $item->sku ?? ''. implode('-', array_reduce($item->variants, function($array, $item){
-                            $array[] = $item->attribute;
-                            return $array;
-                        }, []))."-". time() . "-" . rand(1, 1000000);
-
                     $product_item = ProductItem::create([
                         'product_id' => $product->id,
                         'price' => $item->price,
                         'price_sale' => $item->price_sale,
                         'image' => $hasFile ? $url_item : null,
                         'quantity' => $item->quantity,
-                        'sku' => $sku,
+                        'sku' => $item->sku ?? '',
                         'public_id' => $hasFile ? $public_id : null,
                     ]);
 
@@ -352,6 +363,7 @@ class ProductController extends Controller
                 "message" => $exception->getMessage()
             ], 500);
         }
+
     }
     public function filter(Request $request)
     {
@@ -392,33 +404,35 @@ class ProductController extends Controller
             }])->get();
 
             // Check if products are found
-          
+
 
             return response()->json(['success' => true, 'data' => $products]);
         } catch (Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
-    public function search(Request $request)
+    public function category(Request $request, $slug)
     {
-        $name = $request->input('name');
-
-        if (empty($name)) {
-            return response()->json([
-                'error' => 'Query parameter is required'
-            ], 400);
-        }
-
         try {
-            $products = Product::where('name', 'LIKE', '%' . $name . '%')->get();
+            $category = Category::where('slug', $slug)->first();
 
-            if ($products->isEmpty()) {
+            if(!$category){
                 return response()->json([
-                    'message' => 'Không tìm thấy sản phẩm ' . $name
-                ], 404);
+                    'success' => false,
+                    'message' => 'Không tìm thấy danh mục'
+                ]);
             }
 
-            return response()->json($products);
+            $products = $category->products()->with(['products' => function ($query) {
+                $query->with(['variants' => function ($query) {
+                    $query->orderBy('product_configurations.id', 'asc');
+                }]);
+            }, 'category'])->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $products
+            ]);
         } catch (QueryException $e) {
             return response()->json([
                 'error' => 'Database name error',

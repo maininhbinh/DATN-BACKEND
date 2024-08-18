@@ -12,6 +12,6 @@ class PaymentMethod extends Model
     protected $table = 'payment_methods';
 
     protected $fillable = [
-        'description'
+        "code",
     ];
 }
