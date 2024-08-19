@@ -31,5 +31,8 @@ RUN composer install --ignore-platform-reqs --no-scripts --no-interaction --pref
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
-# Khởi động dịch vụ PHP-FPM
-CMD ["php-fpm"]
+# Mở cổng 80 để lắng nghe các kết nối HTTP
+EXPOSE 80
+
+# Khởi động PHP's built-in server trên cổng 80
+CMD ["php", "-S", "0.0.0.0:80", "-t", "/var/www/html"]
