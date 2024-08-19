@@ -14,7 +14,7 @@ COPY . /var/www/html
 WORKDIR /var/www/html
 
 # Chạy lệnh composer install để cài đặt các gói phụ thuộc
-RUN composer install
+RUN composer install --ignore-platform-reqs
 
 # Thiết lập quyền sở hữu và quyền truy cập cho thư mục
 RUN chown -R www-data:www-data /var/www/html \
