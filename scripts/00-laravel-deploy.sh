@@ -16,4 +16,7 @@ php artisan route:cache
 echo "Running migrations..."
 php artisan migrate --force
 
+echo "Starting queue workers..."
+php artisan queue:work --daemon &
+
 echo "done deploying"
