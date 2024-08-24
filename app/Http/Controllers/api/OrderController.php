@@ -546,7 +546,6 @@ class OrderController extends Controller
         }
     }
 
-
     public function updateStatus(Request $request, $id)
     {
         try {

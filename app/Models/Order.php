@@ -26,7 +26,6 @@ class Order extends Model
         'receiver_address',
         'payment_status',
         'payment_method_id',
-        'pick_up_required',
         'discount_price',
         'discount_code',
         'note',
