@@ -16,6 +16,7 @@ class SlideController extends Controller
             'image' => 'required',
             'image_title' => 'required',
             'is_active' => 'required',
+            'url' => 'required',
         ]);
         $uploadedFileUrl = Cloudinary::upload($request->file('image')->getRealPath())->getSecurePath();
 
@@ -24,6 +25,7 @@ class SlideController extends Controller
             'image_url' => $uploadedFileUrl,
             'public_id' => $publicId,
             'image_title' => $request->image_title,
+            'url' => $request->url,
             'is_active' => $request->is_active,
         ];
         $slide = Slide::create($slideData);

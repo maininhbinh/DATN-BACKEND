@@ -26,8 +26,6 @@ class Product extends Model
         'is_good_deal',
         'is_new',
         'is_show_home',
-        'total_review',
-        'avg_stars',
         'public_id',
         'slug'
     ];
@@ -63,6 +61,10 @@ class Product extends Model
                 'source' => 'name'
             ]
         ];
+    }
+
+    public function orderDetails(){
+        return $this->hasManyThrough(OrderDetail::class, ProductItem::class, 'product_id', 'product_item_id');
     }
 
 }

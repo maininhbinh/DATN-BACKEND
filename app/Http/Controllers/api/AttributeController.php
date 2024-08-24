@@ -4,6 +4,7 @@ namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Attribute;
+use App\Models\Detail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -13,7 +14,10 @@ class AttributeController extends Controller
     {
         try {
             $items = Attribute::orderBy('created_at', 'desc')->get();
-            return response()->json($items, 200);
+            return response()->json([
+                'success' => true,
+                'data' => $items
+            ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -129,6 +133,22 @@ class AttributeController extends Controller
                 'success' => false,
                 'message' => 'Đã xảy ra lỗi khi khôi phục attribute.'
             ], 500);
+        }
+    }
+
+    public function getByDetail(Request $request){
+        try {
+            $detail = Detail::where('name', $request->get('name'))->firstOrFail();
+            $items = $detail->attributes;
+            return response()->json([
+                'success' => true,
+                'data' => $items
+            ]);
+        }catch (\Exception $exception){
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ]);
         }
     }
 }

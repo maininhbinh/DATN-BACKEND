@@ -4,6 +4,7 @@ namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Detail;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -16,7 +17,10 @@ class DetailController extends Controller
     {
         try {
             $items = Detail::orderBy('created_at', 'desc')->get();
-            return response()->json($items, 200);
+            return response()->json([
+                'success' => true,
+                'data' => $items
+            ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -26,9 +30,31 @@ class DetailController extends Controller
     }
 
 
-    public function create()
+    public function listByProduct(Request $request, $id)
     {
         //
+        try {
+
+            $details = Product::with(['details.attributes' => function ($query) use ($id) {
+                $query->with(['values' => function ($query) use ($id) {
+                    $query->whereHas('products', function ($query) use ($id) {
+                        $query->where('id', $id);
+                    });
+                }]);
+            }])->firstOrFail();
+
+            return response()->json([
+                'success' => true,
+                'data' => $details
+            ]);
+
+        }catch (\Exception $exception){
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ]);
+        }
+
     }
 
     /**

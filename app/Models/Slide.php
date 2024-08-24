@@ -13,6 +13,7 @@ class Slide extends Model
         'image_url',
         'public_id',
         'image_title',
+        'url',
         'is_active'
     ];
 }

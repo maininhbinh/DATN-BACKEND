@@ -49,7 +49,10 @@ class OrderController extends Controller
     {
         try {
 
-            $item = Order::orderBy('created_at', 'desc')->get();
+            $item = Order::orderBy('created_at', 'desc')
+                ->join('order_statuses', 'orders.order_status_id', '=', 'order_statuses.id')
+                ->select('orders.*', 'order_statuses.name as status_name') // Chỉ chọn các cột cần thiết
+                ->get();
 
             return response()->json([
                 'sucess' => true,
@@ -182,6 +185,7 @@ class OrderController extends Controller
                     'orders.total_price',
                     'orders.receiver_name',
                     'orders.receiver_phone',
+                    'orders.receiver_email',
                     'orders.receiver_city',
                     'orders.receiver_district',
                     'orders.receiver_ward',
@@ -213,6 +217,7 @@ class OrderController extends Controller
                 'total_price' => $orderDetail->total_price,
                 'receiver_name' => $orderDetail->receiver_name,
                 'receiver_phone' => $orderDetail->receiver_phone,
+                'receiver_email' => $orderDetail->receiver_email,
                 'receiver_city' => $orderDetail->receiver_city,
                 'receiver_district' => $orderDetail->receiver_district,
                 'receiver_ward' => $orderDetail->receiver_ward,
@@ -297,6 +302,7 @@ class OrderController extends Controller
                     'orders.total_price',
                     'orders.receiver_name',
                     'orders.receiver_phone',
+                    'orders.receiver_email',
                     'orders.receiver_city',
                     'orders.receiver_district',
                     'orders.receiver_ward',
@@ -328,6 +334,7 @@ class OrderController extends Controller
                 'total_price' => $orderDetail->total_price,
                 'receiver_name' => $orderDetail->receiver_name,
                 'receiver_phone' => $orderDetail->receiver_phone,
+                'receiver_email' => $orderDetail->receiver_email,
                 'receiver_city' => $orderDetail->receiver_pronvinces,
                 'receiver_district' => $orderDetail->receiver_district,
                 'receiver_ward' => $orderDetail->receiver_ward,

@@ -18,7 +18,6 @@ use App\Http\Controllers\api\SlideController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\api\ProductController;
 use App\Http\Controllers\api\StripeController;
-use App\Http\Controllers\api\UserCouponController;
 use App\Http\Controllers\api\VariantController;
 use App\Http\Controllers\api\VariantOptionController;
 use App\Http\Controllers\api\VnPayController;
@@ -85,15 +84,17 @@ Route::prefix('detail')->group(function () {
     Route::post('/{id}', [DetailController::class, 'update']);
     Route::delete('/{id}', [DetailController::class, 'delete']);
     Route::post('/{id}/restore', [DetailController::class, 'restore']);
+    Route::get('{id}/product', [DetailController::class, 'listByProduct']);
 });
 
 Route::prefix('attribute')->group(function () {
     Route::get('', [AttributeController::class, 'index']);
     Route::post('', [AttributeController::class, 'store']);
-    Route::get('/{id}', [AttributeController::class, 'edit']);
-    Route::post('/{id}', [AttributeController::class, 'update']);
-    Route::delete('/{id}', [AttributeController::class, 'delete']);
-    Route::post('/{id}/restore', [AttributeController::class, 'restore']);
+    Route::get('{id}', [AttributeController::class, 'edit']);
+    Route::post('{id}', [AttributeController::class, 'update']);
+    Route::delete('{id}', [AttributeController::class, 'delete']);
+    Route::post('{id}/restore', [AttributeController::class, 'restore']);
+    Route::post('detail/name', [AttributeController::class, 'getByDetail']);
 });
 
 Route::prefix('value')->group(function () {
@@ -172,7 +173,6 @@ Route::prefix('payment')->group(function () {
 });
 
 Route::prefix('coupon')->group(function () {
-    Route::post('apply', [CouponController::class, 'apply']);
     Route::get('', [CouponController::class, 'index']);
     Route::post('', [CouponController::class, 'store']);
     Route::get('/{id}', [CouponController::class, 'edit']);

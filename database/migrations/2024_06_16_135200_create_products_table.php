@@ -23,8 +23,6 @@ return new class extends Migration
             $table->boolean('is_good_deal')->default(false);
             $table->boolean('is_new')->default(true);
             $table->boolean('is_show_home')->default(false);
-            $table->unsignedBigInteger('total_review')->nullable();
-            $table->unsignedBigInteger('avg_stars')->nullable();
             $table->text('public_id');
             $table->string('slug');
             $table->softDeletes('deleted_at')->nullable();

@@ -231,20 +231,30 @@ class CategoryController extends Controller
             ]);
 
             foreach ($detail as $item) {
-                $detail = Detail::create([
-                    'name' => $item->name,
-                ]);
+                $detail = Detail::firstOrCreate(
+                    [
+                        'name' => $item->name,
+                    ],
+                    [
+                        'name' => $item->name,
+                    ]
+                );
 
                 DetailCategory::create([
                     'detail_id' => $detail->id,
                     'category_id' => $category->id,
                 ]);
 
-                foreach ($item->attribute as $value) {
-                    Attribute::create([
-                        'detail_id' => $detail->id,
-                        'name' => $value->value
-                    ]);
+                foreach ($item->attributes as $value) {
+                    Attribute::firstOrCreate(
+                        [
+                            'name' => $value->name
+                        ],
+                        [
+                            'detail_id' => $detail->id,
+                            'name' => $value->name
+                        ]
+                    );
                 }
             }
 

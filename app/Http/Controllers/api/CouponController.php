@@ -18,7 +18,10 @@ class CouponController extends Controller
     public function index()
     {
         try {
-            $coupons = Coupon::orderBy('created_at', 'desc')->get();
+
+            $coupons = Coupon::where('end_date', '>', Carbon::now())
+                ->orderBy('id', 'desc')
+                ->get();
             return response()->json(['success' => true, 'data' => $coupons], 200);
         } catch (\Exception $e) {
             return response()->json([
