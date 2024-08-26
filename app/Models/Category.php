@@ -23,6 +23,10 @@ class Category extends Model
         return $this->belongsToMany(Detail::class, 'detail_categories');
     }
 
+    public function attributes(){
+        return $this->belongsToMany(Attribute::class, 'attribute_categories');
+    }
+
     public function variants(){
         return $this->hasMany(Variant::class);
     }

@@ -10,7 +10,7 @@ class DetailCategory extends Model
     use HasFactory;
 
     protected $table = 'detail_categories';
-    
+
     protected $fillable = [
         'detail_id',
         'category_id',

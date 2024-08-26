@@ -72,12 +72,27 @@ class ProductController extends Controller
         try {
 
             $product = Product::with([
-                'category.details.attributes' => function ($query) use ($id) {
-                    $query->with(['values' => function ($query) use ($id) {
-                        $query->whereHas('products', function ($query) use ($id) {
-                            $query->where('id', $id);
-                        });
-                    }]);
+                'category.details' => function ($query) use ($id){
+                    $query->whereHas('category', function($query){
+                        $query
+                            ->join('product_details', 'details.id', '=', 'product_details.detail_id')
+                            ->join('products', 'products.id', '=', 'product_details.product_id')
+                            ->whereColumn('categories.id', 'products.category_id');
+                    })
+                        ->with(['attributes' => function ($query) use ($id) {
+                            $query->whereHas('category', function ($query){
+                                $query
+                                    ->join('details', 'attributes.detail_id', '=', 'details.id')
+                                    ->join('product_details', 'details.id', '=', 'product_details.detail_id')
+                                    ->join('products', 'products.id', '=', 'product_details.product_id')
+                                    ->whereColumn('categories.id', 'products.category_id');
+                            })
+                                ->with(['values' => function ($query) use ($id) {
+                                    $query->whereHas('products', function ($query) use ($id) {
+                                        $query->where('id', $id);
+                                    });
+                                }]);
+                        }]);
                 },
                 'category.variants',
                 'products' => function ($query){
@@ -198,11 +213,26 @@ class ProductController extends Controller
                         },
                         'category',
                         'brand',
-                        'details.attributes' => function ($query) use ($request) {
-                            $query->with(['values' => function ($query) use ($request) {
-                                $query->whereHas('products', function ($query) use ($request) {
-                                    $query->where('slug', $request->slug);
-                                });
+                        'details' => function ($query) use ($request){
+                            $query->whereHas('category', function($query){
+                                $query
+                                    ->join('product_details', 'details.id', '=', 'product_details.detail_id')
+                                    ->join('products', 'products.id', '=', 'product_details.product_id')
+                                    ->whereColumn('categories.id', 'products.category_id');
+                            })
+                            ->with(['attributes' => function ($query) use ($request) {
+                                $query->whereHas('category', function ($query){
+                                    $query
+                                        ->join('details', 'attributes.detail_id', '=', 'details.id')
+                                        ->join('product_details', 'details.id', '=', 'product_details.detail_id')
+                                        ->join('products', 'products.id', '=', 'product_details.product_id')
+                                        ->whereColumn('categories.id', 'products.category_id');
+                                })
+                                ->with(['values' => function ($query) use ($request) {
+                                    $query->whereHas('products', function ($query) use ($request) {
+                                        $query->where('slug', $request->slug);
+                                    });
+                                }]);
                             }]);
                         }
                     ]

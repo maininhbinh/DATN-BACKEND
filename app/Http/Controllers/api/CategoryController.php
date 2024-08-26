@@ -4,9 +4,11 @@ namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Attribute;
+use App\Models\AttributeCategory;
 use App\Models\Category;
 use App\Models\Detail;
 use App\Models\DetailCategory;
+use App\Models\Variant;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -38,18 +40,22 @@ class CategoryController extends Controller
 
     public function show(Request $request, $id){
         try {
-            $category = Category::with('details.attributes', 'variants')->find($id);
-
-            if(!$category){
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Không tìm thấy danh mục'
-                ], 404);
-            }
+            $category = Category::with(
+                [
+                    'details'=> function ($query) use ($id) {
+                        $query->with(['attributes' => function ($query) use ($id) {
+                            $query->whereHas('category', function($query) use ($id){
+                                $query->where('categories.id', $id);
+                            });
+                        }]);
+                    },
+                    'variants'
+                ])
+                ->find($id);
 
             return response()->json([
                 'success' => true,
-                'data' => $category
+                'data' => $category,
             ], 200);
         }catch (\Exception $exception){
             return response()->json([
@@ -62,7 +68,13 @@ class CategoryController extends Controller
     public function edit($id){
         try {
 
-            $category = Category::with('details.attributes')->find($id);
+            $category = Category::with(['details' => function ($query) use ($id) {
+                $query->with(['attributes' => function ($query) use ($id) {
+                    $query->whereHas('category', function($query) use ($id){
+                        $query->where('categories.id', $id);
+                    });
+                }]);
+            }])->find($id);
 
             if(!$category){
                 return response()->json([
@@ -92,12 +104,12 @@ class CategoryController extends Controller
             $request->all(),
             [
                 'name' => 'required',
-                'image' => 'image|mimes:jpeg,png,jpg,gif',
+                'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
                 'is_active' => 'required'
             ],
             [
                 'name' => 'không được để trống',
-                'image.image' => 'file phải là ảnh'
+                'image.image' => 'file phải là ảnh',
             ]
         );
 
@@ -105,13 +117,16 @@ class CategoryController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $valid->errors()
-            ]);
+            ], 422);
         }
 
         try {
             DB::beginTransaction();
 
             $category = Category::find($id);
+            $newDetails = json_decode($request->get('newDetails'));
+            $attributes = json_decode($request->get('attributes'));
+            $detailDeletes = json_decode($request->get('detailDeletes'));
 
             if(!$category){
                 return response()->json([
@@ -155,12 +170,79 @@ class CategoryController extends Controller
 
             $category->update($newCategory);
 
+            foreach ($newDetails as $item) {
+                $detail = Detail::firstOrCreate(
+                    [
+                        'name' => $item->name,
+                    ],
+                    [
+                        'name' => $item->name,
+                    ]
+                );
+
+                DetailCategory::create([
+                    'detail_id' => $detail->id,
+                    'category_id' => $id,
+                ]);
+
+                foreach ($item->attributes as $value) {
+                    $attribute = Attribute::firstOrCreate(
+                        [
+                            'name' => $value->name
+                        ],
+                        [
+                            'detail_id' => $detail->id,
+                            'name' => $value->name
+                        ]
+                    );
+
+                    AttributeCategory::create([
+                        'attribute_id' => $attribute->id,
+                        'category_id' => $id
+                    ]);
+                }
+            }
+
+            $category->details()->detach($detailDeletes);
+//
+            foreach ($detailDeletes as $item){
+                $detail = Detail::find($item);
+                if($detail){
+
+                    $category->attributes()->detach($detail->attributes->pluck('id'));
+                }
+            }
+
+            $attributeDelete = $attributes->delete;
+            $attributeAdd = $attributes->add;
+
+            $category->attributes()->detach($attributeDelete);
+
+            foreach ($attributeAdd as $item){
+                foreach ($item->attributes as $attribute){
+                    $attribute = Attribute::firstOrCreate(
+                        [
+                            'name' => $attribute
+                        ],
+                        [
+                            'detail_id' => $item->id,
+                            'name' => $attribute
+                        ]
+                    );
+
+                    AttributeCategory::create([
+                        'attribute_id' => $attribute->id,
+                        'category_id' => $id
+                    ]);
+                }
+            }
+
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Chỉnh sửa danh mục thành công'
-            ]);
+                'message' => 'Cập nhật thành công'
+            ], 200);
 
         }catch (\Exception $exception){
             DB::rollBack();
@@ -246,7 +328,7 @@ class CategoryController extends Controller
                 ]);
 
                 foreach ($item->attributes as $value) {
-                    Attribute::firstOrCreate(
+                    $attribute = Attribute::firstOrCreate(
                         [
                             'name' => $value->name
                         ],
@@ -255,11 +337,15 @@ class CategoryController extends Controller
                             'name' => $value->name
                         ]
                     );
+
+                    AttributeCategory::create([
+                        'attribute_id' => $attribute->id,
+                        'category_id' => $category->id
+                    ]);
                 }
             }
 
             DB::commit();
-
 
             return response()->json([
                 'success' => true,
@@ -302,4 +388,5 @@ class CategoryController extends Controller
             ], 500);
         }
     }
+
 }
