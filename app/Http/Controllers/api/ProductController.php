@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\api;
 
 use App\Helpers\ValidatorHelpers;
+use App\Helpers\ValidatorHelpers as IValidator;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Gallery;
 use App\Models\Product;
-use App\Models\ProductDetail;
 use App\Models\ProductItem;
 use App\Models\ProductValue;
 use App\Models\Value;
@@ -18,7 +18,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use App\Helpers\ValidatorHelpers as IValidator;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
@@ -38,13 +37,6 @@ class ProductController extends Controller
                         ->orderBy('quantity', 'desc')
                         ->with(['variants' => function ($query) {
                             $query
-                                ->whereHas('variant.category', function ($query) {
-                                    $query->join('product_configurations', 'variant_options.id', '=', 'product_configurations.variant_option_id')
-                                    ->join('product_items', 'product_items.id', '=', 'product_configurations.product_item_id')
-                                    ->join('products', 'products.id', '=', 'product_items.product_id')
-                                    ->join('variants', 'variants.id', '=', 'variant_options.variant_id')
-                                    ->whereColumn('variants.category_id', 'products.category_id');
-                                })
                                 ->orderBy('product_configurations.id', 'asc');
                         }]);
                     },
@@ -59,6 +51,7 @@ class ProductController extends Controller
                 'success' => true,
                 'data' => $products
             ], 200);
+
         } catch (\Exception $exception) {
 
             return response()->json([
@@ -68,24 +61,23 @@ class ProductController extends Controller
         }
     }
 
-    public function update(Request $request, $id){
+    public function edit(Request $request, $id){
         try {
 
             $product = Product::with([
                 'category.details' => function ($query) use ($id){
-                    $query->whereHas('category', function($query){
-                        $query
-                            ->join('product_details', 'details.id', '=', 'product_details.detail_id')
-                            ->join('products', 'products.id', '=', 'product_details.product_id')
-                            ->whereColumn('categories.id', 'products.category_id');
-                    })
+                    $query
+                        ->whereHas('category', function($query) use ($id) {
+                            $query->whereHas('products', function ($subQuery) use ($id) {
+                                $subQuery->where('id', $id);
+                            });
+                            }
+                        )
                         ->with(['attributes' => function ($query) use ($id) {
-                            $query->whereHas('category', function ($query){
-                                $query
-                                    ->join('details', 'attributes.detail_id', '=', 'details.id')
-                                    ->join('product_details', 'details.id', '=', 'product_details.detail_id')
-                                    ->join('products', 'products.id', '=', 'product_details.product_id')
-                                    ->whereColumn('categories.id', 'products.category_id');
+                            $query->whereHas('category', function ($query) use ($id) {
+                                $query->whereHas('products', function ($subQuery) use ($id) {
+                                    $subQuery->where('id', $id);
+                                });
                             })
                                 ->with(['values' => function ($query) use ($id) {
                                     $query->whereHas('products', function ($query) use ($id) {
@@ -99,18 +91,42 @@ class ProductController extends Controller
                     $query
                         ->with(['variants' => function ($query) {
                             $query
+                                ->whereHas('variant.category', function ($query) {
+                                    $query->join('product_configurations', 'variant_options.id', '=', 'product_configurations.variant_option_id')
+                                        ->join('product_items', 'product_items.id', '=', 'product_configurations.product_item_id')
+                                        ->join('products', 'products.id', '=', 'product_items.product_id')
+                                        ->join('variants', 'variants.id', '=', 'variant_options.variant_id')
+                                        ->whereColumn('variants.category_id', 'products.category_id');
+                                })
                                 ->orderBy('product_configurations.id', 'asc')
                                 ->join('variants', 'variant_options.variant_id', '=', 'variants.id')
                                 ->select('variant_options.*', 'variants.name as variant_name')
                                 ->get();
                         }]);
                 },
+                'galleries'
             ])->findOrFail($id);
 
             $variantModels = Variant::whereHas('variants.products.product', function ($query) use ($id) {
                 $query->where('products.id', $id);
             })
-            ->with(['variants'])
+            ->whereHas('category', function ($query) {
+                $query
+                    ->join('variant_options', 'variant_options.variant_id', '=', 'variants.id')
+                    ->join('product_configurations', 'variant_options.id', '=', 'product_configurations.variant_option_id')
+                    ->join('product_items', 'product_items.id', '=', 'product_configurations.product_item_id')
+                    ->join('products', 'products.id', '=', 'product_items.product_id')
+                    ->join('variants', 'variants.id', '=', 'variant_options.variant_id')
+                    ->whereColumn('variants.category_id', 'products.category_id');
+            })
+            ->with(['variants' => function ($query) use ($id) {
+                $query
+                    ->whereHas('products.product', function ($subQuery) use ($id) {
+                        $subQuery
+                            ->whereHas('category')
+                            ->where('id', $id);
+                    });
+            }])
             ->get();
 
             $variants = $variantModels->map(function ($item){
@@ -126,7 +142,7 @@ class ProductController extends Controller
                 ];
             });
 
-            return  response()->json([
+            return response()->json([
                 'success' => true,
                 'data' => $product,
                 'variants' => $variants
@@ -139,6 +155,327 @@ class ProductController extends Controller
         }
     }
 
+    public function update(Request $request, $id)
+    {
+
+        $valid = Validator::make(
+            $request->all(),
+            [
+                'thumbnail' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+                "name" => "required|max:70|min:10",
+                "content" => "required",
+                "category_id" => "required",
+                'brand_id' => "required",
+                "is_active" => "required",
+                "product_details" => "required",
+                "product_items" => "required",
+            ],
+            [
+                "thumbnail" => "Sản phẩm phải có ảnh đại diện",
+                "thumbnail.image" => 'thumbnail phải là ảnh',
+                "thumbnail.mimes" => 'định dạng cu thumbnail là jpeg, png, jpg, gif',
+                "name" => "Trường name phải bắt buộc",
+                "name.min" => "Tên sản phẩm phải hơn 10 ký tự",
+                "name.max" => "Tên sản phẩm không được vượt quá 70 ký tự",
+                "content" => "Chưa có nội dung giới thiệu sản phẩm",
+                "category_id" => "Chưa có danh mục",
+                "brand_id" => 'chưa có thương hiệu',
+                "is_active" => "Chưa lựa chọn loại hiển thị",
+                "product_details" => 'Chưa có thông tin chi tiết',
+                "product_items" => "Chưa có biến thể",
+            ]
+        );
+
+        if ($valid->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $valid->errors()
+            ], 422);
+        }
+
+        $name = $request->get("name");
+        $content = $request->get("content");
+        $category_id = $request->get("category_id");
+        $brand_id = $request->get("brand_id");
+        $is_active = $request->get("is_active") == 1 ? 1 : 0;
+        $is_host_deal = $request->get("is_hot_deal") == 1 ? 1 : 0;
+        $is_good_deal = $request->get("is_good_deal") == 1 ? 1 : 0;
+        $is_new = $request->get("is_new") == 1 ? 1 : 0;
+        $is_show_home = $request->get("is_show_home") == 1 ? 1 : 0;
+        $product_details = json_decode($request->get('product_details'));
+        $product_items = json_decode($request->get('product_items'));
+        $product_deletes = json_decode($request->get('product_deletes'));
+        $gallery = json_decode($request->get('gallery'));
+
+        $product_check = ValidatorHelpers::validatorProductItem($product_items);
+
+        if(!$product_check){
+            return response()->json([
+                'success' => false,
+                'message' => 'Dữ liệu gửi lên không đúng'
+            ], 422);
+        }
+
+        try {
+
+            DB::beginTransaction();
+
+            $product = Product::findOrFail($id);
+
+            $old_image = $product->thumbnail;
+            $public_id = $product->public_id;
+
+            $thumbnail = $request->hasFile('thumbnail');
+
+            if($thumbnail){
+                $file = $request->file('thumbnail');
+                $fileName = $file->getClientOriginalName() . '-' . time() . '.' . rand(1, 1000000);
+//
+                $url = Cloudinary::upload($file->getRealPath(), [
+                    'folder' => self::FOLDER,
+                    'public_id' => $fileName
+                ])->getSecurePath();
+//
+                if (!$url) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Không thể tải ảnh'
+                    ], 500);
+                }
+//
+                $public_id = Cloudinary::getPublicId();
+            }
+
+            $newProduct = [
+                'thumbnail' => $thumbnail ? $url : $old_image,
+                'name' => $name,
+                'content' => $content,
+                'category_id' => $category_id,
+                'brand_id' => $brand_id,
+                'is_active' => $is_active,
+                'is_hot_deal' => $is_host_deal,
+                'is_good_deal' => $is_good_deal,
+                'is_new' => $is_new,
+                'is_show_home' => $is_show_home,
+                'public_id' => $public_id,
+            ];
+
+            $product->update($newProduct);
+
+            $product_details_delete = $product_details->delete;
+            $product_details_add = $product_details->add;
+
+            $product->values()->detach($product_details_delete);
+
+            foreach ($product_details_add as $attribute) {
+                foreach($attribute->values as $value){
+                    $name = IValidator::validatorName($value);
+                    $value = Value::firstOrCreate(
+                        [
+                            'name' => $name
+                        ],
+                        [
+                            'name' => $name,
+                        ]
+                    );
+
+                    $value->attributes()->syncWithoutDetaching($attribute->id);
+
+                    $product->values()->syncWithoutDetaching($value->id);
+                }
+            }
+
+            $gallery_delete = $gallery->delete;
+            $gallery_add = $gallery->add;
+
+            $product->galleries()->whereIn('id', $gallery_delete)->delete();
+
+            foreach ($gallery_add as $key => $item) {
+                $image = $item;
+
+                $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $image);
+                $imageData = base64_decode($imageData);
+
+                $tempImagePath = storage_path('app/temp_image.jpg');
+                file_put_contents($tempImagePath, $imageData);
+
+                $url_gallery = Cloudinary::upload($tempImagePath, [
+                    'folder' => self::FOLDER,
+                    'public_id' => "$name-$key" . rand(1, 1000000)
+                ])->getSecurePath();
+
+                $public_id = Cloudinary::getPublicId();
+
+                unlink($tempImagePath);
+
+                Gallery::create([
+                    'product_id' => $product->id,
+                    'image' => $url_gallery,
+                    'public_id' => $public_id,
+                ]);
+            }
+
+            $product->products()->whereIn('id', $product_deletes)->delete();
+
+            foreach ($product_items as $item) {
+                $status = $item->status;
+
+                if($status == 'new'){
+                    $hasFile = isset($item->image) && $item->image;
+
+                    if ($hasFile) {
+
+                        $imageData = $item->image;
+                        $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $imageData);
+                        $imageData = base64_decode($imageData);
+
+                        $tempImagePath = storage_path('app/temp_image.jpg');
+                        file_put_contents($tempImagePath, $imageData);
+
+                        $url_item = Cloudinary::upload($tempImagePath, [
+                            'folder' => self::FOLDER,
+                            'public_id' => "variant-" . implode('-', array_reduce($item->variants, function ($array, $item) {
+                                    $array[] = $item->attribute;
+                                    return $array;
+                                }, [])) . "-" . rand(1, 1000000)
+                        ])->getSecurePath();
+
+                        $public_id = Cloudinary::getPublicId();
+
+                        unlink($tempImagePath);
+                    }
+
+                    $product_item = ProductItem::create([
+                        'product_id' => $product->id,
+                        'price' => $item->price,
+                        'price_sale' => $item->price_sale,
+                        'image' => $hasFile ? $url_item : null,
+                        'quantity' => $item->quantity,
+                        'sku' => $item->sku ?? '',
+                        'public_id' => $hasFile ? $public_id : null,
+                    ]);
+
+                    foreach ($item->variants as $variantModel) {
+
+                        $variant = \App\Helpers\ValidatorHelpers::validatorName($variantModel->variant);
+                        $attribute = \App\Helpers\ValidatorHelpers::validatorName($variantModel->attribute);
+
+                        $variants = Variant::firstOrCreate(
+                            [
+                                'name' => $variant,
+                                'category_id' => $category_id
+                            ],
+                            [
+                                'category_id' => $category_id,
+                                'name' => $variant
+                            ]
+                        );
+
+
+                        $variant_option = VariantOption::firstOrCreate(
+                            [
+                                'name' => $attribute,
+                                'variant_id' => $variants->id
+                            ],
+                            [
+                                'variant_id' => $variants->id,
+                                'name' => $attribute,
+                            ]
+                        );
+
+                        $product_item->variants()->attach($variant_option->id);
+                    }
+                }else if($status == 'edit'){
+                    $product_item = ProductItem::findOrFail($item->id);
+
+                    $old_image = $product_item->imge;
+                    $old_public_id = $product_item->public_id;
+                    $image = $product_item->image;
+
+                    $hasFile = isset($image) && $image;
+
+                    if($hasFile){
+                        $imageData = $image;
+                        $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $imageData);
+                        $imageData = base64_decode($imageData);
+
+                        $tempImagePath = storage_path('app/temp_image.jpg');
+                        file_put_contents($tempImagePath, $imageData);
+
+                        $url_item = Cloudinary::upload($tempImagePath, [
+                            'folder' => self::FOLDER,
+                            'public_id' => "variant-" . implode('-', array_reduce($item->variants, function ($array, $item) {
+                                    $array[] = $item->attribute;
+                                    return $array;
+                                }, [])) . "-" . rand(1, 1000000)
+                        ])->getSecurePath();
+
+                        $public_id = Cloudinary::getPublicId();
+
+                        unlink($tempImagePath);
+                    }
+
+                    $newProduct = [
+                        'price' => $item->price,
+                        'price_sale' => $item->price_sale,
+                        'image' => $hasFile ? $url_item : $old_image,
+                        'quantity' => $item->quantity,
+                        'sku' => $item->sku ?? '',
+                        'public_id' => $hasFile ? $public_id : $old_public_id,
+                    ];
+
+                    $product_item->update($newProduct);
+                    $product_item->variants()->detach();
+
+                    foreach ($item->variants as $variantModel) {
+                        $variant = \App\Helpers\ValidatorHelpers::validatorName($variantModel->variant);
+                        $attribute = \App\Helpers\ValidatorHelpers::validatorName($variantModel->attribute);
+
+                        $variants = Variant::firstOrCreate(
+                            [
+                                'name' => $variant,
+                                'category_id' => $category_id
+                            ],
+                            [
+                                'category_id' => $category_id,
+                                'name' => $variant
+                            ]
+                        );
+
+                        $variant_option = VariantOption::firstOrCreate(
+                            [
+                                'name' => $attribute,
+                                'variant_id' => $variants->id
+                            ],
+                            [
+                                'variant_id' => $variants->id,
+                                'name' => $attribute,
+                            ]
+                        );
+
+                        $product_item->variants()->syncWithoutDetaching($variant_option->id);
+                    }
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+               'success' => true,
+               'message' => 'Cập nhật thành công'
+            ]);
+
+        }catch (Exception $exception){
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ], 500);
+        }
+
+    }
+
     public function featProducts(Request $request)
     {
         try {
@@ -148,6 +485,14 @@ class ProductController extends Controller
                 ->with([
                     'products' => function ($query) {
                         $query
+                            ->whereHas('variants.variant.category', function ($query) {
+                                $query
+                                    ->join('product_configurations', 'variant_options.id', '=', 'product_configurations.variant_option_id')
+                                    ->join('product_items', 'product_items.id', '=', 'product_configurations.product_item_id')
+                                    ->join('products', 'products.id', '=', 'product_items.product_id')
+                                    ->join('variants', 'variants.id', '=', 'variant_options.variant_id')
+                                    ->whereColumn('variants.category_id', 'products.category_id');
+                            })
                             ->where('quantity', '>', '1')
                             ->orderBy('quantity', 'desc')
                             ->with(['variants' => function ($query) {
@@ -192,18 +537,16 @@ class ProductController extends Controller
                 ->with(['galleries'])
                 ->with(
                     [
-                        'products' => function ($query)  {
+                        'products' => function ($query) use ($request) {
                             $query
                                 ->where('quantity', '>', '1')
                                 ->orderBy('quantity', 'desc')
-                                ->with(['variants' => function ($query) {
+                                ->with(['variants' => function ($query) use ($request) {
                                     $query
-                                        ->whereHas('variant.category', function ($query) {
-                                            $query->join('product_configurations', 'variant_options.id', '=', 'product_configurations.variant_option_id')
-                                                ->join('product_items', 'product_items.id', '=', 'product_configurations.product_item_id')
-                                                ->join('products', 'products.id', '=', 'product_items.product_id')
-                                                ->join('variants', 'variants.id', '=', 'variant_options.variant_id')
-                                                ->whereColumn('variants.category_id', 'products.category_id');
+                                        ->whereHas('variant.category', function ($query) use ($request) {
+                                            $query->whereHas('products', function ($subQuery) use ($request) {
+                                                $subQuery->where('slug', $request->slug);
+                                            });
                                         })
                                         ->orderBy('product_configurations.id', 'asc')
                                         ->join('variants', 'variant_options.variant_id', '=', 'variants.id')
@@ -211,29 +554,37 @@ class ProductController extends Controller
                                         ->get();
                             }]);
                         },
-                        'category',
                         'brand',
-                        'details' => function ($query) use ($request){
-                            $query->whereHas('category', function($query){
-                                $query
-                                    ->join('product_details', 'details.id', '=', 'product_details.detail_id')
-                                    ->join('products', 'products.id', '=', 'product_details.product_id')
-                                    ->whereColumn('categories.id', 'products.category_id');
-                            })
-                            ->with(['attributes' => function ($query) use ($request) {
-                                $query->whereHas('category', function ($query){
-                                    $query
-                                        ->join('details', 'attributes.detail_id', '=', 'details.id')
-                                        ->join('product_details', 'details.id', '=', 'product_details.detail_id')
-                                        ->join('products', 'products.id', '=', 'product_details.product_id')
-                                        ->whereColumn('categories.id', 'products.category_id');
-                                })
-                                ->with(['values' => function ($query) use ($request) {
-                                    $query->whereHas('products', function ($query) use ($request) {
-                                        $query->where('slug', $request->slug);
+                        'category.details' => function ($query) use ($request){
+                            $query
+                                ->whereHas('category', function($query) use ($request) {
+                                    $query->whereHas('products', function ($subQuery) use ($request) {
+                                        $subQuery->where('slug', $request->slug);
                                     });
+                                })
+                                ->whereHas('attributes.values', function ($query) use ($request) {
+                                    $query->whereHas('products', function ($subQuery) use ($request) {
+                                        $subQuery->where('slug', $request->slug);
+                                    });
+                                })
+                                ->with(['attributes' => function ($query) use ($request) {
+                                    $query
+                                        ->whereHas('category', function ($query) use ($request) {
+                                            $query->whereHas('products', function ($subQuery) use ($request) {
+                                                $subQuery->where('slug', $request->slug);
+                                            });
+                                        })
+                                        ->whereHas('values', function ($query) use ($request) {
+                                            $query->whereHas('products', function ($subQuery) use ($request) {
+                                                $subQuery->where('slug', $request->slug);
+                                            });
+                                        })
+                                        ->with(['values' => function ($query) use ($request) {
+                                            $query->whereHas('products', function ($query) use ($request) {
+                                                $query->where('slug', $request->slug);
+                                            });
+                                        }]);
                                 }]);
-                            }]);
                         }
                     ]
                 )
@@ -265,6 +616,7 @@ class ProductController extends Controller
             ]);
         }
     }
+
     public function store(Request $request)
     {
 
@@ -345,7 +697,7 @@ class ProductController extends Controller
                 'category_id' => $category_id,
                 'brand_id' => $brand_id,
                 'is_active' => $is_active,
-                'is_host_deal' => $is_host_deal,
+                'is_hot_deal' => $is_host_deal,
                 'is_good_deal' => $is_good_deal,
                 'is_new' => $is_new,
                 'is_show_home' => $is_show_home,
@@ -396,7 +748,8 @@ class ProductController extends Controller
 
                         $variants = Variant::firstOrCreate(
                             [
-                                'name' => $variant
+                                'name' => $variant,
+                                'category_id' => $category_id
                             ],
                             [
                                 'category_id' => $category_id,
@@ -407,7 +760,8 @@ class ProductController extends Controller
 
                         $variant_option = VariantOption::firstOrCreate(
                             [
-                                'name' => $attribute
+                                'name' => $attribute,
+                                'variant_id' => $variants->id
                             ],
                             [
                                 'variant_id' => $variants->id,
@@ -425,31 +779,21 @@ class ProductController extends Controller
                 }
             }
 
-            foreach ($product_details as $detail) {
+            foreach ($product_details as $attribute) {
+                foreach($attribute->values as $value){
+                    $name = IValidator::validatorName($value);
+                    $value = Value::firstOrCreate(
+                        [
+                            'name' => $name
+                        ],
+                        [
+                            'name' => $name,
+                        ]
+                    );
 
-                ProductDetail::create([
-                    'product_id' => $product->id,
-                    'detail_id' => $detail->id,
-                ]);
+                    $value->attributes()->syncWithoutDetaching($attribute->id);
 
-                foreach ($detail->attributes as $attribute) {
-                    foreach($attribute->values as $value){
-                        $name = IValidator::validatorName($value);
-                        $value = Value::firstOrCreate(
-                            [
-                                'name' => $name
-                            ],
-                            [
-                                'attribute_id' => $attribute->id,
-                                'name' => $name,
-                            ]
-                        );
-
-                        ProductValue::create([
-                            'product_id' => $product->id,
-                            'value_id' => $value->id
-                        ]);
-                    }
+                    $product->values()->syncWithoutDetaching($value->id);
                 }
             }
 
@@ -482,7 +826,7 @@ class ProductController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Product added successfully!',
+                'message' => 'Thêm sản phẩm thành công!',
                 'data' => $product->id,
             ], 200);
         } catch (\Exception $exception) {
@@ -493,52 +837,6 @@ class ProductController extends Controller
             ], 500);
         }
 
-    }
-    public function filter(Request $request)
-    {
-        try {
-            if ($request->filled('min_price') && $request->filled('max_price') && $request->min_price > $request->max_price) {
-                return response()->json(['success' => false, 'message' => 'Sai giá trị'], 400);
-            }
-
-            $query = Product::query();
-
-            $query->join('product_items', 'products.id', '=', 'product_items.product_id')
-                ->select('products.*', 'product_items.price_sale');
-
-            if ($request->filled('brand')) {
-                $query->whereHas('brand', function ($q) use ($request) {
-                    $q->where('name', $request->brand);
-                });
-            }
-
-            if ($request->filled('category')) {
-                $query->whereHas('category', function ($q) use ($request) {
-                    $q->where('name', $request->category);
-                });
-            }
-
-            if ($request->filled('min_price') && $request->filled('max_price')) {
-                $query->whereBetween('product_items.price_sale', [$request->min_price, $request->max_price]);
-            } elseif ($request->filled('min_price')) {
-                $query->where('product_items.price_sale', '>=', $request->min_price);
-            } elseif ($request->filled('max_price')) {
-                $query->where('product_items.price_sale', '<=', $request->max_price);
-            }
-
-            $products = $query->with(['products' => function ($query) {
-                $query->with(['variants' => function ($query) {
-                    $query->orderBy('product_configurations.id', 'asc');
-                }]);
-            }])->get();
-
-            // Check if products are found
-
-
-            return response()->json(['success' => true, 'data' => $products]);
-        } catch (Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
     }
 
     public function search(Request $request)
@@ -573,6 +871,7 @@ class ProductController extends Controller
             ], 500);
         }
     }
+
     public function category(Request $request, $slug)
     {
         try {
@@ -632,4 +931,5 @@ class ProductController extends Controller
             ], 500);
         }
     }
+
 }

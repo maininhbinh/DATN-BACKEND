@@ -132,9 +132,7 @@ class MomoController extends Controller
                         'payment_status_id' => PaymentStatuses::getOrder(PaymentStatuses::COMPLETED)
                     ]);
 
-                    $status = PaymentStatuses::COMPLETED->value;
-
-                    event(new OrderCreated($order, $status, $order->email));
+//                    event(new OrderCreated($order, $status, $order->email));
 
                     return redirect('http://localhost:5173/account/my-order/detail/'. $order->id);
 

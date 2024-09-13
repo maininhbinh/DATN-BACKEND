@@ -316,6 +316,43 @@ class AuthController extends Controller
         }
     }
 
+    public function resendToken(Request $request){
+        try {
+            $request->validate([
+                'email' => 'required|email|unique:users,email'
+            ],[
+                'email.required' => 'Trường email là bắt buộc',
+            ]);
+
+            $user = UserRegistration::where('email', $request->email)->latest()->firstOrFail();
+
+            $OTP = sprintf('%04d', rand(0000,9999));
+            $expiresAt = now()->addMinutes(1);
+
+            $title = '[OTP] đăng ký tài khoản';
+            $content = "Xin chào quý khách $user->username OTP xác thực của quý khách là:";
+
+            $user->update([
+                'OTP'=> Hash::make($OTP),
+                'otp_expires_at' => $expiresAt
+            ]);
+
+            event(new OtpRequested($request->email, $content, $OTP, $title));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Gửi lại thành công'
+            ], 200);
+
+
+        }catch (\Exception $exception){
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ]);
+        }
+    }
+
     public function forgotPassword(Request $request) {
         $request->validate([
             'email' => 'email|required',
@@ -323,7 +360,7 @@ class AuthController extends Controller
             'email.required' => 'Trường email là bắt buộc',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $request->email)->firstOrFail();
 
         if (!$user) {
             return response()->json([

@@ -21,10 +21,7 @@ class Detail extends Model
     }
 
     public function attributes(){
-        return $this->hasMany(Attribute::class);
+        return $this->belongsToMany(Attribute::class, 'detail_attributes');
     }
 
-    public function products(){
-        return $this->hasMany(Product::class, 'product_details')->withPivot('value_id')->withTimestamps();
-    }
 }

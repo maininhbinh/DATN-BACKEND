@@ -37,6 +37,7 @@ class CouponController extends Controller
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:255|unique:coupons,code',
             'quantity' => 'required|integer|min:1',
+            'used_count' => 'required|integer|min:1',
             'value' => 'nullable|integer|min:0',
             'type' => 'required|in:number,percent,free_ship',
             'start_date' => 'required|date|after:now',
@@ -89,7 +90,6 @@ class CouponController extends Controller
             'type' => 'sometimes|required|in:number,percent,free_ship',
             'start_date' => 'sometimes|required|date|after:now',
             'end_date' => 'sometimes|required|date|after:start_date',
-            'discount_max' => 'sometimes|required|integer|min:0',
             'is_activate' => 'sometimes|required|integer|in:0,1',
             'status' => 'sometimes|required|in:public,private',
         ]);
@@ -173,10 +173,19 @@ class CouponController extends Controller
                 ->where('is_activate', 1)
                 ->first();
 
+            $use = $user->coupons()->where('code', $request->code)->get();
+
+            if(count($use) >= $coupon->used_count){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Khách hàng đã hết lượt sử dụng'
+                ], 422);
+            }
+
             if($coupon->discount_max > $totalPrice){
                 return response()->json([
                     'success' => false,
-                    'message' => 'Vouncher không thể áp dụng tại giá trị của đơn hàng vượt quá giá trị cho phép'
+                    'message' => 'Đơn hàng tối thiểu là '> $coupon->discount_max
                 ], 422);
             }
 
@@ -187,7 +196,7 @@ class CouponController extends Controller
                 ], 422);
             }
 
-            if ($coupon->used_count >= $coupon->quantity) {
+            if ($coupon->quantity < 1) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Coupon đã hết số lượng sử dụng.'
@@ -200,10 +209,15 @@ class CouponController extends Controller
                 $discount = ($coupon->value / 100) * $totalPrice;
             }
 
+            $use = $user->with(['coupons' => function ($query) use ($request) {
+                $query->where('code', $request->code);
+            }]);
+
             return response()->json([
                 'success' => true,
                 'code' => $coupon->code,
                 'discount' => $discount,
+                'user' => $user
             ], 200);
         } catch (\Exception $e) {
             return response()->json([

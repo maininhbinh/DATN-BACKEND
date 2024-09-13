@@ -21,6 +21,7 @@ use App\Http\Controllers\api\StripeController;
 use App\Http\Controllers\api\VariantController;
 use App\Http\Controllers\api\VariantOptionController;
 use App\Http\Controllers\api\VnPayController;
+use App\Http\Controllers\api\PaymentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -42,6 +43,7 @@ Route::prefix('auth')->group(function () {
     Route::post('verifyOTP', [AuthController::class, 'verifyOTP']);
     Route::post('login', [AuthController::class, 'login']);
     Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+    Route::post('resend_token', [AuthController::class, 'resendToken']);
 });
 
 Route::prefix('user')->group(function () {
@@ -118,13 +120,13 @@ Route::prefix('product')->group(function () {
     Route::get('', [ProductController::class, 'index']);
     Route::post('', [ProductController::class, 'store']);
     Route::get('/{slug}', [ProductController::class, 'show']);
-    Route::get('edit/{id}', [ProductController::class, 'update']);
+    Route::get('edit/{id}', [ProductController::class, 'edit']);
+    Route::post('update/{id}', [ProductController::class, 'update']);
     Route::get('/home/{feat}', [ProductController::class, 'featProducts']);
     Route::get('{slug}/category', [ProductController::class, 'category']);
 });
 
 Route::prefix('slider')->group(function () {
-
     Route::post('/', [SlideController::class, 'store']);
     Route::get('/', [SlideController::class, 'show']);
     Route::delete('/{id}', [SlideController::class, 'destroy']);
@@ -168,8 +170,10 @@ Route::prefix('payment')->group(function () {
     Route::get('momo_fallback', [MomoController::class, 'fallBack']);
     Route::post('stripe/{order_id}', [StripeController::class, 'stripePayment']);
     Route::get('vnpay/{orderId}', [VnPayController::class, 'vnpayPayment']);
-    Route::get('vnpay/callback', [VnPayController::class, 'returnCallBack']);
+    Route::get('vnpay_callback', [VnPayController::class, 'returnCallBack']);
 });
+Route::get('payment/{orderId}', [PaymentController::class, 'payment']);
+
 
 Route::prefix('coupon')->group(function () {
     Route::post('apply', [CouponController::class, 'apply']);
@@ -195,3 +199,5 @@ Route::middleware('auth:sanctum')->prefix('comment')->group(function () {
 Route::prefix('statistical')->group(function () {
     Route::get('today', [StatisticalController::class, 'today']);
 });
+
+

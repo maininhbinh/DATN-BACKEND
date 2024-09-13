@@ -18,14 +18,12 @@ class OrderCreated
     /**
      * Create a new event instance.
      */
-    public $order;
-    public $status;
+    public $orderDetail;
     public $toEmail;
-    public function __construct(Order $order, $status, $toEmail)
+    public function __construct($orderDetail, $toEmail)
     {
         //
-        $this->order = $order;
-        $this->status = $status;
+        $this->orderDetail = $orderDetail;
         $this->toEmail = $toEmail;
 
     }

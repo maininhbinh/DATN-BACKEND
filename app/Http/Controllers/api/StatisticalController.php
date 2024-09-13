@@ -4,6 +4,7 @@ namespace App\Http\Controllers\api;
 
 use App\Enums\PaymentStatuses;
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\User;
@@ -87,12 +88,57 @@ class StatisticalController extends Controller
                 'percent' => ceil($percentCoupon),
             ];
 
+            $ordersByHour = Order::select(
+                DB::raw('HOUR(created_at) as hour'),
+                DB::raw('COUNT(*) as total_orders'),
+                DB::raw('SUM(total_price) as total_value')
+            )->whereDate('created_at', today()) // Lấy đơn hàng trong ngày hôm nay
+            ->groupBy(DB::raw('HOUR(created_at)'))
+            ->orderBy('hour')
+            ->get();
+
+            $categoriesWithTotalValue = Category::with(['products.products.orderDetails' => function ($query) {
+                $query->selectRaw('product_item_id, sum(price * quantity) as total_value')
+                    ->groupBy('product_item_id');
+            }])
+            ->get()
+            ->map(function ($category){
+                $totalValue = $category->products->flatMap(function ($product) {
+                    return $product->products->flatMap(function($product_item){
+                        return $product_item->orderDetails;
+                    });
+                })->sum('total_value');
+
+                return [
+                    'category' => $category->name,
+                    'total_value' => $totalValue
+                ];
+            });
+
+            $categoriesWithTotalValueArray = $categoriesWithTotalValue->toArray();
+
+            $totalValueOfAllCategories = array_sum(array_column($categoriesWithTotalValueArray, 'total_value'));
+
+            $categoriesWithPercentage = array_map(function($category) use ($totalValueOfAllCategories) {
+                $percentage = $totalValueOfAllCategories > 0
+                    ? ($category['total_value'] / $totalValueOfAllCategories) * 100
+                    : 0;
+
+                return [
+                    'category' => $category['category'],
+                    'total_value' => $category['total_value'],
+                    'percentage' => round($percentage, 2)  // Làm tròn phần trăm
+                ];
+            }, $categoriesWithTotalValueArray);
+
             return response()->json([
                 'success' => true,
                 'salesByDay' => $salesByDay,
                 'orderByDay' => $orderByDay,
                 'userByDay' => $userByDay,
-                'totalCoupon' => $couponByDay
+                'totalCoupon' => $couponByDay,
+                'ordersByHour' => $ordersByHour,
+                'categoriesWithTotalValue' => $categoriesWithPercentage
             ]);
         }catch (\Exception $exception){
             return response()->json([

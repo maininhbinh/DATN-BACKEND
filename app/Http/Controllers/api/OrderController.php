@@ -13,6 +13,7 @@ use App\Models\OrderDetail;
 use App\Models\OrderHistory;
 use App\Models\OrderStatus;
 use App\Models\PaymentMethod;
+use App\Models\ProductItem;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -465,13 +466,19 @@ class OrderController extends Controller
                     ->where('is_activate', 1)
                     ->first();
 
-                if($coupon && $coupon->discount_max < $totalPrice && $coupon->used_count < $coupon->quantity){
+                if($coupon && $coupon->discount_max < $totalPrice && $coupon->quantity > 1){
                     $discountCode = $coupon->code;
                     $discountPrice = $coupon->value;
 
                     if($coupon->type == 'percent'){
                         $discountPrice = ($coupon->value / 100) * $totalPrice;
                     }
+
+                    $coupon->update([
+                        'quantity' => $coupon->quantity -1
+                    ]);
+
+                    $user->coupons()->attach($coupon->id, ['action' => 'redeemed']);
                 }
 
             }
@@ -508,30 +515,26 @@ class OrderController extends Controller
                     'quantity' => $cart->quantity,
                     'price' => $cart->price,
                 ]);
+
+                $product_item = ProductItem::find($cart->product_item_id);
+
+                if($product_item->quantity < 1){
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'số lượng sản phẩm đã hêt',
+                    ], 422);
+                }
+
+                $product_item->update([
+                    'quantity' => $product_item->quantity -1
+                ]);
             }
 
             Cart::where('user_id', $user->id)->delete();
 
             DB::commit();
 
-            switch ($paymentMethod) {
-                case PaymentMethods::VNPAY->value:
-                    return redirect()->action([VnPayController::class, 'vnpayPayment'], ['orderId' => $order->id]);
-
-                case PaymentMethods::MOMO->value:
-                    return redirect()->action([MomoController::class, 'momoPayment'], ['orderId' => $order->id]);
-
-                case PaymentMethods::COD->value:
-                    return response()->json([
-                        'success' => true,
-                        'url' => 'http://localhost:5173/account/my-order/detail/'. $order->id
-                    ]);
-                default:
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Phương thức thanh toán không hợp lệ hoặc không hoạt động. Vui lòng chọn phương thức khác',
-                    ]);
-            }
+            return redirect()->action([PaymentController::class, 'payment'], ['orderId' => $order->id]);
         } catch (ValidationException $validationException) {
             return response()->json([
                 'success' => false,
@@ -541,7 +544,7 @@ class OrderController extends Controller
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => $exception->getLine()
+                'message' => $exception->getMessage()
             ], 500);
         }
     }

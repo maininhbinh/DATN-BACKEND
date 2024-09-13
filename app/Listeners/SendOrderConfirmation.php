@@ -7,6 +7,7 @@ use App\Mail\SendOrder;
 use App\Mail\SendOTP;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class SendOrderConfirmation implements ShouldQueue
@@ -25,10 +26,9 @@ class SendOrderConfirmation implements ShouldQueue
     public function handle(OrderCreated $event): void
     {
         //
-        $order = $event->order;
-        $status = $event->status;
+        $orderDetail = $event->orderDetail;
         $toEmail = $event->toEmail;
 
-        Mail::to($toEmail)->send(new SendOrder($status, $order));
+        Mail::to($toEmail)->send(new SendOrder($orderDetail));
     }
 }

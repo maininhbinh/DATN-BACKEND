@@ -33,6 +33,10 @@ class Coupon extends Model
         }
     }
 
+    public function users(){
+        return $this->belongsToMany(User::class, 'coupon_histories');
+    }
+
     public function qualified($userPoint)
     {
         return $userPoint >= $this->point_required;

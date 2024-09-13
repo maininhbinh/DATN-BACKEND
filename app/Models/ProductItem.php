@@ -29,6 +29,10 @@ class ProductItem extends Model
         static::creating(function ($product) {
             $product->sku = self::generateUniqueSKU($product->sku);
         });
+
+        static::updating(function ($product) {
+            $product->sku = self::generateUniqueSKU($product->sku);
+        });
     }
 
     public static function generateUniqueSKU($sku)
@@ -49,6 +53,10 @@ class ProductItem extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function orderDetails(){
+        return $this->hasMany(OrderDetail::class);
     }
 
     public function variants(){

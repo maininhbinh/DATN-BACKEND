@@ -56,5 +56,9 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
+    public function coupons(){
+        return $this->belongsToMany(Coupon::class, 'coupon_histories');
+    }
+
     // Rest omitted for brevity
 }

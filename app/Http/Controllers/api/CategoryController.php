@@ -191,10 +191,11 @@ class CategoryController extends Controller
                             'name' => $value->name
                         ],
                         [
-                            'detail_id' => $detail->id,
                             'name' => $value->name
                         ]
                     );
+
+                    $attribute->details()->syncWithoutDetaching([$detail->id]);
 
                     AttributeCategory::create([
                         'attribute_id' => $attribute->id,
@@ -225,10 +226,11 @@ class CategoryController extends Controller
                             'name' => $attribute
                         ],
                         [
-                            'detail_id' => $item->id,
                             'name' => $attribute
                         ]
                     );
+
+                    $attribute->details()->syncWithoutDetaching([$item->id]);
 
                     AttributeCategory::create([
                         'attribute_id' => $attribute->id,
@@ -322,10 +324,7 @@ class CategoryController extends Controller
                     ]
                 );
 
-                DetailCategory::create([
-                    'detail_id' => $detail->id,
-                    'category_id' => $category->id,
-                ]);
+                $category->details()->attach($detail->id);
 
                 foreach ($item->attributes as $value) {
                     $attribute = Attribute::firstOrCreate(
@@ -333,15 +332,13 @@ class CategoryController extends Controller
                             'name' => $value->name
                         ],
                         [
-                            'detail_id' => $detail->id,
                             'name' => $value->name
                         ]
                     );
 
-                    AttributeCategory::create([
-                        'attribute_id' => $attribute->id,
-                        'category_id' => $category->id
-                    ]);
+                    $detail->attributes()->syncWithoutDetaching($attribute->id);
+
+                    $category->attributes()->syncWithoutDetaching($attribute->id);
                 }
             }
 

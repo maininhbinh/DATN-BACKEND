@@ -46,10 +46,6 @@ class Product extends Model
         return $this->hasMany(Gallery::class);
     }
 
-    public function details(){
-        return $this->belongsToMany(Detail::class, 'product_details');
-    }
-
     public function values(){
         return $this->belongsToMany(Value::class, 'product_values');
     }

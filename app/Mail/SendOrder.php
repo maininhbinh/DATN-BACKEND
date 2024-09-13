@@ -16,28 +16,22 @@ class SendOrder extends Mailable
     /**
      * Create a new message instance.
      */
-    private $order;
-    private $status;
+    private $orderDetail;
 
-    public function __construct($order, $status)
+    public function __construct($orderDetail)
     {
         //
-        $this->order = $order;
-        $this->status = $status;
+        $this->orderDetail = $orderDetail;
     }
 
     public function build()
     {
-        $order = $this->order;
-        $status = $this->status;
+        $orderDetail = $this->orderDetail;
 
         return $this
             ->from(env('MAIL_FROM_ADDRESS'))
-            ->view('emails.sendOrder')
-            ->with([
-                'order' => $order,
-                'stat' => $status,
-            ]);
+            ->view('emails.sendOrder');
+//            ->with('order', $orderDetail);
     }
 
     /**

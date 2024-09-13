@@ -23,4 +23,14 @@ enum PaymentMethods: string
             self::COD => 4,
         };
     }
+
+    public static function getValue(PaymentMethods $type): int
+    {
+        return match ($type) {
+            self::STRIPE => self::STRIPE->value,
+            self::MOMO => self::MOMO->value,
+            self::VNPAY => self::VNPAY->value,
+            self::COD => self::COD->value,
+        };
+    }
 }

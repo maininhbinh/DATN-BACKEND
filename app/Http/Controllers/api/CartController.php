@@ -86,7 +86,25 @@ class CartController extends Controller
 
                 if($cart && $cart->id){
 
-                    Log::channel('debug')->debug($quantity);
+                    $product_item = ProductItem::find($cart->product_item_id);
+
+                    $price = $product_item->price_sale ?? $product_item->price;
+
+                    $maxQuantity = 0;
+                    if ($price < 3000000) {
+                        $maxQuantity = 10;
+                    } elseif ($price >= 3000000 && $price < 5000000) {
+                        $maxQuantity = 5;
+                    } elseif ($price >= 10000000) {
+                        $maxQuantity = 3;
+                    }
+
+                    if($cart->quantity > $maxQuantity){
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Đơn hàng vượt quá số lượng cho phép'
+                        ], 422);
+                    }
 
                     $cart->quantity += $quantity;
 
@@ -152,6 +170,27 @@ class CartController extends Controller
 
                 $cart = Cart::where('user_id', $user->id)->where('product_item_id', $id)->first();
                 $cart->quantity = $quantity;
+
+                $product_item = ProductItem::find($cart->product_item_id);
+
+                $price = $product_item->price_sale ?? $product_item->price;
+
+
+                $maxQuantity = 0;
+                if ($price < 3000000) {
+                    $maxQuantity = 10;
+                } elseif ($price >= 3000000 && $price < 5000000) {
+                    $maxQuantity = 5;
+                } elseif ($price >= 10000000) {
+                    $maxQuantity = 3;
+                }
+
+                if($cart->quantity > $maxQuantity){
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Đơn hàng vượt quá số lượng cho phép'
+                    ], 422);
+                }
 
                 if($cart->quantity < $cart->quantity_product){
                     return response()->json([

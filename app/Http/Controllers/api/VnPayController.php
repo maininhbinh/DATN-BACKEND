@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\api;
 
 use App\Enums\PaymentStatuses;
+use App\Events\OrderCreated;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\Request;
@@ -18,7 +19,7 @@ class VnPayController extends Controller
         }
 
         $vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-        $vnp_Returnurl = 'http://localhost:5173/account/my-order/detail/'. $order->id; // Set your actual return URL here
+        $vnp_Returnurl = 'http://127.0.0.1:8000/api/payment/vnpay_callback'; // Set your actual return URL here
         $vnp_TmnCode = "YKQE9ZZ7"; // Set in .env file
         $vnp_HashSecret = "6FVJRRE8PB3R9GRJNLFGDUIWVCEEO547"; // Set in .env file
 
@@ -70,36 +71,53 @@ class VnPayController extends Controller
             $vnp_Url .= 'vnp_SecureHash=' . $vnpSecureHash;
         }
 
-        $order->payment_status_id = PaymentStatuses::getOrder(PaymentStatuses::COMPLETED);
-        $order->save();
-
         return response()->json(['url' => $vnp_Url], 200);
     }
 
     public function returnCallBack(Request $request)
     {
-        $vnp_HashSecret = env('VNPAY_HASH_SECRET'); // Set in .env file
-        $inputData = $request->except('vnp_SecureHash');
-        ksort($inputData);
-        $hashData = "";
-        $i = 0;
-        foreach ($inputData as $key => $value) {
-            $hashData .= ($i == 0 ? '' : '&') . urlencode($key) . "=" . urlencode($value);
-            $i = 1;
+        $vnpResponseCode = $request->input('vnp_ResponseCode');
+        $vnpTransactionStatus = $request->input('vnp_TransactionStatus');
+        $vnpAmount = $request->input('vnp_Amount');
+        $vnpTxnRef = $request->input('vnp_TxnRef');
+        $vnpSecureHash = $request->input('vnp_SecureHash');
+
+        // Check Secure Hash
+        $vnpData = $request->except('vnp_SecureHash');
+        ksort($vnpData);
+        $query = http_build_query($vnpData);
+        $secureHash = hash_hmac('sha512', $query, '6FVJRRE8PB3R9GRJNLFGDUIWVCEEO547');
+
+        if ($secureHash === $vnpSecureHash) {
+            if ($vnpResponseCode === '00' && $vnpTransactionStatus === '00') {
+                // Thanh toán thành công
+                $order = Order::where('sku', $vnpTxnRef)
+                    ->join('users', 'orders.user_id', '=', 'users.id')
+                    ->select('orders.*', 'users.email')
+                    ->first();
+
+
+                if (!$order) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Order not found'
+                    ], 404);
+                }
+
+                Order::where('sku', $vnpTxnRef)->update([
+                    'payment_status_id' => PaymentStatuses::getOrder(PaymentStatuses::COMPLETED)
+                ]);
+
+//                event(new OrderCreated($orderDetail, $order->email));
+
+                return redirect('http://localhost:5173/account/my-order/detail/'. $order->id);
+            } else {
+                // Thanh toán thất bại
+                return redirect('http://localhost:5173/');
+            }
+        } else {
+            // Xác thực hash không đúng
+            return redirect('http://localhost:5173/');
         }
-
-        $secureHash = hash_hmac('sha512', $hashData, $vnp_HashSecret);
-
-        return view('vnpay_response', [
-            'vnp_TxnRef' => $request->input('vnp_TxnRef'),
-            'vnp_Amount' => $request->input('vnp_Amount'),
-            'vnp_OrderInfo' => $request->input('vnp_OrderInfo'),
-            'vnp_ResponseCode' => $request->input('vnp_ResponseCode'),
-            'vnp_TransactionNo' => $request->input('vnp_TransactionNo'),
-            'vnp_BankCode' => $request->input('vnp_BankCode'),
-            'vnp_PayDate' => $request->input('vnp_PayDate'),
-            'secureHash' => $secureHash,
-            'vnp_SecureHash' => $request->input('vnp_SecureHash'),
-        ]);
     }
 }

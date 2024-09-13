@@ -14,12 +14,12 @@ class Attribute extends Model
         'name'
     ];
 
-    public function detail(){
-        return $this->belongsTo(Detail::class);
+    public function details(){
+        return $this->belongsToMany(Detail::class, 'detail_attributes');
     }
 
     public function values(){
-        return $this->hasMany(Value::class);
+        return $this->belongsToMany(Value::class, 'attribute_values');
     }
 
     public function category(){
