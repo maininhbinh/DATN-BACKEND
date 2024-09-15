@@ -40,7 +40,7 @@ class CouponController extends Controller
             'used_count' => 'required|integer|min:1',
             'value' => 'nullable|integer|min:0',
             'type' => 'required|in:number,percent,free_ship',
-            'start_date' => 'required|date|after:now',
+            'start_date' => 'required|date|after_or_equal:today',
             'end_date' => 'required|date|after:start_date',
             'discount_max' => 'required|integer|min:0',
             'is_activate' => 'required|integer|in:0,1',
@@ -175,17 +175,17 @@ class CouponController extends Controller
 
             $use = $user->coupons()->where('code', $request->code)->get();
 
-            if(count($use) >= $coupon->used_count){
+            if (count($use) >= $coupon->used_count) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Khách hàng đã hết lượt sử dụng'
                 ], 422);
             }
 
-            if($coupon->discount_max > $totalPrice){
+            if ($coupon->discount_max > $totalPrice) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Đơn hàng tối thiểu là '> $coupon->discount_max
+                    'message' => 'Đơn hàng tối thiểu là ' > $coupon->discount_max
                 ], 422);
             }
 
@@ -205,7 +205,7 @@ class CouponController extends Controller
 
             $discount = $coupon->value;
 
-            if($coupon->type == 'percent'){
+            if ($coupon->type == 'percent') {
                 $discount = ($coupon->value / 100) * $totalPrice;
             }
 

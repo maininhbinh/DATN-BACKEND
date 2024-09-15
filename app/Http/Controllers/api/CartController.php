@@ -20,11 +20,11 @@ class CartController extends Controller
             $items = Cart::where('user_id', Auth::id())
                 ->join('product_items', 'carts.product_item_id', '=', 'product_items.id')
                 ->join('products', 'product_items.product_id', '=', 'products.id')
-                ->select('carts.id','products.name', 'products.thumbnail', 'products.slug', 'carts.quantity', 'carts.user_id', 'carts.product_item_id', 'product_items.quantity as quantity_product')
+                ->select('carts.id', 'products.name', 'products.thumbnail', 'products.slug', 'carts.quantity', 'carts.user_id', 'carts.product_item_id', 'product_items.quantity as quantity_product')
                 ->with('productItem.variants')
                 ->get();
 
-            $items = $items->map(function($item){
+            $items = $items->map(function ($item) {
                 return [
                     'id' => $item->id,
                     'name' => $item->name,
@@ -37,6 +37,7 @@ class CartController extends Controller
                     'price_sale' => $item->productItem->price_sale,
                     'image' => $item->productItem->image,
                     'variants' => $item->productItem->variants,
+                    'max_quantity' => $item->quantity_product,
                 ];
             });
 
@@ -44,8 +45,6 @@ class CartController extends Controller
                 'success' => true,
                 'data' => $items
             ], 200);
-
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -77,14 +76,14 @@ class CartController extends Controller
 
             $user = $request->user();
 
-            if($user && $user->id){
+            if ($user && $user->id) {
                 $cart = Cart::where('user_id', $user->id)
                     ->where('product_item_id', $productItemId)
                     ->join('product_items', 'carts.product_item_id', '=', 'product_items.id')
                     ->select('carts.*', 'product_items.quantity as quantity_product')
                     ->first();
 
-                if($cart && $cart->id){
+                if ($cart && $cart->id) {
 
                     $product_item = ProductItem::find($cart->product_item_id);
 
@@ -99,7 +98,7 @@ class CartController extends Controller
                         $maxQuantity = 3;
                     }
 
-                    if($cart->quantity > $maxQuantity){
+                    if ($cart->quantity > $maxQuantity) {
                         return response()->json([
                             'success' => false,
                             'message' => 'Đơn hàng vượt quá số lượng cho phép'
@@ -108,7 +107,7 @@ class CartController extends Controller
 
                     $cart->quantity += $quantity;
 
-                    if($cart->quantity > $cart->quantity_product){
+                    if ($cart->quantity > $cart->quantity_product) {
                         return response()->json([
                             'success' => false,
                             'message' => 'Số lương đơn hàng vượt quá số lượng sản phâm'
@@ -116,15 +115,13 @@ class CartController extends Controller
                     }
 
                     $cart->save();
-
-                }else{
+                } else {
 
                     Cart::create([
                         'user_id' => $user->id,
                         'product_item_id' => $productItemId,
                         'quantity' => $quantity
                     ]);
-
                 }
 
                 return response()->json([
@@ -132,15 +129,13 @@ class CartController extends Controller
                     'message' => 'Update success'
                 ], 200);
             }
-
-        }catch (ValidationException $e){
+        } catch (ValidationException $e) {
 
             return response()->json([
                 'success' => false,
                 'message' => $e->getLine(),
             ], 422);
-
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -166,7 +161,7 @@ class CartController extends Controller
 
             $user = $request->user();
 
-            if($user && $user->id){
+            if ($user && $user->id) {
 
                 $cart = Cart::where('user_id', $user->id)->where('product_item_id', $id)->first();
                 $cart->quantity = $quantity;
@@ -185,14 +180,14 @@ class CartController extends Controller
                     $maxQuantity = 3;
                 }
 
-                if($cart->quantity > $maxQuantity){
+                if ($cart->quantity > $maxQuantity) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Đơn hàng vượt quá số lượng cho phép'
                     ], 422);
                 }
 
-                if($cart->quantity < $cart->quantity_product){
+                if ($cart->quantity < $cart->quantity_product) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Số lương đơn hàng vượt quá số lượng sản phâm'
@@ -200,23 +195,20 @@ class CartController extends Controller
                 }
 
                 $cart->save();
-
-            }else{
+            } else {
 
                 $cart = collect(session('cart', []));
                 $product = $cart->firstWhere('product_item_id', $id);
 
-                if($product) {
+                if ($product) {
                     $product['quantity'] = $quantity;
                 }
-
             }
 
             return response()->json([
                 'success' => true,
                 'message' => 'Cập nhật cart thành cônng'
             ]);
-
         } catch (ValidationException $e) {
 
             return response()->json([
@@ -224,7 +216,6 @@ class CartController extends Controller
                 'message' => 'Validation failed',
                 'errors' => $e->getLine()
             ], 422);
-
         } catch (\Exception $e) {
 
             return response()->json([
@@ -232,7 +223,6 @@ class CartController extends Controller
                 'message' => 'Error updating cart.',
                 'error' => $e->getLine()
             ], 500);
-
         }
     }
 
@@ -244,11 +234,10 @@ class CartController extends Controller
 
             $user = AuthHelpers::CheckAuth($token);
 
-            if($user && $user->id){
+            if ($user && $user->id) {
 
                 Cart::where('user_id', $user->id)->where('product_item_id', $id)->delete();
-
-            }else{
+            } else {
 
                 $cart = collect(session('cart', []));
 
@@ -263,7 +252,6 @@ class CartController extends Controller
                 'success' => true,
                 'message' => 'Item removed from cart'
             ], 200);
-
         } catch (\Exception $e) {
 
             return response()->json([
@@ -271,7 +259,6 @@ class CartController extends Controller
                 'message' => 'Unable to remove item from cart',
                 'error' => $e->getMessage()
             ], 500);
-
         }
     }
 }
