@@ -37,6 +37,7 @@ class CartController extends Controller
                     'price_sale' => $item->productItem->price_sale,
                     'image' => $item->productItem->image,
                     'variants' => $item->productItem->variants,
+                    'max_quantity' => $item->quantity_product,
                 ];
             });
 
