@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('product_id')->constrained('products');
             $table->decimal('price', 15, 0);
-            $table->decimal('price_sale', 15, 0);
+            $table->decimal('price_sale', 15, 0)->nullable();
             $table->integer('quantity')->default(0);
             $table->string('sku')->unique();
             $table->text('image')->nullable();

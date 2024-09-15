@@ -33,7 +33,6 @@ class ProductController extends Controller
             $products = Product::with([
                 'products' => function ($query) {
                     $query
-                        ->where('quantity', '>', '1')
                         ->orderBy('quantity', 'desc')
                         ->with(['variants' => function ($query) {
                             $query
@@ -388,14 +387,13 @@ class ProductController extends Controller
                 }else if($status == 'edit'){
                     $product_item = ProductItem::findOrFail($item->id);
 
-                    $old_image = $product_item->imge;
+                    $old_image = $product_item->image;
                     $old_public_id = $product_item->public_id;
-                    $image = $product_item->image;
 
-                    $hasFile = isset($image) && $image;
+                    $hasFile = isset($item->image) && $item->image;
 
                     if($hasFile){
-                        $imageData = $image;
+                        $imageData = $item->image;
                         $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $imageData);
                         $imageData = base64_decode($imageData);
 
@@ -482,6 +480,18 @@ class ProductController extends Controller
 
             $products = Product::where($request->feat, true)
                 ->where('is_active', true)
+                ->whereHas('products', function ($query) use ($request) {
+                    $query
+                        ->whereHas('variants.variant.category', function ($query) {
+                            $query
+                                ->join('product_configurations', 'variant_options.id', '=', 'product_configurations.variant_option_id')
+                                ->join('product_items', 'product_items.id', '=', 'product_configurations.product_item_id')
+                                ->join('products', 'products.id', '=', 'product_items.product_id')
+                                ->join('variants', 'variants.id', '=', 'variant_options.variant_id')
+                                ->whereColumn('variants.category_id', 'products.category_id');
+                        })
+                        ->where('quantity', '>', 1);
+                })
                 ->with([
                     'products' => function ($query) {
                         $query
@@ -493,7 +503,6 @@ class ProductController extends Controller
                                     ->join('variants', 'variants.id', '=', 'variant_options.variant_id')
                                     ->whereColumn('variants.category_id', 'products.category_id');
                             })
-                            ->where('quantity', '>', '1')
                             ->orderBy('quantity', 'desc')
                             ->with(['variants' => function ($query) {
                                 $query
@@ -534,12 +543,25 @@ class ProductController extends Controller
 
             $product = Product::where('slug', $request->slug)
                 ->where('is_active', true)
+                ->whereHas('products', function ($query) use ($request) {
+                    $query
+                        ->whereHas('variants.variant.category', function ($query) use ($request) {
+                            $query->whereHas('products', function ($subQuery) use ($request) {
+                                $subQuery->where('slug', $request->slug);
+                            });
+                        })
+                        ->where('quantity', '>', 1);
+                })
                 ->with(['galleries'])
                 ->with(
                     [
                         'products' => function ($query) use ($request) {
                             $query
-                                ->where('quantity', '>', '1')
+                                ->whereHas('variants.variant.category', function ($query)  use ($request) {
+                                    $query->whereHas('products', function ($subQuery) use ($request) {
+                                        $subQuery->where('slug', $request->slug);
+                                    });
+                                })
                                 ->orderBy('quantity', 'desc')
                                 ->with(['variants' => function ($query) use ($request) {
                                     $query
@@ -862,66 +884,6 @@ class ProductController extends Controller
         } catch (QueryException $e) {
             return response()->json([
                 'error' => 'Database query error',
-                'message' => $e->getMessage()
-            ], 500);
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'An unexpected error occurred',
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function category(Request $request, $slug)
-    {
-        try {
-            $category = Category::where('slug', $slug)->first();
-
-            if(!$category){
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Không tìm thấy danh mục'
-                ]);
-            }
-
-            $products = $category
-                ->products()
-                ->where('is_active', true)
-                ->with(
-                [
-                    'products' => function ($query) {
-                        $query
-                            ->where('quantity', '>', '1')
-                            ->orderBy('quantity', 'desc')
-                            ->with(['variants' => function ($query) {
-                                $query
-                                    ->whereHas('variant.category', function ($query) {
-                                        $query->join('product_configurations', 'variant_options.id', '=', 'product_configurations.variant_option_id')
-                                            ->join('product_items', 'product_items.id', '=', 'product_configurations.product_item_id')
-                                            ->join('products', 'products.id', '=', 'product_items.product_id')
-                                            ->join('variants', 'variants.id', '=', 'variant_options.variant_id')
-                                            ->whereColumn('variants.category_id', 'products.category_id');
-                                    })
-                                    ->orderBy('product_configurations.id', 'asc')
-                                    ->join('variants', 'variant_options.variant_id', '=', 'variants.id')
-                                    ->select('variant_options.*', 'variants.name as variant_name')
-                                    ->get();
-                            }]);
-                    },
-                    'category'
-                ])
-                ->orderBy('id', 'desc')
-                ->withSum('products', 'product_items.quantity',)
-                ->withSum('orderDetails', 'quantity',)
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'data' => $products
-            ]);
-        } catch (QueryException $e) {
-            return response()->json([
-                'error' => 'Database name error',
                 'message' => $e->getMessage()
             ], 500);
         } catch (\Exception $e) {

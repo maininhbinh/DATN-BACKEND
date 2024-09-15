@@ -72,7 +72,9 @@ Route::prefix('brand')->group(function () {
 
 Route::prefix('category')->group(function () {
     Route::get('', [CategoryController::class, 'index']);
+    Route::get('page/{slug}', [CategoryController::class, 'page']);
     Route::post('', [CategoryController::class, 'store']);
+    Route::get('list', [CategoryController::class, 'listCategory']);
     Route::get('{id}', [CategoryController::class, 'edit']);
     Route::get('show/{id}', [CategoryController::class, 'show']);
     Route::post('{id}', [CategoryController::class, 'update']);
@@ -119,9 +121,9 @@ Route::prefix('role')->group(function () {
 Route::prefix('product')->group(function () {
     Route::get('', [ProductController::class, 'index']);
     Route::post('', [ProductController::class, 'store']);
-    Route::get('/{slug}', [ProductController::class, 'show']);
     Route::get('edit/{id}', [ProductController::class, 'edit']);
     Route::post('update/{id}', [ProductController::class, 'update']);
+    Route::get('/{slug}', [ProductController::class, 'show']);
     Route::get('/home/{feat}', [ProductController::class, 'featProducts']);
     Route::get('{slug}/category', [ProductController::class, 'category']);
 });

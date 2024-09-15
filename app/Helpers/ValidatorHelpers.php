@@ -25,10 +25,11 @@ class ValidatorHelpers
         }
 
         foreach($productItem as $item){
+            if($item->price < 0) return false;
+            if($item->quantity < 0) return false;
             if((float) $item->price_sale > $item->price){
                 return false;
             }
-
             $variantsCollect = collect($item->variants);
 
             $checkVariants = $variantsCollect->first(function($item){

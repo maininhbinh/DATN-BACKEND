@@ -466,6 +466,15 @@ class OrderController extends Controller
                     ->where('is_activate', 1)
                     ->first();
 
+                $use = $user->coupons()->where('code', $discountCode)->get();
+
+                if(count($use) >= $coupon->used_count){
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Mã giảm giá không hợp lệ'
+                    ], 422);
+                }
+
                 if($coupon && $coupon->discount_max < $totalPrice && $coupon->quantity > 1){
                     $discountCode = $coupon->code;
                     $discountPrice = $coupon->value;
@@ -475,7 +484,7 @@ class OrderController extends Controller
                     }
 
                     $coupon->update([
-                        'quantity' => $coupon->quantity -1
+                        'quantity' => $coupon->quantity - 1
                     ]);
 
                     $user->coupons()->attach($coupon->id, ['action' => 'redeemed']);

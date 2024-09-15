@@ -10,6 +10,7 @@ use App\Models\Detail;
 use App\Models\DetailCategory;
 use App\Models\Variant;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -22,8 +23,42 @@ class CategoryController extends Controller
 
     public function index(Request $request){
         try {
+            $categories = Category::orderBy('id', 'DESC')
+                ->get();
 
-            $categories = Category::orderBy('id', 'DESC')->get();;
+            return response()->json([
+                'success' => true,
+                'data' => $categories
+            ]);
+
+        }catch (\Exception $exception){
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ]);
+        }
+    }
+
+    public function listCategory(Request $request)
+    {
+        try {
+            $categories = Category::orderBy('id', 'DESC')
+                ->whereHas('products', function ($query) use ($request) {
+                    $query
+                    ->whereHas('products', function ($query) use ($request) {
+                        $query
+                            ->whereHas('variants.variant.category', function ($query) {
+                                $query
+                                    ->join('product_configurations', 'variant_options.id', '=', 'product_configurations.variant_option_id')
+                                    ->join('product_items', 'product_items.id', '=', 'product_configurations.product_item_id')
+                                    ->join('products', 'products.id', '=', 'product_items.product_id')
+                                    ->join('variants', 'variants.id', '=', 'variant_options.variant_id')
+                                    ->whereColumn('variants.category_id', 'products.category_id');
+                            })
+                            ->where('quantity', '>', 1);
+                    });
+                })
+                ->get();
 
             return response()->json([
                 'success' => true,
@@ -382,6 +417,154 @@ class CategoryController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $exception->getMessage()
+            ], 500);
+        }
+    }
+
+    public function page(Request $request, $slug)
+    {
+        try {
+            $category = Category::where('slug', $slug)->first();
+
+            if(!$category){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không tìm thấy danh mục'
+                ]);
+            }
+
+            $productModel = $category->products();
+
+            $paramModel = (array) $request->query();
+
+            foreach ($paramModel as $key => $value) {
+
+                $variantModel = $category->variants()->where('slug', $key)->first();
+
+                if(!$variantModel){
+                    continue;
+                }
+
+                $queryVariant = explode(',', $value);
+
+                $productModel->whereHas('products.variants', function ($query) use ($queryVariant) {
+                    $query->whereIn('slug', $queryVariant);
+                });
+
+            }
+
+            if($request->query('price')){
+                $price = explode('-', $request->query('price'));
+                $minPrice = $price[0];
+                $maxPrice = $price[1];
+                $productModel->whereHas('products', function ($query) use ($minPrice, $maxPrice) {
+                    $query->whereBetween('price', [$minPrice, $maxPrice])
+                        ->orWhereBetween('price_sale', [$minPrice, $maxPrice]);
+                });
+            }
+
+            // Hoặc, nếu bạn cần xử lý các tham số theo dạng mảng liên kết:
+            $allParamsArray = [];
+            foreach ($paramModel as $key => $value) {
+                $allParamsArray[$key] = $value;
+            }
+
+            $products = $productModel
+                ->where('is_active', true)
+                ->whereHas('products', function ($query) use ($request) {
+                    $query
+                        ->whereHas('variants.variant.category', function ($query) {
+                            $query
+                                ->join('product_configurations', 'variant_options.id', '=', 'product_configurations.variant_option_id')
+                                ->join('product_items', 'product_items.id', '=', 'product_configurations.product_item_id')
+                                ->join('products', 'products.id', '=', 'product_items.product_id')
+                                ->join('variants', 'variants.id', '=', 'variant_options.variant_id')
+                                ->whereColumn('variants.category_id', 'products.category_id');
+                        })
+                        ->where('quantity', '>', 1);
+                })
+                ->with([
+                    'products' => function ($query) {
+                        $query
+                            ->whereHas('variants.variant.category', function ($query) {
+                                $query
+                                    ->join('product_configurations', 'variant_options.id', '=', 'product_configurations.variant_option_id')
+                                    ->join('product_items', 'product_items.id', '=', 'product_configurations.product_item_id')
+                                    ->join('products', 'products.id', '=', 'product_items.product_id')
+                                    ->join('variants', 'variants.id', '=', 'variant_options.variant_id')
+                                    ->whereColumn('variants.category_id', 'products.category_id');
+                            })
+                            ->where('quantity', '>', '1')
+                            ->orderBy('quantity', 'desc')
+                            ->with(['variants' => function ($query) {
+                                $query
+                                    ->whereHas('variant.category', function ($query) {
+                                        $query->join('product_configurations', 'variant_options.id', '=', 'product_configurations.variant_option_id')
+                                            ->join('product_items', 'product_items.id', '=', 'product_configurations.product_item_id')
+                                            ->join('products', 'products.id', '=', 'product_items.product_id')
+                                            ->join('variants', 'variants.id', '=', 'variant_options.variant_id')
+                                            ->whereColumn('variants.category_id', 'products.category_id');
+                                    })
+                                    ->orderBy('product_configurations.id', 'asc');
+                            }]);
+                    },
+                ])
+                ->orderBy('id', 'desc')
+                ->withSum('products', 'product_items.quantity',)
+                ->withSum('orderDetails', 'quantity',)
+                ->get();
+
+            $variants = $category
+                ->variants()
+                ->with(['variants'])
+                ->get()
+                ->map(function ($item){
+                    return [
+                        'id' => $item->id,
+                        'name' => $item->name,
+                        'slug' => $item->slug,
+                        'attributes' => $item->variants->map(function ($item) {
+                            return [
+                                'id' => $item->id,
+                                'value' => $item->name,
+                                'slug' => $item->slug,
+                            ];
+                        }),
+                    ];
+                });
+
+            $maxPrice = $category
+                ->join('products', 'categories.id', '=', 'products.category_id')
+                ->join('product_items', 'products.id', '=', 'product_items.product_id')
+                ->max('product_items.price');
+
+            $minPrice = $category
+                ->join('products', 'categories.id', '=', 'products.category_id')
+                ->join('product_items', 'products.id', '=', 'product_items.product_id')
+                ->selectRaw('MIN(COALESCE(product_items.price_sale, product_items.price)) as min_price')
+                ->pluck('min_price')
+                ->first();
+
+            return response()->json([
+                'success' => true,
+                'data' => $products,
+                'filter' => [
+                    'variants' => $variants,
+                    'price' => [
+                        'maxPrice' => $maxPrice,
+                        'minPrice' => $minPrice,
+                    ]
+                ],
+            ]);
+        } catch (QueryException $e) {
+            return response()->json([
+                'error' => 'Database name error',
+                'message' => $e->getMessage()
+            ], 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'An unexpected error occurred',
+                'message' => $e->getMessage()
             ], 500);
         }
     }

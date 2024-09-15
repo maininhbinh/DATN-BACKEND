@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->foreignId('variant_id')->constrained('variants');
+            $table->string('slug');
             $table->softDeletes()->nullable();
             $table->timestamps();
         });
