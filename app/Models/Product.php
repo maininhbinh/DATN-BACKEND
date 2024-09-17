@@ -59,6 +59,15 @@ class Product extends Model
         ];
     }
 
+    public function comments(){
+        return $this->hasMany(Comment::class);
+    }
+
+    public function getAverageRatingAttribute()
+    {
+        return $this->comments()->avg('rating');
+    }
+
     public function orderDetails(){
         return $this->hasManyThrough(OrderDetail::class, ProductItem::class, 'product_id', 'product_item_id');
     }

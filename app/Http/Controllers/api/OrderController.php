@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\api;
 
+use App\Models\OrderStatus;
 use App\Enums\OrderStatus as EnumOrderStatus;
-use App\Enums\PaymentMethods;
 use App\Enums\PaymentStatuses;
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
@@ -11,15 +11,12 @@ use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\OrderHistory;
-use App\Models\OrderStatus;
 use App\Models\PaymentMethod;
 use App\Models\ProductItem;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use libphonenumber\PhoneNumber;
-use Propaganistas\LaravelPhone\Rules\Phone;
 
 class OrderController extends Controller
 {
@@ -512,9 +509,9 @@ class OrderController extends Controller
                 'discount_price' => $discountPrice,
             ]);
 
-            OrderHistory::create([
+            OrderHistory::query()->create([
                 'order_id' => $order->id,
-                'order_status_id' => EnumOrderStatus::getOrder(EnumOrderStatus::PENDING)
+                'order_status_id' => $order->order_status_id,
             ]);
 
             foreach ($carts as $cart) {
@@ -568,9 +565,9 @@ class OrderController extends Controller
             $order->order_status_id = $orderStatus;
             $order->save();
 
-            OrderHistory::create([
+            OrderHistory::query()->create([
                 'order_id' => $order->id,
-                'order_status_id' => $orderStatus
+                'order_status_id' => $order->order_status_id,
             ]);
 
             return response()->json([
@@ -584,6 +581,7 @@ class OrderController extends Controller
             ]);
         }
     }
+
     public function processPayment(Request $request, $order_id)
     {
         $request->validate([
@@ -613,6 +611,57 @@ class OrderController extends Controller
                     'success' => false,
                     'message' => 'Hình thức thanh toán không hợp lệ.'
                 ]);
+        }
+    }
+
+    public function orderCancel(Request $request){
+
+        try {
+            $request->validate([
+                'order_id' => 'required|integer|exists:orders,id',
+                'none' => 'required|string',
+            ]);
+
+            $note = $request->get('note');
+
+            $order = Order::query()->findOrFail($request->get('order_id'));
+
+            if($order->order_status_id != \App\Enums\OrderStatus::getOrder(EnumOrderStatus::PENDING)){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Đơn hàng không được hủy. Đơn hàng phảiở trạng thái "đang chờ sử lý".'
+                ]);
+            }
+
+            $order->update([
+                'order_status_id' => EnumOrderStatus::getOrder(EnumOrderStatus::CANCELLED),
+                'note' => $note
+            ]);
+
+            OrderHistory::query()->create([
+                'order_id' => $order->id,
+                'order_status_id' => $order->order_status_id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Hủy đơn hàng thành công'
+            ]);
+
+        }catch (\Exception $exception){
+
+            return response()->json([
+            'success' => true,
+            'message' => 'Máy chủ gặp sự cố'
+            ]);
+
+        }catch (ValidationException $validationException){
+
+            return response()->json([
+                'success' => true,
+                'message' => $validationException->getMessage()
+            ]);
+
         }
     }
 }

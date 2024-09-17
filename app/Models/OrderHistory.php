@@ -11,7 +11,7 @@ class OrderHistory extends Model
 
     protected $fillable = [
         'order_id',
-        'order_status_id'
+        'order_status_id',
     ];
 
     public function order()

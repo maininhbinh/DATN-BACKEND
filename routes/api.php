@@ -126,6 +126,7 @@ Route::prefix('product')->group(function () {
     Route::get('/{slug}', [ProductController::class, 'show']);
     Route::get('/home/{feat}', [ProductController::class, 'featProducts']);
     Route::get('{slug}/category', [ProductController::class, 'category']);
+    Route::get('similar/{id}', [ProductController::class, 'getSimilarProducts']);
 });
 
 Route::prefix('slider')->group(function () {
@@ -139,6 +140,7 @@ Route::prefix('slider')->group(function () {
 Route::prefix('order')->middleware('auth:sanctum')->group(function () {
     Route::get('user', [OrderController::class, 'getAllOrder']);
     Route::get('today', [OrderController::class, 'getOrderToday']);
+    Route::get('cancel', [OrderController::class, 'orderCancel']);
     Route::get('detail/{id}', [OrderController::class, 'getOrderDetail']);
     Route::get('', [OrderController::class, 'index']);
     Route::post('', [OrderController::class, 'placeOrder']);

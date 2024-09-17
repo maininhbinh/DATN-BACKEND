@@ -516,7 +516,10 @@ class ProductController extends Controller
                                     ->orderBy('product_configurations.id', 'asc');
                             }]);
                     },
-                    'category'
+                    'category',
+                    'comments' => function ($query) {
+                        $query->avg('rating');
+                    }
                 ])
                 ->orderBy('id', 'desc')
                 ->withSum('products', 'product_items.quantity',)
@@ -891,6 +894,84 @@ class ProductController extends Controller
                 'error' => 'An unexpected error occurred',
                 'message' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    public function getSimilarProducts(Request $request, $id){
+        try {
+            $product = Product::query()->findOrFail($id);
+
+            // Tính giá trung bình của các product_item cho sản phẩm hiện tại
+            $averagePrice = $product->products()->avg('price');
+
+            // Xác định khoảng giá (ví dụ +/- 20%)
+            $priceRangeMin = $averagePrice * 0.8;
+            $priceRangeMax = $averagePrice * 1.2;
+
+            // Truy vấn các sản phẩm có giá trung bình của product_item trong khoảng giá tương tự
+            $similarProducts =  Product::where('products.category_id', $product->category_id)
+                ->where('products.id', '!=', $product->id) // Loại bỏ sản phẩm hiện tại
+                ->whereHas('products', function($query) use ($priceRangeMin, $priceRangeMax) {
+                    $query->select('product_id')
+                        ->groupBy('product_id')
+                        ->havingRaw('AVG(price) BETWEEN ? AND ?', [$priceRangeMin, $priceRangeMax]);
+                })
+                ->whereHas('products', function ($query) use ($request) {
+                    $query
+                        ->whereHas('variants.variant.category', function ($query) {
+                            $query
+                                ->join('product_configurations', 'variant_options.id', '=', 'product_configurations.variant_option_id')
+                                ->join('product_items', 'product_items.id', '=', 'product_configurations.product_item_id')
+                                ->join('products', 'products.id', '=', 'product_items.product_id')
+                                ->join('variants', 'variants.id', '=', 'variant_options.variant_id')
+                                ->whereColumn('variants.category_id', 'products.category_id');
+                        })
+                        ->where('quantity', '>', 1);
+                })
+                ->with([
+                    'products' => function ($query) {
+                        $query
+                            ->whereHas('variants.variant.category', function ($query) {
+                                $query
+                                    ->join('product_configurations', 'variant_options.id', '=', 'product_configurations.variant_option_id')
+                                    ->join('product_items', 'product_items.id', '=', 'product_configurations.product_item_id')
+                                    ->join('products', 'products.id', '=', 'product_items.product_id')
+                                    ->join('variants', 'variants.id', '=', 'variant_options.variant_id')
+                                    ->whereColumn('variants.category_id', 'products.category_id');
+                            })
+                            ->orderBy('quantity', 'desc')
+                            ->with(['variants' => function ($query) {
+                                $query
+                                    ->whereHas('variant.category', function ($query) {
+                                        $query->join('product_configurations', 'variant_options.id', '=', 'product_configurations.variant_option_id')
+                                            ->join('product_items', 'product_items.id', '=', 'product_configurations.product_item_id')
+                                            ->join('products', 'products.id', '=', 'product_items.product_id')
+                                            ->join('variants', 'variants.id', '=', 'variant_options.variant_id')
+                                            ->whereColumn('variants.category_id', 'products.category_id');
+                                    })
+                                    ->orderBy('product_configurations.id', 'asc');
+                            }]);
+                    },
+                    'category',
+                ])
+                ->groupBy('products.id')
+                ->orderBy('products.id', 'desc')
+                ->withSum('products', 'product_items.quantity',)
+                ->withSum('orderDetails', 'quantity',)
+                ->leftJoin('comments', 'products.id', '=', 'comments.product_id')
+                ->selectRaw(DB::raw('IFNULL(AVG(comments.rating), 0) as average_rating',))
+                ->limit(10)
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $similarProducts,
+            ]);
+        }catch (Exception $e){
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
         }
     }
 

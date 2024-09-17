@@ -463,6 +463,12 @@ class CategoryController extends Controller
                 });
             }
 
+            if($request->boolean('on_sale')){
+                $productModel->whereHas('products', function ($query) {
+                    $query->whereNotNull('price_sale');
+                });
+            }
+
             // Hoặc, nếu bạn cần xử lý các tham số theo dạng mảng liên kết:
             $allParamsArray = [];
             foreach ($paramModel as $key => $value) {
