@@ -619,7 +619,7 @@ class OrderController extends Controller
         try {
             $request->validate([
                 'order_id' => 'required|integer|exists:orders,id',
-                'none' => 'required|string',
+                'note' => 'required|string',
             ]);
 
             $note = $request->get('note');
@@ -652,7 +652,7 @@ class OrderController extends Controller
 
             return response()->json([
             'success' => true,
-            'message' => 'Máy chủ gặp sự cố'
+            'message' => $exception->getMessage()
             ]);
 
         }catch (ValidationException $validationException){

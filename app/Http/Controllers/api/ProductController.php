@@ -5,21 +5,17 @@ namespace App\Http\Controllers\api;
 use App\Helpers\ValidatorHelpers;
 use App\Helpers\ValidatorHelpers as IValidator;
 use App\Http\Controllers\Controller;
-use App\Models\Category;
 use App\Models\Gallery;
 use App\Models\Product;
 use App\Models\ProductItem;
-use App\Models\ProductValue;
 use App\Models\Value;
 use App\Models\Variant;
 use App\Models\VariantOption;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Exception;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 
 class ProductController extends Controller

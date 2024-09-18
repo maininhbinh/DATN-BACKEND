@@ -22,11 +22,12 @@ enum OrderStatus: string
         return match($type) {
             self::PENDING => 1,
             self::PREPARING => 2,
-            self::TRANSPORTING => 3,
-            self::DELIVERTING => 4,
-            self::DELIVERED => 5,
-            self::COMPLETED => 6,
-            self::CANCELLED => 7,
+            self::READY_FOR_PICKUP => 3,
+            self::TRANSPORTING => 4,
+            self::DELIVERTING => 5,
+            self::DELIVERED => 6,
+            self::COMPLETED => 7,
+            self::CANCELLED => 8,
         };
     }
 

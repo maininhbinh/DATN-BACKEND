@@ -140,7 +140,7 @@ Route::prefix('slider')->group(function () {
 Route::prefix('order')->middleware('auth:sanctum')->group(function () {
     Route::get('user', [OrderController::class, 'getAllOrder']);
     Route::get('today', [OrderController::class, 'getOrderToday']);
-    Route::get('cancel', [OrderController::class, 'orderCancel']);
+    Route::post('cancel', [OrderController::class, 'orderCancel']);
     Route::get('detail/{id}', [OrderController::class, 'getOrderDetail']);
     Route::get('', [OrderController::class, 'index']);
     Route::post('', [OrderController::class, 'placeOrder']);

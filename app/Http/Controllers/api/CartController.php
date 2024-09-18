@@ -22,6 +22,7 @@ class CartController extends Controller
                 ->join('products', 'product_items.product_id', '=', 'products.id')
                 ->select('carts.id','products.name', 'products.thumbnail', 'products.slug', 'carts.quantity', 'carts.user_id', 'carts.product_item_id', 'product_items.quantity as quantity_product')
                 ->with('productItem.variants')
+                ->withSum('productItem', 'product_items.quantity',)
                 ->get();
 
             $items = $items->map(function($item){
@@ -36,6 +37,7 @@ class CartController extends Controller
                     'price' => $item->productItem->price,
                     'price_sale' => $item->productItem->price_sale,
                     'image' => $item->productItem->image,
+                    'maxQuantity' => $item->productItem->quantity,
                     'variants' => $item->productItem->variants,
                 ];
             });
@@ -93,9 +95,9 @@ class CartController extends Controller
                     $maxQuantity = 0;
                     if ($price < 3000000) {
                         $maxQuantity = 10;
-                    } elseif ($price >= 3000000 && $price < 5000000) {
+                    } elseif ($price >= 3000000 && $price <= 10000000) {
                         $maxQuantity = 5;
-                    } elseif ($price >= 10000000) {
+                    } elseif ($price > 10000000) {
                         $maxQuantity = 3;
                     }
 
@@ -179,13 +181,13 @@ class CartController extends Controller
                 $maxQuantity = 0;
                 if ($price < 3000000) {
                     $maxQuantity = 10;
-                } elseif ($price >= 3000000 && $price < 5000000) {
+                } elseif ($price >= 3000000 && $price <= 10000000) {
                     $maxQuantity = 5;
-                } elseif ($price >= 10000000) {
+                } elseif ($price > 10000000) {
                     $maxQuantity = 3;
                 }
 
-                if($cart->quantity > $maxQuantity){
+                if($cart->quantity < $quantity || $cart->quantity  > $maxQuantity){
                     return response()->json([
                         'success' => false,
                         'message' => 'Đơn hàng vượt quá số lượng cho phép'
