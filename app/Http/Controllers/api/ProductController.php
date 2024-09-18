@@ -513,13 +513,13 @@ class ProductController extends Controller
                             }]);
                     },
                     'category',
-                    'comments' => function ($query) {
-                        $query->avg('rating');
-                    }
                 ])
-                ->orderBy('id', 'desc')
+                ->groupBy('products.id')
+                ->orderBy('products.id', 'desc')
                 ->withSum('products', 'product_items.quantity',)
                 ->withSum('orderDetails', 'quantity',)
+                ->leftJoin('comments', 'products.id', '=', 'comments.product_id')
+                ->selectRaw(DB::raw('IFNULL(AVG(comments.rating), 0) as average_rating',))
                 ->limit(10)
                 ->get();
 
