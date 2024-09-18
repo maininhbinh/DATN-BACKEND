@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('image')->nullable();
             $table->string('phone')->nullable();
             $table->string('address')->nullable();
-            $table->string('county')->nullable();
+            $table->string('ward')->nullable();
             $table->string('district')->nullable();
             $table->string('city')->nullable();
             $table->foreignId('role_id')->default(Roles::getOrder(Roles::USER))->constrained('roles');

@@ -7,6 +7,7 @@ use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use App\Models\User;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -93,7 +94,7 @@ class UserController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
-            'county' => 'nullable|string|max:255',
+            'ward' => 'nullable|string|max:255',
             'district' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'role_id' => 'nullable|integer',
@@ -143,16 +144,12 @@ class UserController extends Controller
             // Validate request data
             $validatedData = $request->validate([
                 'username' => 'sometimes|required|string|max:255',
-                'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $id,
-                'password' => 'sometimes|required|string|min:8',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
                 'phone' => 'nullable|string|max:20',
                 'address' => 'nullable|string|max:255',
-                'county' => 'nullable|string|max:255',
+                'ward' => 'nullable|string|max:255',
                 'district' => 'nullable|string|max:255',
                 'city' => 'nullable|string|max:255',
-                'role_id' => 'nullable|integer',
-                'is_active' => 'nullable|integer',
             ], [
                 'image.image' => 'Hình ảnh phải là file hình ảnh',
                 'image.mimes' => 'Định dạng của hình ảnh phải là jpeg, png, jpg hoặc gif',
@@ -219,6 +216,49 @@ class UserController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Xóa người dùng thành công',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Máy chủ không hoạt động',
+            ], 500);
+        }
+    }
+
+    public function updatePassword(Request $request, $id){
+        try {
+            // Validate request data
+            $validatedData = $request->validate([
+                'password' => [
+                    'required',
+                    'string',
+                ],
+                'new_password' => [
+                    'required',
+                    'string',
+                    'min:6',
+                    'max:250',
+                    'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/'
+                ],
+            ]);
+
+            // Find user
+            $user = User::findOrFail($id);
+
+            if (!$user || !Hash::check($request->password, $user->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'email or password is incorrect'
+                ], 422);
+            };
+
+            $user->update([
+                'password' => $request->new_password
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $user,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([

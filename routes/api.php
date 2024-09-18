@@ -53,6 +53,7 @@ Route::prefix('user')->group(function () {
     Route::get('{id}', [UserController::class, 'edit']);
     Route::post('/{id}', [UserController::class, 'update']);
     Route::delete('/{id}', [UserController::class, 'delete']);
+    Route::put('/{id}/password', [UserController::class, 'updatePassword']);
 });
 
 Route::middleware('auth:sanctum')->prefix('cart')->group(function () {
@@ -60,6 +61,7 @@ Route::middleware('auth:sanctum')->prefix('cart')->group(function () {
     Route::post('add', [CartController::class, 'store']);
     Route::put('/{id}', [CartController::class, 'updateQuantity']);
     Route::delete('/{id}', [CartController::class, 'destroy']);
+    Route::get('checkout', [CartController::class, 'checkout']);
 });
 
 Route::prefix('brand')->group(function () {

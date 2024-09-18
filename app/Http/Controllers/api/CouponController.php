@@ -40,7 +40,7 @@ class CouponController extends Controller
             'used_count' => 'required|integer|min:1',
             'value' => 'nullable|integer|min:0',
             'type' => 'required|in:number,percent,free_ship',
-            'start_date' => 'required|date|after:now',
+            'start_date' => 'required|date|after_or_equal:today',
             'end_date' => 'required|date|after:start_date',
             'discount_max' => 'required|integer|min:0',
             'is_activate' => 'required|integer|in:0,1',
