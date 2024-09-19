@@ -23,6 +23,7 @@ class CommentController extends Controller
                 return [
                     'product_id' => $comment->product_id,
                     'user_name' => $comment->user->username, // Giả sử trường 'name' là tên người dùng
+                    'avatar' => $comment->user->image,
                     'content' => $comment->content,
                     'rating' => $comment->rating,
                     'created_at' => $comment->created_at,

@@ -532,7 +532,7 @@ class OrderController extends Controller
                 }
 
                 $product_item->update([
-                    'quantity' => $product_item->quantity -1
+                    'quantity' => $product_item->quantity - $cart->quantity
                 ]);
             }
 

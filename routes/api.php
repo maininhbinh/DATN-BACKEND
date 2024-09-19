@@ -192,7 +192,6 @@ Route::prefix('coupon')->group(function () {
 });
 
 Route::prefix('filter')->group(function () {
-    Route::post('', [ProductController::class, 'filter']);
     Route::get('/search', [ProductController::class, 'search']);
 });
 

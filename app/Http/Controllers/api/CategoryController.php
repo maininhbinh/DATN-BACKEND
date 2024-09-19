@@ -469,6 +469,11 @@ class CategoryController extends Controller
                 });
             }
 
+            if($request->query('dir')){
+                $orderBy = $request->query('dir');
+                $productModel->orderBy('products_min_price', $orderBy);
+            }
+
             // Hoặc, nếu bạn cần xử lý các tham số theo dạng mảng liên kết:
             $allParamsArray = [];
             foreach ($paramModel as $key => $value) {
@@ -490,9 +495,9 @@ class CategoryController extends Controller
                         ->where('quantity', '>', 1);
                 })
                 ->with([
-                    'products' => function ($query) {
+                    'products' => function ($query) use ($request) {
                         $query
-                            ->whereHas('variants.variant.category', function ($query) {
+                            ->whereHas('variants.variant.category', function ($query) use ($request) {
                                 $query
                                     ->join('product_configurations', 'variant_options.id', '=', 'product_configurations.variant_option_id')
                                     ->join('product_items', 'product_items.id', '=', 'product_configurations.product_item_id')
@@ -500,11 +505,10 @@ class CategoryController extends Controller
                                     ->join('variants', 'variants.id', '=', 'variant_options.variant_id')
                                     ->whereColumn('variants.category_id', 'products.category_id');
                             })
-                            ->where('quantity', '>', '1')
                             ->orderBy('quantity', 'desc')
-                            ->with(['variants' => function ($query) {
+                            ->with(['variants' => function ($query) use ($request) {
                                 $query
-                                    ->whereHas('variant.category', function ($query) {
+                                    ->whereHas('variant.category', function ($query) use ($request) {
                                         $query->join('product_configurations', 'variant_options.id', '=', 'product_configurations.variant_option_id')
                                             ->join('product_items', 'product_items.id', '=', 'product_configurations.product_item_id')
                                             ->join('products', 'products.id', '=', 'product_items.product_id')
@@ -514,10 +518,16 @@ class CategoryController extends Controller
                                     ->orderBy('product_configurations.id', 'asc');
                             }]);
                     },
+                    'category',
                 ])
-                ->orderBy('id', 'desc')
+                ->groupBy('products.id')
+                ->withMin('products', 'price') // Lấy giá thấp nhất của productItems
+                ->orderBy('products.id', 'desc')
                 ->withSum('products', 'product_items.quantity',)
                 ->withSum('orderDetails', 'quantity',)
+                ->leftJoin('comments', 'products.id', '=', 'comments.product_id')
+                ->selectRaw(DB::raw('IFNULL(AVG(comments.rating), 0) as average_rating',))
+                ->limit(10)
                 ->get();
 
             $variants = $category

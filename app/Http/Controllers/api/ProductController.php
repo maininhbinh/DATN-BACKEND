@@ -872,11 +872,53 @@ class ProductController extends Controller
 
         try {
             $products = Product::where('name', 'LIKE', '%' . $name . '%')
-                ->with(['products' => function ($query) {
-                    $query->with(['variants' => function ($query) {
-                        $query->orderBy('product_configurations.id', 'asc');
-                    }]);
-                }, 'category'])
+                ->where('is_active', true)
+                ->whereHas('products', function ($query) use ($request) {
+                    $query
+                        ->whereHas('variants.variant.category', function ($query) {
+                            $query
+                                ->join('product_configurations', 'variant_options.id', '=', 'product_configurations.variant_option_id')
+                                ->join('product_items', 'product_items.id', '=', 'product_configurations.product_item_id')
+                                ->join('products', 'products.id', '=', 'product_items.product_id')
+                                ->join('variants', 'variants.id', '=', 'variant_options.variant_id')
+                                ->whereColumn('variants.category_id', 'products.category_id');
+                        })
+                        ->where('quantity', '>', 1);
+                })
+                ->with([
+                    'products' => function ($query) {
+                        $query
+                            ->whereHas('variants.variant.category', function ($query) {
+                                $query
+                                    ->join('product_configurations', 'variant_options.id', '=', 'product_configurations.variant_option_id')
+                                    ->join('product_items', 'product_items.id', '=', 'product_configurations.product_item_id')
+                                    ->join('products', 'products.id', '=', 'product_items.product_id')
+                                    ->join('variants', 'variants.id', '=', 'variant_options.variant_id')
+                                    ->whereColumn('variants.category_id', 'products.category_id');
+                            })
+                            ->orderBy('quantity', 'desc')
+                            ->with(['variants' => function ($query) {
+                                $query
+                                    ->whereHas('variant.category', function ($query) {
+                                        $query->join('product_configurations', 'variant_options.id', '=', 'product_configurations.variant_option_id')
+                                            ->join('product_items', 'product_items.id', '=', 'product_configurations.product_item_id')
+                                            ->join('products', 'products.id', '=', 'product_items.product_id')
+                                            ->join('variants', 'variants.id', '=', 'variant_options.variant_id')
+                                            ->whereColumn('variants.category_id', 'products.category_id');
+                                    })
+                                    ->orderBy('product_configurations.id', 'asc');
+                            }]);
+                    },
+                    'category',
+                ])
+                ->groupBy('products.id')
+                ->withAvg('products', 'price')
+                ->orderBy('products.id', 'desc')
+                ->withSum('products', 'product_items.quantity',)
+                ->withSum('orderDetails', 'quantity',)
+                ->leftJoin('comments', 'products.id', '=', 'comments.product_id')
+                ->selectRaw(DB::raw('IFNULL(AVG(comments.rating), 0) as average_rating',))
+                ->limit(5)
                 ->get();
 
             return response()->json($products);
