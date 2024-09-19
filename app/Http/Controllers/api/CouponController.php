@@ -171,7 +171,7 @@ class CouponController extends Controller
             $coupon = Coupon::where('code', $request->code)
                 ->where('end_date', '>', Carbon::now())
                 ->where('is_activate', 1)
-                ->first();
+                ->firstOrFail();
 
             $use = $user->coupons()->where('code', $request->code)->get();
 
